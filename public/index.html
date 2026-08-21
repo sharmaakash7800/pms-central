@@ -94,13 +94,10 @@
       <span class="text-[10px] bg-indigo-200 dark:bg-indigo-900 text-indigo-900 dark:text-indigo-200 px-2 py-0.5 rounded-full font-bold">Personalized View</span>
     </div>
 
-    <!-- VIEW 1: COLLAPSIBLE TASKS LIST -->
+    <!-- VIEW 1: TASKS LIST -->
     <div id="viewPmsBoard" class="view-section space-y-2">
-      
-      <!-- Filter Toolbar -->
       <div class="bg-white dark:bg-darkcard rounded-xl border border-slate-200 dark:border-darkborder p-2 flex flex-wrap items-center justify-between gap-1.5 shadow-2xs">
         <div class="flex flex-wrap items-center gap-1.5 flex-1 min-w-[260px]">
-          
           <div class="flex items-center gap-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkborder rounded-lg px-2 py-0.5 min-w-[160px]">
             <span class="text-[9px] font-bold text-slate-400 uppercase">Site:</span>
             <select id="filterByProject" onchange="applyFilters()" class="w-full bg-transparent text-[11px] font-bold text-slate-800 dark:text-slate-200 outline-none cursor-pointer">
@@ -133,7 +130,6 @@
       <div id="collapsibleTasksContainer" class="space-y-2">
         <p class="text-center py-6 text-slate-400 text-xs">Loading database records...</p>
       </div>
-
     </div>
 
     <!-- VIEW 2: REVIEW CONSOLE -->
@@ -206,9 +202,9 @@
       <div id="vendorCardsContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2"></div>
     </div>
 
-    <!-- VIEW 4: SITES & PROJECTS DIRECTORY (Dedicated Panel) -->
+    <!-- VIEW 4: SITES & PROJECTS DIRECTORY (With Search Bar Added) -->
     <div id="viewSites" class="view-section hidden space-y-2.5">
-      <div class="bg-white dark:bg-darkcard p-3 rounded-xl border border-slate-200 dark:border-darkborder flex items-center justify-between">
+      <div class="bg-white dark:bg-darkcard p-3 rounded-xl border border-slate-200 dark:border-darkborder flex flex-wrap items-center justify-between gap-2">
         <div class="flex items-center gap-2">
           <span class="text-base">📍</span>
           <div>
@@ -216,10 +212,18 @@
             <p class="text-[9px] text-slate-400">Manage site titles, PO numbers, and personnel assignments</p>
           </div>
         </div>
-        <button onclick="openSiteModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1">
-          <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-          <span>+ Add New Site</span>
-        </button>
+
+        <div class="flex items-center gap-2">
+          <div class="relative">
+            <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-2"></i>
+            <input type="text" id="siteSearchInput" placeholder="Search site name..." oninput="filterSitesDirectory()" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkborder rounded-lg pl-8 pr-3 py-1 text-xs outline-none focus:border-indigo-500 dark:text-white w-44 font-medium">
+          </div>
+
+          <button onclick="openSiteModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+            <span>+ Add Site</span>
+          </button>
+        </div>
       </div>
 
       <div id="sitesCardsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -238,7 +242,7 @@
 
   </main>
 
-  <!-- Bottom Capsule Bar (With Sites Tab) -->
+  <!-- Bottom Capsule Bar -->
   <div class="fixed bottom-3 left-1/2 -translate-x-1/2 z-40">
     <div class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded-full shadow-xl px-4 py-1.5 flex items-center gap-4 sm:gap-6">
       <button onclick="switchTab('viewPmsBoard')" id="tabBtn-viewPmsBoard" class="nav-capsule-btn active flex flex-col items-center text-slate-500 hover:text-indigo-600 transition">
@@ -308,7 +312,7 @@
     </div>
   </div>
 
-  <!-- Modal: Add / Edit Site (With Optional Metadata Fields) -->
+  <!-- Modal: Add / Edit Site -->
   <div id="siteModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
     <div class="bg-white dark:bg-darkcard rounded-2xl max-w-lg w-full p-4 shadow-2xl border border-slate-100 dark:border-darkborder relative max-h-[92vh] flex flex-col">
       <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-darkborder">
@@ -424,7 +428,6 @@
       </div>
 
       <form onsubmit="event.preventDefault(); submitFullTaskPackage();" class="overflow-y-auto custom-scroll py-2.5 space-y-2.5 flex-1 pr-1">
-        
         <div class="bg-slate-50 dark:bg-slate-800/80 p-2.5 rounded-xl border border-slate-200 dark:border-darkborder space-y-2">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
             <div>
@@ -459,7 +462,6 @@
 
         <div class="bg-indigo-50/60 dark:bg-indigo-950/40 p-2.5 rounded-xl border border-indigo-100 dark:border-indigo-900 space-y-2">
           <span class="text-[9px] font-extrabold text-indigo-700 dark:text-indigo-300 uppercase tracking-wider block">Project & Personnel Metadata (Optional)</span>
-          
           <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
             <div>
               <label class="block text-[8px] font-bold text-slate-500 uppercase mb-0.5">Company Name</label>
@@ -502,7 +504,7 @@
     </div>
   </div>
 
-  <!-- Modal: Doer Edit Execution -->
+  <!-- Modal: Doer Edit Execution (Strict PO Step Condition) -->
   <div id="doerModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
     <div class="bg-white dark:bg-darkcard rounded-2xl max-w-sm w-full p-4 shadow-2xl border border-slate-100 dark:border-darkborder relative">
       <button onclick="toggleModal('doerModal', false)" class="absolute right-3 top-3 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"><i data-lucide="x" class="w-4 h-4"></i></button>
@@ -531,6 +533,7 @@
           </select>
         </div>
 
+        <!-- Vendor Box strictly on Issue PO steps -->
         <div id="vendorFieldGroup" class="hidden bg-amber-50/60 dark:bg-slate-800/80 p-2 rounded-xl border border-amber-200 dark:border-amber-900/60 space-y-1.5">
           <span class="text-[9px] font-extrabold text-amber-800 dark:text-amber-400 uppercase">Vendor & PO Details</span>
           <div class="grid grid-cols-2 gap-1.5">
@@ -679,7 +682,7 @@
       populateReviewPmsSelector();
     }
 
-    // ---------------- SITES PANEL MANAGEMENT ----------------
+    // ---------------- SITES MANAGEMENT WITH SEARCH ----------------
     async function loadSitesList() {
       const container = document.getElementById('sitesCardsContainer');
       container.innerHTML = '<p class="text-xs text-slate-400 py-6 text-center">Loading sites...</p>';
@@ -693,14 +696,20 @@
           renderProjectFilterDropdown();
         }
       } catch (err) {
-        container.innerHTML = `<p class="text-xs text-rose-500 py-6 text-center">Error loading sites: ${err.message}</p>`;
+        container.innerHTML = `<p class="text-xs text-rose-500 py-6 text-center">Error: ${err.message}</p>`;
       }
+    }
+
+    function filterSitesDirectory() {
+      const q = document.getElementById('siteSearchInput').value.toLowerCase();
+      const filtered = allSitesList.filter(s => s.siteName.toLowerCase().includes(q) || (s.projectTitle || '').toLowerCase().includes(q));
+      renderSitesDirectoryCards(filtered);
     }
 
     function renderSitesDirectoryCards(sites) {
       const container = document.getElementById('sitesCardsContainer');
       if (sites.length === 0) {
-        container.innerHTML = '<p class="text-xs text-slate-400 py-6 text-center">No sites recorded.</p>';
+        container.innerHTML = '<p class="text-xs text-slate-400 py-6 text-center">No sites found.</p>';
         return;
       }
 
@@ -1101,86 +1110,6 @@
       }
     }
 
-    function renderTeamView() {
-      const container = document.getElementById('teamCardsContainer');
-      if (activeDoers.length === 0) {
-        container.innerHTML = '<p class="text-xs text-slate-400 py-4">No team members.</p>';
-        return;
-      }
-
-      let html = '';
-      activeDoers.forEach(d => {
-        html += `
-          <div class="bg-white dark:bg-darkcard p-2.5 rounded-xl border border-slate-200 dark:border-darkborder shadow-2xs flex items-center justify-between text-xs">
-            <div class="flex items-center gap-2">
-              <div class="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold flex items-center justify-center text-[10px]">
-                ${d.name.charAt(0).toUpperCase()}
-              </div>
-              <div>
-                <h4 class="font-bold text-slate-900 dark:text-white text-xs">${d.name}</h4>
-                <p class="text-[9px] text-slate-400 font-mono">${d.email}</p>
-                <span class="inline-block text-[8px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950 px-1 py-0.2 rounded mt-0.5">${d.role || 'Executive'}</span>
-              </div>
-            </div>
-            
-            <div class="flex items-center gap-1">
-              <button onclick="openEditDoerModal('${d._id}', '${d.name.replace(/'/g, "\\'")}', '${d.email}', '${(d.role || '').replace(/'/g, "\\'")}')" class="text-slate-400 hover:text-indigo-600 p-1 rounded-md transition" title="Edit Member">
-                <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
-              </button>
-              <button onclick="removeDoer('${d._id}')" class="text-slate-300 hover:text-rose-600 p-1 rounded-md transition" title="Remove">
-                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-              </button>
-            </div>
-          </div>
-        `;
-      });
-      container.innerHTML = html;
-      lucide.createIcons();
-    }
-
-    function openEditDoerModal(id, name, email, role) {
-      document.getElementById('editDoerId').value = id;
-      document.getElementById('editDoerName').value = name;
-      document.getElementById('editDoerEmail').value = email;
-      document.getElementById('editDoerRole').value = role;
-      document.getElementById('editDoerAlert').innerHTML = '';
-      toggleModal('editDoerModal', true);
-    }
-
-    async function saveEditedDoer() {
-      const btn = document.getElementById('btnSaveEditedDoer');
-      const id = document.getElementById('editDoerId').value;
-      btn.disabled = true;
-
-      const payload = {
-        name: document.getElementById('editDoerName').value.trim(),
-        email: document.getElementById('editDoerEmail').value.trim(),
-        role: document.getElementById('editDoerRole').value.trim()
-      };
-
-      try {
-        const url = id ? `${API_BASE}/api/doers/${id}` : `${API_BASE}/api/doers`;
-        const method = id ? 'PUT' : 'POST';
-
-        const res = await fetch(url, {
-          method,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        const json = await res.json();
-        if (json.success) {
-          toggleModal('editDoerModal', false);
-          loadDoersList();
-        } else {
-          document.getElementById('editDoerAlert').innerHTML = `<div class="p-1 bg-rose-50 text-rose-700 text-[10px] rounded">${json.error}</div>`;
-        }
-      } catch (err) {
-        document.getElementById('editDoerAlert').innerHTML = `<div class="p-1 bg-rose-50 text-rose-700 text-[10px] rounded">${err.message}</div>`;
-      } finally {
-        btn.disabled = false;
-      }
-    }
-
     function calculateTimeRemaining(targetEndDate, status, actualDoneDate) {
       if (status === 'Completed') {
         const doneStr = actualDoneDate ? new Date(actualDoneDate).toLocaleDateString('en-GB') : '';
@@ -1254,8 +1183,9 @@
         optCompleted.disabled = false;
       }
 
-      const isPoStep = /(po|vendor|purchase order|procurement)/i.test(title);
-      document.getElementById('vendorFieldGroup').classList.toggle('hidden', !isPoStep);
+      // Strict condition: Vendor details only open on "Issue PO" or strictly Purchase Order steps
+      const isIssuePoStep = /(issue po|purchase order|place po)/i.test(title);
+      document.getElementById('vendorFieldGroup').classList.toggle('hidden', !isIssuePoStep);
 
       const isDeliveryStep = /(delivery|readiness|dispatch|receipt|received|material delivery|clearance)/i.test(title);
       document.getElementById('recvQtyFieldGroup').classList.toggle('hidden', !isDeliveryStep);
@@ -1382,19 +1312,6 @@
         }
       } catch (err) {
         console.error('Error fetching sites:', err);
-      }
-    }
-
-    async function removeDoer(id) {
-      if (!confirm('Remove member?')) return;
-      try {
-        const res = await fetch(`${API_BASE}/api/doers/${id}`, { method: 'DELETE' });
-        const json = await res.json();
-        if (json.success) {
-          loadDoersList();
-        }
-      } catch (err) {
-        alert(err.message);
       }
     }
 
