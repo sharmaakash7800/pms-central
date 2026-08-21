@@ -313,7 +313,7 @@
     </div>
   </div>
 
-  <!-- Modal: Add / Edit Site (With All Requested Optional Fields) -->
+  <!-- Modal: Add / Edit Site (With All Optional Fields) -->
   <div id="siteModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
     <div class="bg-white dark:bg-darkcard rounded-2xl max-w-lg w-full p-4 shadow-2xl border relative max-h-[92vh] flex flex-col">
       <div class="flex items-center justify-between pb-2 border-b">
@@ -382,6 +382,20 @@
           <button type="button" onclick="toggleModal('siteModal', false)" class="px-2.5 py-1 font-bold text-slate-600">Cancel</button>
           <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-1.5 rounded transition">Save Site Record</button>
         </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Create Task -->
+  <div id="createTaskModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
+    <div class="bg-white dark:bg-darkcard rounded-2xl max-w-md w-full p-4 shadow-2xl border relative">
+      <button onclick="toggleModal('createTaskModal', false)" class="absolute right-3 top-3 text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
+      <h3 class="text-xs font-bold text-slate-900 dark:text-white mb-2">Create Task Package</h3>
+      <form onsubmit="event.preventDefault(); submitFullTaskPackage();" class="space-y-2">
+        <input type="text" id="mProject" required placeholder="Site Name" class="w-full border rounded px-2 py-1 text-xs">
+        <input type="text" id="mItemName" required placeholder="Main Task Name" class="w-full border rounded px-2 py-1 text-xs">
+        <input type="date" id="mStartDate" required class="w-full border rounded px-2 py-1 text-xs">
+        <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-1 rounded text-xs">Save in DB</button>
       </form>
     </div>
   </div>
@@ -474,7 +488,7 @@
       const doerEmail = document.getElementById('doerDropdownSelect').value.toLowerCase().trim();
 
       if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10" class="text-center py-10 text-slate-400">No records found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="10" class="text-center py-10 text-slate-400">No records found. Click "+ Task" to begin.</td></tr>';
         return;
       }
 
@@ -490,7 +504,6 @@
 
         const isCollapsed = !!collapsedTasks[item.uniqueId];
 
-        // Calculate KPI Stats for Banner Chart
         const total = sortedSteps.length;
         const doneCount = sortedSteps.filter(s => s.status === 'Completed').length;
         const overdueCount = sortedSteps.filter(s => (new Date(s.plannedEndDate) < now && s.status !== 'Completed') || s.status === 'Delayed').length;
@@ -644,7 +657,6 @@
       }
     }
 
-    // Fully detailed Sites Directory with Edit/Delete support
     async function loadSitesList() {
       const container = document.getElementById('sitesCardsContainer');
       container.innerHTML = '<p class="text-xs text-slate-400 py-6 text-center">Loading sites...</p>';
@@ -698,13 +710,13 @@
       document.getElementById('editSiteId').value = '';
       document.getElementById('formSiteName').value = '';
       document.getElementById('formCompanyName').value = 'MAHESHWARI DISTRIBUTORS';
-      document.getElementById('formProjectTitle').value = 'SUPPLY PMS: EV Charging';
-      document.getElementById('formPoNumber').value = '5100033887';
-      document.getElementById('formDataEntryOp').value = 'Commercial Person';
-      document.getElementById('formProcCoord').value = 'Tulsi Sen';
-      document.getElementById('formTechPerson').value = 'Heera lal Ji (8003698656)';
-      document.getElementById('formPurchaser').value = 'Ronak Ji (8107688615)';
-      document.getElementById('formVre').value = 'Aarti Bala (8824133320)';
+      document.getElementById('formProjectTitle').value = '';
+      document.getElementById('formPoNumber').value = '';
+      document.getElementById('formDataEntryOp').value = '';
+      document.getElementById('formProcCoord').value = '';
+      document.getElementById('formTechPerson').value = '';
+      document.getElementById('formPurchaser').value = '';
+      document.getElementById('formVre').value = '';
       document.getElementById('formProjectOwner').value = '';
       document.getElementById('modalSiteTitle').innerText = 'Add New Site / Project';
       toggleModal('siteModal', true);
@@ -713,7 +725,7 @@
     function openEditSiteModal(id, name, comp, proj, po, operator, coord, tech, pur, vre, owner) {
       document.getElementById('editSiteId').value = id;
       document.getElementById('formSiteName').value = name;
-      document.getElementById('formCompanyName').value = comp || 'MAHESHWARI DISTRIBUTORS';
+      document.getElementById('formCompanyName').value = comp || '';
       document.getElementById('formProjectTitle').value = proj || '';
       document.getElementById('formPoNumber').value = po || '';
       document.getElementById('formDataEntryOp').value = operator || '';
@@ -775,6 +787,7 @@
       if (json.success) {
         activeDoers = json.data;
         renderDoerHeaderDropdown(activeDoers);
+        renderTeamView();
       }
     }
 
@@ -785,15 +798,16 @@
       select.innerHTML = html;
     }
 
-    function openCreateModal() {}
+    function openCreateModal() { toggleModal('createTaskModal', true); }
     function openAddMemberModal() {}
     function renderTeamView() {
       const container = document.getElementById('teamCardsContainer');
+      if (!container) return;
       let html = '';
       activeDoers.forEach(d => {
-        html += `<div class="bg-white dark:bg-darkcard p-3 rounded-xl border"><h4 class="font-bold text-xs">${d.name}</h4><p class="text-[10px] text-slate-400">${d.email}</p></div>`;
+        html += `<div class="bg-white dark:bg-darkcard p-3 rounded-xl border shadow-2xs"><h4 class="font-bold text-xs">${d.name}</h4><p class="text-[10px] text-slate-400 font-mono">${d.email}</p><span class="inline-block text-[8px] text-indigo-600 bg-indigo-50 px-1 py-0.2 rounded mt-1">${d.role || 'Executive'}</span></div>`;
       });
-      container.innerHTML = html;
+      container.innerHTML = html || '<p class="text-xs text-slate-400 py-4">No members found.</p>';
     }
     function renderVendorsView() {}
     function exportToCSV() { loadDashboardData(); }
