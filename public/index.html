@@ -224,7 +224,7 @@
         </div>
         <button onclick="openSiteModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1">
           <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-          <span>+ Add Site</span>
+          <span>+ Add New Site</span>
         </button>
       </div>
       <div id="sitesCardsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -380,7 +380,7 @@
 
         <div class="pt-2 border-t flex justify-end gap-1.5">
           <button type="button" onclick="toggleModal('siteModal', false)" class="px-2.5 py-1 font-bold text-slate-600">Cancel</button>
-          <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-1.5 rounded transition">Save Site</button>
+          <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-1.5 rounded transition">Save Site Record</button>
         </div>
       </form>
     </div>
@@ -490,11 +490,30 @@
 
         const isCollapsed = !!collapsedTasks[item.uniqueId];
 
+        // Calculate KPI Stats for Banner Chart
+        const total = sortedSteps.length;
+        const doneCount = sortedSteps.filter(s => s.status === 'Completed').length;
+        const overdueCount = sortedSteps.filter(s => (new Date(s.plannedEndDate) < now && s.status !== 'Completed') || s.status === 'Delayed').length;
+        const pendingCount = total - doneCount - overdueCount;
+        const percentage = total > 0 ? Math.round((doneCount / total) * 100) : 0;
+
         html += `
           <tr class="bg-indigo-50/90 dark:bg-indigo-950/70 font-bold border-t-2 border-indigo-200 dark:border-indigo-900">
             <td class="py-2.5 px-3 font-mono text-indigo-700 dark:text-indigo-300">${item.uniqueId}</td>
-            <td class="py-2.5 px-3 text-slate-900 dark:text-white" colspan="2">📦 ${item.mainItemName} <span class="text-[10px] text-slate-400 font-normal">(${item.projectName || 'General'})</span></td>
-            <td class="py-2.5 px-3 text-slate-500 italic text-[11px]" colspan="6">Total Steps: ${item.steps.length} | Category: ${item.pmsType}</td>
+            <td class="py-2.5 px-3 text-slate-900 dark:text-white" colspan="3">
+              📦 ${item.mainItemName} <span class="text-[10px] text-slate-400 font-normal">(${item.projectName || 'General'})</span>
+            </td>
+            <td class="py-2.5 px-3" colspan="5">
+              <div class="flex items-center gap-3 text-[10px]">
+                <span class="px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold">🟢 ${doneCount} Done</span>
+                <span class="px-1.5 py-0.5 bg-rose-100 text-rose-800 rounded font-bold">🚨 ${overdueCount} Overdue</span>
+                <span class="px-1.5 py-0.5 bg-slate-200 text-slate-700 rounded font-bold">⚪ ${pendingCount} Pending</span>
+                <span class="text-indigo-600 dark:text-indigo-300 font-extrabold">${percentage}%</span>
+                <div class="w-24 bg-slate-200 h-1.5 rounded-full overflow-hidden flex-1">
+                  <div class="bg-emerald-500 h-full rounded-full" style="width: ${percentage}%"></div>
+                </div>
+              </div>
+            </td>
             <td class="py-2.5 px-3 text-center">
               <button onclick="toggleTaskCollapse('${item.uniqueId}')" class="px-2 py-0.5 bg-indigo-600 text-white rounded text-[10px] font-bold shadow-xs">
                 ${isCollapsed ? 'Show Steps ▾' : 'Hide Steps ▴'}
