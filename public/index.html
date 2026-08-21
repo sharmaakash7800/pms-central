@@ -478,7 +478,7 @@
       document.querySelectorAll('.nav-capsule-btn').forEach(b => b.classList.remove('active'));
       document.getElementById(viewId).classList.remove('hidden');
       const btn = document.getElementById(`tabBtn-${viewId}`);
-      if (btn) btn.classList.1 = btn.classList.add('active'); // Fixed toggle
+      if (btn) btn.classList.add('active');
 
       if (viewId === 'viewReview') populateReviewPmsSelector();
       if (viewId === 'viewVendors') renderVendorsView();
@@ -628,7 +628,6 @@
               statusLabel = '🚨 Overdue';
             }
 
-            // Google Form Link Integration for NFA and PO steps
             let formActionLink = '';
             const titleLower = s.stepTitle.toLowerCase();
             if (titleLower.includes('nfa request for approval') || titleLower.includes('nfa')) {
@@ -772,7 +771,7 @@
               <div class="bg-white dark:bg-darkcard p-3 rounded-xl border border-slate-200 dark:border-darkborder shadow-2xs space-y-1.5 text-xs">
                 <div class="flex items-center justify-between font-bold">
                   <span onclick="openCreateModalWithSite('${s.siteName.replace(/'/g, "\\'")}')" class="text-indigo-600 dark:text-indigo-400 text-xs font-extrabold cursor-pointer hover:underline" title="Click to create task for this site">📍 ${s.siteName}</span>
-                  <div class="files items-center gap-1">
+                  <div class="flex items-center gap-1">
                     <button onclick="openEditSiteModal('${s._id}', '${s.siteName.replace(/'/g, "\\'")}', '${(s.companyName || '').replace(/'/g, "\\'")}', '${(s.projectTitle || '').replace(/'/g, "\\'")}', '${(s.poNumber || '').replace(/'/g, "\\'")}', '${(s.dataEntryOperator || '').replace(/'/g, "\\'")}', '${(s.processCoordinator || '').replace(/'/g, "\\'")}', '${(s.technicalPerson || '').replace(/'/g, "\\'")}', '${(s.purchaserPerson || '').replace(/'/g, "\\'")}', '${(s.vrePerson || '').replace(/'/g, "\\'")}', '${(s.projectOwner || '').replace(/'/g, "\\'")}')" class="text-slate-400 hover:text-indigo-600 p-1" title="Edit Site">
                       <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
                     </button>
@@ -1156,7 +1155,7 @@
     }
 
     async function saveNewMember() {
-      const name = document.getElementById('newName').value.trim(); // Fixed typo
+      const name = document.getElementById('newMemberName').value.trim();
       const email = document.getElementById('newMemberEmail').value.trim();
       const role = document.getElementById('newMemberRole').value.trim();
 
