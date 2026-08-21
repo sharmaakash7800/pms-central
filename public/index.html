@@ -17,7 +17,7 @@
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
 
   <!-- Header -->
-  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between h-16 items-center">
         
@@ -27,11 +27,11 @@
           </div>
           <div>
             <h1 class="text-base font-bold text-slate-900 leading-tight">PMS Central Hub</h1>
-            <p class="text-xs text-slate-400 font-medium">Task Automation & Execution Tracking</p>
+            <p class="text-[11px] text-slate-400 font-medium">Task & Sub-Step Master Execution Portal</p>
           </div>
         </div>
 
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-2.5">
           <!-- Role Selector -->
           <div class="flex items-center gap-2 bg-slate-100 p-1.5 rounded-xl border border-slate-200">
             <i data-lucide="user-check" class="w-4 h-4 text-slate-500 pl-1"></i>
@@ -39,13 +39,18 @@
               <option value="ADMIN">Super Admin (All View)</option>
               <option value="DOER">Doer Portal (My Tasks)</option>
             </select>
-            <input type="email" id="doerEmail" class="hidden bg-white text-xs border border-slate-300 rounded-lg px-2.5 py-1 outline-none font-medium w-48" placeholder="Enter your email" value="ronak@domain.com" oninput="loadDashboardData()">
+            <input type="email" id="doerEmail" class="hidden bg-white text-xs border border-slate-300 rounded-lg px-2.5 py-1 outline-none font-medium w-48" placeholder="Enter doer email" value="heeralal@domain.com" oninput="loadDashboardData()">
           </div>
 
-          <!-- Open Bulk Generator Modal Button -->
+          <!-- Buttons: Add Custom Task & Bulk Generator -->
+          <button onclick="toggleModal('customTaskModal', true)" class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-bold px-3 py-2 rounded-xl shadow-xs flex items-center gap-1.5 transition">
+            <i data-lucide="plus" class="w-4 h-4 text-indigo-600"></i>
+            <span>+ New Task</span>
+          </button>
+          
           <button onclick="toggleModal('bulkModal', true)" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow-md shadow-indigo-100 flex items-center gap-1.5 transition">
-            <i data-lucide="plus-circle" class="w-4 h-4"></i>
-            <span>+ Create Bulk PMS</span>
+            <i data-lucide="sparkles" class="w-4 h-4"></i>
+            <span>Bulk Generator</span>
           </button>
         </div>
 
@@ -53,71 +58,74 @@
     </div>
   </header>
 
-  <!-- Main View -->
+  <!-- Main Content -->
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-1">
     
-    <!-- Stats Cards -->
+    <!-- Top Stats -->
     <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
-      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
         <div>
           <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Tasks</p>
           <h3 class="text-2xl font-extrabold text-slate-900 mt-0.5" id="statTasks">0</h3>
         </div>
         <div class="bg-indigo-50 p-2.5 rounded-xl text-indigo-600"><i data-lucide="package" class="w-5 h-5"></i></div>
       </div>
-      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
         <div>
-          <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Sub-Steps</p>
+          <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Sub-Steps</p>
           <h3 class="text-2xl font-extrabold text-blue-600 mt-0.5" id="statSteps">0</h3>
         </div>
         <div class="bg-blue-50 p-2.5 rounded-xl text-blue-600"><i data-lucide="list-ordered" class="w-5 h-5"></i></div>
       </div>
-      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
         <div>
           <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Pending Action</p>
           <h3 class="text-2xl font-extrabold text-amber-500 mt-0.5" id="statPending">0</h3>
         </div>
         <div class="bg-amber-50 p-2.5 rounded-xl text-amber-500"><i data-lucide="clock" class="w-5 h-5"></i></div>
       </div>
-      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex items-center justify-between">
+      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
         <div>
-          <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Completed</p>
+          <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Completed Steps</p>
           <h3 class="text-2xl font-extrabold text-emerald-600 mt-0.5" id="statCompleted">0</h3>
         </div>
         <div class="bg-emerald-50 p-2.5 rounded-xl text-emerald-600"><i data-lucide="check-circle" class="w-5 h-5"></i></div>
       </div>
     </div>
 
-    <!-- Data Table Container -->
-    <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
-      <div class="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/50">
+    <!-- Master Data Table -->
+    <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden flex flex-col">
+      <div class="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/60">
         <div class="flex items-center gap-2">
           <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-          <h2 class="font-bold text-slate-900 text-sm" id="tableTitle">Super Admin Timeline (All Tasks)</h2>
+          <h2 class="font-bold text-slate-900 text-sm" id="tableTitle">Super Admin Timeline (All Tasks & Steps)</h2>
         </div>
         <div class="flex items-center gap-2">
-          <input type="text" id="searchInput" placeholder="Search tasks, WBS, owner..." oninput="filterTable()" class="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs outline-none focus:border-indigo-500 w-64">
+          <input type="text" id="searchInput" placeholder="Search task, step, WBS, owner..." oninput="filterTable()" class="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs outline-none focus:border-indigo-500 w-64">
           <button onclick="loadDashboardData()" class="p-1.5 text-slate-500 hover:text-indigo-600 border border-slate-200 rounded-xl hover:bg-white transition"><i data-lucide="refresh-cw" class="w-4 h-4"></i></button>
         </div>
       </div>
 
-      <div class="overflow-x-auto max-h-[600px] custom-scroll">
+      <!-- Table with Separate Task and Step Columns -->
+      <div class="overflow-x-auto max-h-[640px] custom-scroll">
         <table class="w-full text-left border-collapse text-xs">
-          <thead class="bg-slate-100/90 text-slate-700 uppercase font-bold sticky top-0 z-10 border-b border-slate-200 text-[11px]">
+          <thead class="bg-slate-100/90 text-slate-700 uppercase font-bold sticky top-0 z-10 border-b border-slate-200 text-[11px] tracking-wide">
             <tr>
-              <th class="py-3 px-3.5">Task ID</th>
-              <th class="py-3 px-2">WBS</th>
-              <th class="py-3 px-4">Task / Step Title</th>
+              <th class="py-3 px-3">Task ID</th>
+              <th class="py-3 px-3 min-w-[180px]">Main Task (Item)</th>
+              <th class="py-3 px-2 text-center">WBS</th>
+              <th class="py-3 px-4 min-w-[220px]">Step Title / Sub-task</th>
               <th class="py-3 px-3">Owner</th>
-              <th class="py-3 px-3">Start - End</th>
-              <th class="py-3 px-3 text-center">Recv Qty</th>
+              <th class="py-3 px-3 min-w-[160px]">Start – End Date</th>
+              <th class="py-3 px-2 text-center">Target Qty</th>
+              <th class="py-3 px-2 text-center">Recv Qty</th>
               <th class="py-3 px-3">Attachment</th>
               <th class="py-3 px-3">Status</th>
-              <th class="py-3 px-3 text-center">Action</th>
+              <th class="py-3 px-3 text-center min-w-[120px]">Action</th>
             </tr>
           </thead>
           <tbody id="tableRows" class="divide-y divide-slate-100">
-            <tr><td colspan="9" class="text-center py-10 text-slate-400">Loading records...</td></tr>
+            <tr><td colspan="11" class="text-center py-10 text-slate-400">Loading records...</td></tr>
           </tbody>
         </table>
       </div>
@@ -125,7 +133,105 @@
 
   </main>
 
-  <!-- Modal 1: Bulk Task Generator Modal (Click to Open) -->
+  <!-- Modal 1: Create Single Custom Task -->
+  <div id="customTaskModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 relative">
+      <button onclick="toggleModal('customTaskModal', false)" class="absolute right-4 top-4 text-slate-400 hover:text-slate-700"><i data-lucide="x" class="w-5 h-5"></i></button>
+      
+      <div class="flex items-center gap-2 mb-4">
+        <i data-lucide="plus-circle" class="w-5 h-5 text-indigo-600"></i>
+        <h3 class="text-base font-bold text-slate-900">Create New Main Task</h3>
+      </div>
+
+      <form onsubmit="event.preventDefault(); submitSingleTask();" class="space-y-3.5">
+        <div>
+          <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Project Name</label>
+          <input type="text" id="ctProject" required class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-indigo-500" value="Substation & Plant Modernization">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Main Task / Item Name</label>
+          <input type="text" id="ctItem" required class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-indigo-500" placeholder="e.g. Supply of 33kV Vacuum Circuit Breaker">
+        </div>
+        <div class="grid grid-cols-3 gap-2.5">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">PMS Type</label>
+            <select id="ctType" class="w-full border border-slate-200 rounded-xl px-2.5 py-2 text-xs outline-none">
+              <option value="SUPPLY">SUPPLY</option>
+              <option value="SERVICE">SERVICE</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Start Date</label>
+            <input type="date" id="ctStart" required class="w-full border border-slate-200 rounded-xl px-2.5 py-2 text-xs outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Target Qty</label>
+            <input type="number" id="ctQty" required value="1" min="1" class="w-full border border-slate-200 rounded-xl px-2.5 py-2 text-xs outline-none">
+          </div>
+        </div>
+        <button type="submit" id="btnSingleTaskSubmit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl shadow-md transition flex items-center justify-center gap-2 text-xs">
+          <span>Create Task in DB</span>
+        </button>
+      </form>
+      <div id="singleTaskAlert" class="mt-3"></div>
+    </div>
+  </div>
+
+  <!-- Modal 2: Add Sub-Step to Existing Task -->
+  <div id="addStepModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 relative">
+      <button onclick="toggleModal('addStepModal', false)" class="absolute right-4 top-4 text-slate-400 hover:text-slate-700"><i data-lucide="x" class="w-5 h-5"></i></button>
+      
+      <div class="flex items-center gap-2 mb-3">
+        <i data-lucide="list-plus" class="w-5 h-5 text-indigo-600"></i>
+        <h3 class="text-base font-bold text-slate-900">Add Sub-Step to Task</h3>
+      </div>
+      <p id="asParentTaskLabel" class="text-xs text-slate-600 mb-3 bg-indigo-50/70 p-2.5 rounded-xl border border-indigo-100 font-semibold"></p>
+
+      <form onsubmit="event.preventDefault(); submitAddStep();" class="space-y-3">
+        <input type="hidden" id="asTaskId">
+        
+        <div class="grid grid-cols-3 gap-2.5">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">WBS No</label>
+            <input type="text" id="asWbs" required class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none" placeholder="e.g. 1">
+          </div>
+          <div class="col-span-2">
+            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Owner Name</label>
+            <input type="text" id="asOwnerName" required class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none" placeholder="e.g. Heera Lal Ji">
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Step Title / Task Description</label>
+          <input type="text" id="asTitle" required class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none" placeholder="e.g. Drawings & Technical Submissions">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Owner Email</label>
+          <input type="email" id="asOwnerEmail" required class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none" placeholder="e.g. heeralal@domain.com">
+        </div>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Planned Start</label>
+            <input type="date" id="asStart" required class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Planned End</label>
+            <input type="date" id="asEnd" required class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none">
+          </div>
+        </div>
+
+        <button type="submit" id="btnAddStepSubmit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl shadow-md transition text-xs flex items-center justify-center gap-1.5">
+          <span>Add Step to MongoDB</span>
+        </button>
+      </form>
+      <div id="addStepAlert" class="mt-3"></div>
+    </div>
+  </div>
+
+  <!-- Modal 3: Bulk Task Generator Modal -->
   <div id="bulkModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 relative">
       <button onclick="toggleModal('bulkModal', false)" class="absolute right-4 top-4 text-slate-400 hover:text-slate-700"><i data-lucide="x" class="w-5 h-5"></i></button>
@@ -167,14 +273,14 @@ Supply of 2 MVA Transformer</textarea>
     </div>
   </div>
 
-  <!-- Modal 2: Doer Action / Remark / Qty / Attachment Modal -->
+  <!-- Modal 4: Doer Action / Remark / Qty / Attachment Modal -->
   <div id="doerModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 relative">
       <button onclick="toggleModal('doerModal', false)" class="absolute right-4 top-4 text-slate-400 hover:text-slate-700"><i data-lucide="x" class="w-5 h-5"></i></button>
       
       <div class="flex items-center gap-2 mb-3">
         <i data-lucide="edit-3" class="w-5 h-5 text-indigo-600"></i>
-        <h3 class="text-base font-bold text-slate-900">Update Doer Execution</h3>
+        <h3 class="text-base font-bold text-slate-900">Update Step Execution</h3>
       </div>
       <p id="modalStepTitle" class="text-xs text-slate-500 mb-4 bg-slate-50 p-2.5 rounded-xl border border-slate-100 font-medium"></p>
 
@@ -193,18 +299,18 @@ Supply of 2 MVA Transformer</textarea>
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Received Quantity (Nos/Mtr)</label>
+          <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Received Quantity</label>
           <input type="number" id="editQty" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none" placeholder="e.g. 50">
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Attachment Link (Google Drive / CDN)</label>
+          <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Attachment Link (Google Drive / Doc)</label>
           <input type="url" id="editAttachment" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none" placeholder="https://drive.google.com/...">
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Execution Remarks / Notes</label>
-          <textarea id="editRemarks" rows="3" class="w-full border border-slate-200 rounded-xl p-2.5 text-xs outline-none" placeholder="Inspection conducted, punch points noted..."></textarea>
+          <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Execution Remarks / Punch Points</label>
+          <textarea id="editRemarks" rows="3" class="w-full border border-slate-200 rounded-xl p-2.5 text-xs outline-none" placeholder="Enter remarks..."></textarea>
         </div>
 
         <button type="submit" id="btnDoerSave" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl shadow-md transition text-xs flex items-center justify-center gap-1.5">
@@ -216,7 +322,12 @@ Supply of 2 MVA Transformer</textarea>
   </div>
 
   <script>
-    document.getElementById('pStartDate').value = new Date().toISOString().slice(0, 10);
+    const todayStr = new Date().toISOString().slice(0, 10);
+    document.getElementById('pStartDate').value = todayStr;
+    document.getElementById('ctStart').value = todayStr;
+    document.getElementById('asStart').value = todayStr;
+    document.getElementById('asEnd').value = todayStr;
+
     let allData = [];
 
     function toggleModal(id, show) {
@@ -230,10 +341,10 @@ Supply of 2 MVA Transformer</textarea>
 
       if (role === 'DOER') {
         doerEmail.classList.remove('hidden');
-        tableTitle.innerText = 'Doer Task Workspace (Action Portal)';
+        tableTitle.innerText = 'Doer Task Workspace (My Action Steps)';
       } else {
         doerEmail.classList.add('hidden');
-        tableTitle.innerText = 'Super Admin Timeline (All Tasks)';
+        tableTitle.innerText = 'Super Admin Timeline (All Tasks & Steps)';
       }
       loadDashboardData();
     }
@@ -246,7 +357,7 @@ Supply of 2 MVA Transformer</textarea>
       let url = '/api/pms/all';
       if (role === 'DOER') {
         if (!email) {
-          tbody.innerHTML = `<tr><td colspan="9" class="py-8 text-center text-amber-600 font-medium">Enter Doer Email to view assigned tasks.</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="11" class="py-8 text-center text-amber-600 font-medium">Enter Doer Email to view assigned steps.</td></tr>`;
           return;
         }
         url = `/api/pms/my-tasks?email=${encodeURIComponent(email)}`;
@@ -257,7 +368,7 @@ Supply of 2 MVA Transformer</textarea>
         const json = await res.json();
 
         if (!json.success || json.data.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="9" class="py-12 text-center text-slate-400 font-medium">No tasks found. Click "+ Create Bulk PMS" to add tasks.</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="11" class="py-12 text-center text-slate-400 font-medium">No tasks found. Click "+ New Task" or "Bulk Generator" to add tasks.</td></tr>`;
           updateStats(0, 0, 0, 0);
           return;
         }
@@ -265,7 +376,7 @@ Supply of 2 MVA Transformer</textarea>
         allData = json.data;
         renderGrid(allData, role);
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="9" class="py-8 text-center text-rose-500 font-medium">Error connecting to API: ${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="11" class="py-8 text-center text-rose-500 font-medium">Error connecting to API: ${err.message}</td></tr>`;
       }
     }
 
@@ -276,40 +387,58 @@ Supply of 2 MVA Transformer</textarea>
 
       if (role === 'ADMIN') {
         data.forEach(item => {
+          // Parent Task Header Row
           html += `
-            <tr class="bg-indigo-50/70 font-semibold border-t-2 border-indigo-100">
-              <td class="py-2.5 px-3.5 font-mono text-indigo-700 font-bold">${item.uniqueId}</td>
-              <td class="py-2.5 px-2 text-slate-400">-</td>
-              <td class="py-2.5 px-4 font-bold text-slate-900" colspan="2">📦 ${item.mainItemName}</td>
-              <td class="py-2.5 px-3 text-slate-600">${new Date(item.startDate).toLocaleDateString('en-GB')}</td>
-              <td class="py-2.5 px-3 text-center text-slate-400">-</td>
-              <td class="py-2.5 px-3 text-slate-400">-</td>
+            <tr class="bg-indigo-50/80 font-bold border-t-2 border-indigo-200">
+              <td class="py-2.5 px-3 font-mono text-indigo-700">${item.uniqueId}</td>
+              <td class="py-2.5 px-3 text-slate-900 flex items-center gap-1.5">
+                <span>📦</span>
+                <span>${item.mainItemName}</span>
+              </td>
+              <td class="py-2.5 px-2 text-center text-slate-400">-</td>
+              <td class="py-2.5 px-4 text-slate-500 text-[11px] italic font-normal">All WBS Workflow Steps</td>
               <td class="py-2.5 px-3"><span class="px-2 py-0.5 bg-indigo-100 text-indigo-800 text-[10px] font-bold rounded-md">${item.pmsType}</span></td>
-              <td class="py-2.5 px-3 text-center text-slate-400">-</td>
+              <td class="py-2.5 px-3 text-slate-700">${new Date(item.startDate).toLocaleDateString('en-GB')}</td>
+              <td class="py-2.5 px-2 text-center font-extrabold text-indigo-900">${item.totalQty || 1}</td>
+              <td class="py-2.5 px-2 text-center text-slate-400">-</td>
+              <td class="py-2.5 px-3 text-slate-400">-</td>
+              <td class="py-2.5 px-3"><span class="px-2 py-0.5 text-[10px] font-semibold bg-white border border-indigo-200 text-indigo-700 rounded-md">${item.steps.length} Steps</span></td>
+              <td class="py-2.5 px-3 text-center">
+                <button onclick="openAddStepModal('${item.uniqueId}', '${item.mainItemName.replace(/'/g, "\\'")}', '${item.steps.length + 1}')" class="px-2.5 py-1 bg-white hover:bg-indigo-600 hover:text-white text-indigo-700 rounded-lg text-[11px] font-bold border border-indigo-300 shadow-xs transition">
+                  + Add Step
+                </button>
+              </td>
             </tr>
           `;
 
+          // Step Sub-rows
           item.steps.forEach(s => {
             totalSteps++;
             if (s.status === 'Completed') completed++; else pending++;
 
             html += `
-              <tr class="hover:bg-slate-50 transition">
-                <td class="py-2 px-3.5 text-slate-400 font-mono text-[11px]">${item.uniqueId}</td>
-                <td class="py-2 px-2 font-mono font-bold text-slate-700">${s.wbsNo}</td>
-                <td class="py-2 px-4 text-slate-700 font-medium">
+              <tr class="hover:bg-slate-50/90 transition">
+                <td class="py-2 px-3 text-slate-400 font-mono text-[11px]">${item.uniqueId}</td>
+                <td class="py-2 px-3 text-slate-500 text-[11px]">${item.mainItemName}</td>
+                <td class="py-2 px-2 text-center font-mono font-bold text-slate-800 bg-slate-50/50">${s.wbsNo}</td>
+                <td class="py-2 px-4 text-slate-800 font-medium">
                   <div>${s.stepTitle}</div>
                   ${s.remarks ? `<div class="text-[11px] text-amber-700 mt-0.5">💬 ${s.remarks}</div>` : ''}
                 </td>
-                <td class="py-2 px-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-700">${s.assignedName || s.assignedEmail}</span></td>
-                <td class="py-2 px-3 text-slate-600">${new Date(s.plannedStartDate).toLocaleDateString('en-GB')} - ${new Date(s.plannedEndDate).toLocaleDateString('en-GB')}</td>
-                <td class="py-2 px-3 text-center font-bold text-slate-800">${s.receivedQty || 0}</td>
                 <td class="py-2 px-3">
-                  ${s.attachmentUrl ? `<a href="${s.attachmentUrl}" target="_blank" class="text-indigo-600 hover:underline inline-flex items-center gap-1"><i data-lucide="paperclip" class="w-3.5 h-3.5"></i> View</a>` : `<span class="text-slate-300">-</span>`}
+                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                    ${s.assignedName || s.assignedEmail}
+                  </span>
+                </td>
+                <td class="py-2 px-3 text-slate-600">${new Date(s.plannedStartDate).toLocaleDateString('en-GB')} – ${new Date(s.plannedEndDate).toLocaleDateString('en-GB')}</td>
+                <td class="py-2 px-2 text-center text-slate-400 font-mono">${item.totalQty || 1}</td>
+                <td class="py-2 px-2 text-center font-bold text-slate-800">${s.receivedQty || 0}</td>
+                <td class="py-2 px-3">
+                  ${s.attachmentUrl ? `<a href="${s.attachmentUrl}" target="_blank" class="text-indigo-600 hover:underline inline-flex items-center gap-1 font-semibold"><i data-lucide="paperclip" class="w-3.5 h-3.5"></i> View</a>` : `<span class="text-slate-300">-</span>`}
                 </td>
                 <td class="py-2 px-3"><span class="px-2 py-0.5 text-[10px] font-bold rounded-md ${s.status === 'Completed' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${s.status}</span></td>
                 <td class="py-2 px-3 text-center">
-                  <button onclick="openDoerModal('${item.uniqueId}', '${s._id}', '${s.stepTitle.replace(/'/g, "\\'")}', '${s.status}', '${s.receivedQty || 0}', '${s.attachmentUrl || ''}', '${(s.remarks || '').replace(/'/g, "\\'")}')" class="px-2 py-1 bg-slate-100 hover:bg-indigo-50 text-indigo-600 rounded-lg text-[11px] font-bold border border-slate-200">Edit</button>
+                  <button onclick="openDoerModal('${item.uniqueId}', '${s._id}', '${s.stepTitle.replace(/'/g, "\\'")}', '${s.status}', '${s.receivedQty || 0}', '${s.attachmentUrl || ''}', '${(s.remarks || '').replace(/'/g, "\\'")}')" class="px-2.5 py-1 bg-slate-100 hover:bg-indigo-50 text-indigo-700 rounded-lg text-[11px] font-bold border border-slate-200">Edit</button>
                 </td>
               </tr>
             `;
@@ -325,18 +454,19 @@ Supply of 2 MVA Transformer</textarea>
 
           html += `
             <tr class="hover:bg-slate-50 transition">
-              <td class="py-2.5 px-3.5 font-mono text-indigo-600 font-bold">${d.uniqueId}</td>
-              <td class="py-2.5 px-2 font-mono font-bold text-slate-800">${s.wbsNo}</td>
+              <td class="py-2.5 px-3 font-mono text-indigo-600 font-bold">${d.uniqueId}</td>
+              <td class="py-2.5 px-3 font-bold text-slate-900">${d.mainItemName}</td>
+              <td class="py-2.5 px-2 text-center font-mono font-bold text-slate-800">${s.wbsNo}</td>
               <td class="py-2.5 px-4 text-slate-800">
                 <div class="font-bold text-slate-900">${s.stepTitle}</div>
-                <div class="text-[11px] text-slate-500 mt-0.5">📦 Item: ${d.mainItemName}</div>
                 ${s.remarks ? `<div class="text-[11px] text-amber-700 mt-0.5">💬 Remark: ${s.remarks}</div>` : ''}
               </td>
               <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-indigo-50 text-indigo-700">${s.assignedName || s.assignedEmail}</span></td>
-              <td class="py-2.5 px-3 text-slate-600">${new Date(s.plannedStartDate).toLocaleDateString('en-GB')} - ${new Date(s.plannedEndDate).toLocaleDateString('en-GB')}</td>
-              <td class="py-2.5 px-3 text-center font-bold text-slate-900">${s.receivedQty || 0}</td>
+              <td class="py-2.5 px-3 text-slate-600">${new Date(s.plannedStartDate).toLocaleDateString('en-GB')} – ${new Date(s.plannedEndDate).toLocaleDateString('en-GB')}</td>
+              <td class="py-2.5 px-2 text-center text-slate-500">${d.totalQty || 1}</td>
+              <td class="py-2.5 px-2 text-center font-extrabold text-slate-900">${s.receivedQty || 0}</td>
               <td class="py-2.5 px-3">
-                ${s.attachmentUrl ? `<a href="${s.attachmentUrl}" target="_blank" class="text-indigo-600 hover:underline inline-flex items-center gap-1"><i data-lucide="paperclip" class="w-3.5 h-3.5"></i> Proof</a>` : `<span class="text-slate-300">-</span>`}
+                ${s.attachmentUrl ? `<a href="${s.attachmentUrl}" target="_blank" class="text-indigo-600 hover:underline inline-flex items-center gap-1 font-semibold"><i data-lucide="paperclip" class="w-3.5 h-3.5"></i> Proof</a>` : `<span class="text-slate-300">-</span>`}
               </td>
               <td class="py-2.5 px-3"><span class="px-2 py-0.5 text-[10px] font-bold rounded-md ${s.status === 'Completed' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${s.status}</span></td>
               <td class="py-2.5 px-3 text-center">
@@ -350,6 +480,85 @@ Supply of 2 MVA Transformer</textarea>
 
       tbody.innerHTML = html;
       lucide.createIcons();
+    }
+
+    function openAddStepModal(taskId, taskName, nextWbs) {
+      document.getElementById('asTaskId').value = taskId;
+      document.getElementById('asParentTaskLabel').innerText = `${taskId} : ${taskName}`;
+      document.getElementById('asWbs').value = nextWbs;
+      document.getElementById('asTitle').value = '';
+      document.getElementById('asOwnerName').value = '';
+      document.getElementById('asOwnerEmail').value = '';
+      document.getElementById('addStepAlert').innerHTML = '';
+      toggleModal('addStepModal', true);
+    }
+
+    async function submitSingleTask() {
+      const btn = document.getElementById('btnSingleTaskSubmit');
+      const alertBox = document.getElementById('singleTaskAlert');
+      btn.disabled = true;
+
+      const payload = {
+        projectName: document.getElementById('ctProject').value,
+        mainItemName: document.getElementById('ctItem').value,
+        pmsType: document.getElementById('ctType').value,
+        startDate: document.getElementById('ctStart').value,
+        totalQty: document.getElementById('ctQty').value
+      };
+
+      try {
+        const res = await fetch('/api/pms/create-task', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (json.success) {
+          toggleModal('customTaskModal', false);
+          loadDashboardData();
+        } else {
+          alertBox.innerHTML = `<div class="p-2 bg-rose-50 text-rose-700 rounded-lg text-xs">${json.error}</div>`;
+        }
+      } catch (err) {
+        alertBox.innerHTML = `<div class="p-2 bg-rose-50 text-rose-700 rounded-lg text-xs">Error: ${err.message}</div>`;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function submitAddStep() {
+      const btn = document.getElementById('btnAddStepSubmit');
+      const alertBox = document.getElementById('addStepAlert');
+      btn.disabled = true;
+
+      const payload = {
+        uniqueId: document.getElementById('asTaskId').value,
+        wbsNo: document.getElementById('asWbs').value,
+        stepTitle: document.getElementById('asTitle').value,
+        assignedName: document.getElementById('asOwnerName').value,
+        assignedEmail: document.getElementById('asOwnerEmail').value,
+        plannedStartDate: document.getElementById('asStart').value,
+        plannedEndDate: document.getElementById('asEnd').value
+      };
+
+      try {
+        const res = await fetch('/api/pms/add-step', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (json.success) {
+          toggleModal('addStepModal', false);
+          loadDashboardData();
+        } else {
+          alertBox.innerHTML = `<div class="p-2 bg-rose-50 text-rose-700 rounded-lg text-xs">${json.error}</div>`;
+        }
+      } catch (err) {
+        alertBox.innerHTML = `<div class="p-2 bg-rose-50 text-rose-700 rounded-lg text-xs">Error: ${err.message}</div>`;
+      } finally {
+        btn.disabled = false;
+      }
     }
 
     function openDoerModal(taskId, stepId, title, status, qty, attach, remarks) {
@@ -424,7 +633,7 @@ Supply of 2 MVA Transformer</textarea>
           alertBox.innerHTML = `<div class="p-2 bg-rose-50 text-rose-700 rounded-lg text-xs">${json.error}</div>`;
         }
       } catch (err) {
-        alertBox.innerHTML = `<div class="p-2 bg-rose-50 text-rose-700 rounded-lg text-xs">Network error: ${err.message}</div>`;
+        alertBox.innerHTML = `<div class="p-2 bg-rose-50 text-rose-700 rounded-lg text-xs">Error: ${err.message}</div>`;
       } finally {
         btn.disabled = false;
       }
