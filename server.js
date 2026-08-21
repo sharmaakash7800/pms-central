@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const connectDB = require('./db');
-const { Doer, Vendor, PmsTask } = require('./models');
+const { Doer, Vendor, Site, PmsTask } = require('./models');
 
 const app = express();
 app.use(cors());
@@ -19,10 +19,10 @@ app.get('/api/doers', async (req, res) => {
     let doers = await Doer.find({ isActive: true }).sort({ name: 1 });
     if (doers.length === 0) {
       const initial = [
-        { name: 'Heera Lal Ji', email: 'heeralal@domain.com', role: 'Technical Lead' },
-        { name: 'Ronak Ji', email: 'ronak@domain.com', role: 'Commercial Head' },
-        { name: 'Aarti Bala', email: 'aarti@domain.com', role: 'Operations & Procurement' },
-        { name: 'Mukesh Sharma', email: 'mukesh@domain.com', role: 'Field Engineering' }
+        { name: 'Aarti Bala', email: 'aarti@domain.com', role: 'VRE' },
+        { name: 'Heera Lal Ji', email: 'heeralal@domain.com', role: 'Technical Person' },
+        { name: 'Ronak Ji', email: 'ronak@domain.com', role: 'Purchaser Person' },
+        { name: 'Tulsi Sen', email: 'tulsi@domain.com', role: 'Process Coordinator' }
       ];
       doers = await Doer.insertMany(initial);
     }
@@ -45,6 +45,29 @@ app.post('/api/doers', async (req, res) => {
     });
     await newDoer.save();
     res.status(201).json({ success: true, data: newDoer });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/doers/:id', async (req, res) => {
+  try {
+    const { name, email, role, phone } = req.body;
+    if (!name || !email) return res.status(400).json({ error: 'Name and Email required.' });
+
+    const updated = await Doer.findByIdAndUpdate(
+      req.params.id,
+      {
+        name: name.trim(),
+        email: email.toLowerCase().trim(),
+        role: role ? role.trim() : 'Executive',
+        phone: phone || ''
+      },
+      { new: true }
+    );
+
+    if (!updated) return res.status(404).json({ error: 'Member not found' });
+    res.json({ success: true, data: updated });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -85,6 +108,98 @@ app.post('/api/vendors', async (req, res) => {
     });
     await newVendor.save();
     res.status(201).json({ success: true, data: newVendor });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ---------------- SITE / PROJECT MASTER APIS ----------------
+app.get('/api/sites', async (req, res) => {
+  try {
+    let sites = await Site.find().sort({ siteName: 1 });
+    if (sites.length === 0) {
+      const defaultSites = [
+        { siteName: 'EV Charging_CLZS', projectTitle: 'SUPPLY PMS: EV Charging', poNumber: '5100033887' },
+        { siteName: 'DSC Smelter' }, { siteName: 'DSC Common-RD' }, { siteName: 'SKM' },
+        { siteName: 'Debari' }, { siteName: 'Zawar' }, { siteName: 'HO' }, { siteName: 'Agucha' },
+        { siteName: 'All Site Cable Tray' }, { siteName: 'NFA_PO' }
+      ];
+      sites = await Site.insertMany(defaultSites);
+    }
+    res.json({ success: true, data: sites });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/api/sites', async (req, res) => {
+  try {
+    const { siteName, companyName, projectTitle, poNumber, dataEntryOperator, processCoordinator, technicalPerson, purchaserPerson, vrePerson, projectOwner } = req.body;
+    if (!siteName) return res.status(400).json({ error: 'Site name is required.' });
+
+    const existing = await Site.findOne({ siteName: siteName.trim() });
+    if (existing) return res.status(400).json({ error: 'Site already exists.' });
+
+    const newSite = new Site({
+      siteName: siteName.trim(),
+      companyName: companyName || 'MAHESHWARI DISTRIBUTORS',
+      projectTitle: projectTitle || '',
+      poNumber: poNumber || '',
+      dataEntryOperator: dataEntryOperator || '',
+      processCoordinator: processCoordinator || 'Tulsi Sen',
+      technicalPerson: technicalPerson || 'Heera lal Ji (8003698656)',
+      purchaserPerson: purchaserPerson || 'Ronak Ji (8107688615)',
+      vrePerson: vrePerson || 'Aarti Bala (8824133320)',
+      projectOwner: projectOwner || ''
+    });
+
+    await newSite.save();
+    res.status(201).json({ success: true, data: newSite });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.put('/api/sites/:id', async (req, res) => {
+  try {
+    const { siteName, companyName, projectTitle, poNumber, dataEntryOperator, processCoordinator, technicalPerson, purchaserPerson, vrePerson, projectOwner } = req.body;
+    const oldSite = await Site.findById(req.params.id);
+    if (!oldSite) return res.status(404).json({ error: 'Site not found.' });
+
+    if (siteName && siteName.trim() !== oldSite.siteName) {
+      await PmsTask.updateMany({ projectName: oldSite.siteName }, { $set: { projectName: siteName.trim() } });
+    }
+
+    const updated = await Site.findByIdAndUpdate(
+      req.params.id,
+      {
+        siteName: siteName ? siteName.trim() : oldSite.siteName,
+        companyName: companyName || oldSite.companyName,
+        projectTitle: projectTitle !== undefined ? projectTitle : oldSite.projectTitle,
+        poNumber: poNumber !== undefined ? poNumber : oldSite.poNumber,
+        dataEntryOperator: dataEntryOperator !== undefined ? dataEntryOperator : oldSite.dataEntryOperator,
+        processCoordinator: processCoordinator !== undefined ? processCoordinator : oldSite.processCoordinator,
+        technicalPerson: technicalPerson !== undefined ? technicalPerson : oldSite.technicalPerson,
+        purchaserPerson: purchaserPerson !== undefined ? purchaserPerson : oldSite.purchaserPerson,
+        vrePerson: vrePerson !== undefined ? vrePerson : oldSite.vrePerson,
+        projectOwner: projectOwner !== undefined ? projectOwner : oldSite.projectOwner
+      },
+      { new: true }
+    );
+
+    res.json({ success: true, data: updated });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.delete('/api/sites/:id', async (req, res) => {
+  try {
+    const site = await Site.findById(req.params.id);
+    if (site) {
+      await Site.findByIdAndDelete(req.params.id);
+    }
+    res.json({ success: true, message: 'Site deleted successfully.' });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -155,21 +270,41 @@ app.post('/api/pms/create-custom-package', async (req, res) => {
   }
 });
 
-// Update Step Details & Upsert Vendor
 app.patch('/api/pms/update-step', async (req, res) => {
   try {
     const { uniqueId, stepId, status, remarks, receivedQty, attachmentUrl, vendorDetails } = req.body;
 
-    const updateFields = {
-      'steps.$.status': status,
-      'steps.$.remarks': remarks,
-      'steps.$.receivedQty': Number(receivedQty) || 0,
-      'steps.$.attachmentUrl': attachmentUrl || ''
-    };
+    const task = await PmsTask.findOne({ uniqueId });
+    if (!task) return res.status(404).json({ error: 'Task not found' });
+
+    const sortedSteps = [...task.steps].sort((a, b) => (parseInt(a.wbsNo, 10) || 0) - (parseInt(b.wbsNo, 10) || 0));
+    const targetIndex = sortedSteps.findIndex(s => s._id.toString() === stepId.toString());
+
+    if (targetIndex === -1) return res.status(404).json({ error: 'Step not found' });
+
+    if (status === 'Completed' && targetIndex > 0) {
+      const prevStep = sortedSteps[targetIndex - 1];
+      if (prevStep.status !== 'Completed') {
+        return res.status(400).json({
+          error: `Sequential Lock: Cannot complete Step #${sortedSteps[targetIndex].wbsNo} because previous Step #${prevStep.wbsNo} (${prevStep.stepTitle}) is not yet Completed.`
+        });
+      }
+    }
+
+    const stepToUpdate = task.steps.id(stepId);
+    stepToUpdate.status = status;
+    stepToUpdate.remarks = remarks;
+    stepToUpdate.receivedQty = Number(receivedQty) || 0;
+    stepToUpdate.attachmentUrl = attachmentUrl || '';
+
+    if (status === 'Completed') {
+      stepToUpdate.actualEndDate = new Date();
+    } else {
+      stepToUpdate.actualEndDate = null;
+    }
 
     if (vendorDetails) {
-      updateFields['steps.$.vendorDetails'] = vendorDetails;
-
+      stepToUpdate.vendorDetails = vendorDetails;
       if (vendorDetails.vendorName) {
         await Vendor.findOneAndUpdate(
           { vendorName: vendorDetails.vendorName },
@@ -186,20 +321,8 @@ app.patch('/api/pms/update-step', async (req, res) => {
       }
     }
 
-    if (status === 'Completed') {
-      updateFields['steps.$.actualEndDate'] = new Date();
-    } else {
-      updateFields['steps.$.actualEndDate'] = null;
-    }
-
-    const updatedTask = await PmsTask.findOneAndUpdate(
-      { uniqueId, 'steps._id': stepId },
-      { $set: updateFields },
-      { new: true }
-    );
-
-    if (!updatedTask) return res.status(404).json({ error: 'Task or Step not found' });
-    res.json({ success: true, data: updatedTask });
+    await task.save();
+    res.json({ success: true, data: task });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -221,33 +344,6 @@ app.get('/api/pms/history', async (req, res) => {
       { $sort: { 'step.actualEndDate': -1 } }
     ]);
     res.json({ success: true, count: history.length, data: history });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.get('/api/pms/my-tasks', async (req, res) => {
-  try {
-    const { email } = req.query;
-    if (!email) return res.status(400).json({ error: 'Email required' });
-
-    const tasks = await PmsTask.aggregate([
-      { $unwind: '$steps' },
-      { $match: { 'steps.assignedEmail': email.toLowerCase().trim() } },
-      {
-        $project: {
-          uniqueId: 1,
-          projectName: 1,
-          pmsType: 1,
-          mainItemName: 1,
-          totalQty: 1,
-          step: '$steps'
-        }
-      },
-      { $sort: { 'step.plannedStartDate': 1 } }
-    ]);
-
-    res.json({ success: true, count: tasks.length, data: tasks });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
