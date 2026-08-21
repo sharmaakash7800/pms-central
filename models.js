@@ -1,5 +1,23 @@
 const mongoose = require('mongoose');
 
+const DoerSchema = new mongoose.Schema({
+  name: { type: String, required: true, trim: true },
+  email: { type: String, required: true, unique: true, lowercase: true, trim: true },
+  role: { type: String, default: 'Executive' },
+  phone: { type: String, default: '' },
+  isActive: { type: Boolean, default: true }
+}, { timestamps: true });
+
+const VendorSchema = new mongoose.Schema({
+  vendorName: { type: String, required: true, trim: true },
+  contactPerson: { type: String, default: '' },
+  phone: { type: String, default: '' },
+  email: { type: String, default: '' },
+  poNumber: { type: String, default: '' },
+  relatedTaskId: { type: String, default: '' },
+  itemName: { type: String, default: '' }
+}, { timestamps: true });
+
 const StepTemplateSchema = new mongoose.Schema({
   pmsType: { type: String, enum: ['SUPPLY', 'SERVICE'], required: true },
   stepNo: { type: String, required: true },
@@ -23,7 +41,12 @@ const SubStepSchema = new mongoose.Schema({
   remarks: { type: String, default: '' },
   receivedQty: { type: Number, default: 0 },
   attachmentUrl: { type: String, default: '' },
-  percentComplete: { type: Number, default: 0 }
+  vendorDetails: {
+    vendorName: { type: String, default: '' },
+    contactPerson: { type: String, default: '' },
+    phone: { type: String, default: '' },
+    poNumber: { type: String, default: '' }
+  }
 });
 
 const PmsTaskSchema = new mongoose.Schema({
@@ -33,11 +56,12 @@ const PmsTaskSchema = new mongoose.Schema({
   mainItemName: { type: String, required: true },
   startDate: { type: Date, required: true },
   totalQty: { type: Number, default: 1 },
-  sheetId: { type: String, default: '' },
   steps: [SubStepSchema]
 }, { timestamps: true });
 
 module.exports = {
+  Doer: mongoose.model('Doer', DoerSchema),
+  Vendor: mongoose.model('Vendor', VendorSchema),
   StepTemplate: mongoose.model('StepTemplate', StepTemplateSchema),
   PmsTask: mongoose.model('PmsTask', PmsTaskSchema)
 };
