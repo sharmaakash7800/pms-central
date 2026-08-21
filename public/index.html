@@ -388,11 +388,11 @@
     </div>
   </div>
 
-  <!-- Modal: Create Task Package with Custom Steps List Area -->
+  <!-- Modal: Create Task Package -->
   <div id="createTaskModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
     <div class="bg-white dark:bg-darkcard rounded-2xl max-w-3xl w-full p-4 shadow-2xl border relative max-h-[92vh] flex flex-col">
       <div class="flex items-center justify-between pb-2 border-b">
-        <h3 class="text-xs font-bold text-slate-900 dark:text-white">Create Main Task & Custom Steps</h3>
+        <h3 class="text-xs font-bold text-slate-900 dark:text-white">Create Main Task & Steps From Persistent Memory</h3>
         <button onclick="toggleModal('createTaskModal', false)" class="text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
       </div>
 
@@ -427,22 +427,24 @@
           </div>
         </div>
 
-        <!-- Custom Steps List Box -->
-        <div class="bg-slate-50 dark:bg-slate-800 p-2.5 rounded-xl border space-y-1.5">
-          <label class="block font-bold text-slate-700 dark:text-slate-200">Custom Steps List (Enter one step title per line):</label>
-          <textarea id="bulkStepsInput" rows="5" class="w-full border rounded p-2 text-xs font-mono dark:bg-slate-900 dark:text-white" placeholder="Complete Technicals&#10;Commercial Offer & Vendor Negotiations&#10;Offer Evaluation by Technical Team"></textarea>
+        <!-- Custom Steps List Box with Auto-Memory Save -->
+        <div class="bg-indigo-50/60 p-2.5 rounded-xl border space-y-1.5">
+          <label class="block font-bold text-indigo-900 dark:text-indigo-200">Custom Steps List (Saved automatically in browser memory):</label>
+          <textarea id="bulkStepsInput" rows="5" class="w-full border rounded p-2 text-xs font-mono dark:bg-slate-900 dark:text-white" placeholder="Paste your step list here..."></textarea>
           <div class="flex justify-between items-center pt-1">
-            <span class="text-[10px] text-slate-400">Type your custom steps above, then click generate.</span>
-            <button type="button" onclick="generateStepsFromBulkInput()" class="bg-indigo-600 text-white font-bold px-4 py-1 rounded shadow-xs">Generate From List</button>
+            <span class="text-[10px] text-slate-500">List stays remembered for future site tasks.</span>
+            <button type="button" onclick="generateStepsFromBulkInput()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-1.5 rounded shadow-xs">Generate From List</button>
           </div>
         </div>
 
         <div class="flex justify-between items-center">
-          <span class="font-bold text-slate-700 dark:text-slate-300">Generated Steps Table:</span>
+          <span class="font-bold text-slate-700 dark:text-slate-300">Configured Steps Table:</span>
           <button type="button" onclick="addSingleStepRow()" class="text-indigo-600 font-bold text-[11px]">+1 Step</button>
         </div>
 
-        <div id="stepsContainer" class="space-y-1.5"></div>
+        <div id="stepsContainer" class="space-y-1.5">
+          <p class="text-xs text-slate-400 text-center py-4 italic">No steps generated yet. Click "Generate From List".</p>
+        </div>
 
         <div class="pt-2 border-t flex justify-end gap-1.5">
           <button type="button" onclick="toggleModal('createTaskModal', false)" class="px-2.5 py-1 font-bold text-slate-600">Cancel</button>
@@ -874,8 +876,17 @@
       document.getElementById('mStartDate').value = new Date().toISOString().slice(0, 10);
       document.getElementById('mProject').value = '';
       document.getElementById('mItemName').value = '';
-      document.getElementById('bulkStepsInput').value = '';
-      document.getElementById('stepsContainer').innerHTML = '';
+      
+      // Load saved list from browser memory if available
+      const savedList = localStorage.getItem('pms_saved_steps_list') || '';
+      document.getElementById('bulkStepsInput').value = savedList;
+      
+      if (savedList) {
+        generateStepsFromBulkInput();
+      } else {
+        document.getElementById('stepsContainer').innerHTML = '<p class="text-xs text-slate-400 text-center py-4 italic">No steps generated yet. Paste your list above and click "Generate From List".</p>';
+      }
+      
       toggleModal('createTaskModal', true);
     }
 
@@ -888,9 +899,12 @@
       const bulkText = document.getElementById('bulkStepsInput').value.trim();
       const container = document.getElementById('stepsContainer');
       if (!bulkText) {
-        alert('Please enter at least one step title in the box.');
+        alert('Please paste or type your step titles list in the text box first.');
         return;
       }
+
+      // Save to browser memory permanently for other sites
+      localStorage.setItem('pms_saved_steps_list', bulkText);
 
       const lines = bulkText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
       let html = '';
@@ -923,6 +937,8 @@
 
     function addSingleStepRow() {
       const container = document.getElementById('stepsContainer');
+      if(container.querySelector('p')) container.innerHTML = '';
+      
       const count = container.children.length + 1;
       let doerOptions = '';
       activeDoers.forEach(d => {
@@ -957,7 +973,7 @@
 
       const stepCards = document.querySelectorAll('#stepsContainer .step-card');
       if (stepCards.length === 0) {
-        alert('Please add or generate at least one step.');
+        alert('Please paste your list and click "Generate From List" first.');
         return;
       }
 
