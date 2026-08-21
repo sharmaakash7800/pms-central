@@ -191,7 +191,9 @@
           <span>+ Add Site</span>
         </button>
       </div>
-      <div id="sitesCardsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+      <div id="sitesCardsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <p class="text-xs text-slate-400 py-6 text-center">Loading sites...</p>
+      </div>
     </div>
 
     <!-- VIEW 5: TEAM DIRECTORY -->
@@ -288,23 +290,10 @@
     </div>
   </div>
 
-  <!-- Modal: Create Task -->
-  <div id="createTaskModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
-    <div class="bg-white dark:bg-darkcard rounded-2xl max-w-md w-full p-4 shadow-2xl border relative">
-      <button onclick="toggleModal('createTaskModal', false)" class="absolute right-3 top-3 text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
-      <h3 class="text-xs font-bold text-slate-900 dark:text-white mb-2">Create Task</h3>
-      <form onsubmit="event.preventDefault(); submitFullTaskPackage();" class="space-y-2">
-        <input type="text" id="mProject" required placeholder="Site Name" class="w-full border rounded px-2 py-1 text-xs">
-        <input type="text" id="mItemName" required placeholder="Task Name" class="w-full border rounded px-2 py-1 text-xs">
-        <input type="date" id="mStartDate" required class="w-full border rounded px-2 py-1 text-xs">
-        <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-1 rounded text-xs">Create</button>
-      </form>
-    </div>
-  </div>
-
   <script>
     let activeDoers = [];
     let allData = [];
+    let allVendors = [];
     let allSitesList = [];
 
     const API_BASE = window.location.origin.startsWith('file:') 
@@ -512,22 +501,41 @@
       }
     }
 
+    // ---------------- RESTORED SITES DIRECTORY RENDERER ----------------
     async function loadSitesList() {
       const container = document.getElementById('sitesCardsContainer');
-      const res = await fetch(`${API_BASE}/api/sites`);
-      const json = await res.json();
-      if (json.success) {
-        allSitesList = json.data;
-        let html = '';
-        allSitesList.forEach(s => {
-          html += `
-            <div class="bg-white dark:bg-darkcard p-3 rounded-xl border shadow-2xs space-y-1">
-              <h4 class="font-bold text-indigo-600 text-xs">📍 ${s.siteName}</h4>
-              <p class="text-[10px] text-slate-500 font-mono">Company: ${s.companyName || 'MAHESHWARI DISTRIBUTORS'}</p>
-            </div>
-          `;
-        });
-        container.innerHTML = html || '<p class="text-xs text-slate-400">No sites found.</p>';
+      container.innerHTML = '<p class="text-xs text-slate-400 py-6 text-center">Loading sites...</p>';
+
+      try {
+        const res = await fetch(`${API_BASE}/api/sites`);
+        const json = await res.json();
+        if (json.success) {
+          allSitesList = json.data;
+          let html = '';
+          allSitesList.forEach(s => {
+            html += `
+              <div class="bg-white dark:bg-darkcard p-3 rounded-xl border border-slate-200 dark:border-darkborder shadow-2xs space-y-1.5 text-xs">
+                <div class="flex items-center justify-between font-bold">
+                  <span class="text-indigo-600 dark:text-indigo-400 text-xs font-extrabold">📍 ${s.siteName}</span>
+                </div>
+                <div class="text-[10px] text-slate-500 dark:text-slate-400 space-y-0.5 font-mono">
+                  <p><b>Company:</b> ${s.companyName || 'MAHESHWARI DISTRIBUTORS'}</p>
+                  ${s.projectTitle ? `<p><b>Project:</b> ${s.projectTitle}</p>` : ''}
+                  ${s.poNumber ? `<p><b>PO No:</b> ${s.poNumber}</p>` : ''}
+                  <div class="pt-1 text-[9px] text-slate-600 dark:text-slate-300 border-t border-slate-100 dark:border-darkborder space-y-0.5">
+                    <p>⚙️ <b>Coordinator:</b> ${s.processCoordinator || 'Tulsi Sen'}</p>
+                    <p>🛠️ <b>Technical:</b> ${s.technicalPerson || 'Heera lal Ji'}</p>
+                    <p>🛒 <b>Purchaser:</b> ${s.purchaserPerson || 'Ronak Ji'}</p>
+                    <p>📋 <b>VRE:</b> ${s.vrePerson || 'Aarti Bala'}</p>
+                  </div>
+                </div>
+              </div>
+            `;
+          });
+          container.innerHTML = html || '<p class="text-xs text-slate-400 py-6 text-center">No sites found.</p>';
+        }
+      } catch (err) {
+        container.innerHTML = `<p class="text-xs text-rose-500 py-6 text-center">Error: ${err.message}</p>`;
       }
     }
 
@@ -547,17 +555,6 @@
       select.innerHTML = html;
     }
 
-    function addNewSitePrompt() {
-      const name = prompt('Enter new site name:');
-      if (name) {
-        fetch(`${API_BASE}/api/sites`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ siteName: name.trim() })
-        }).then(() => { renderProjectFilterDropdown(); loadSitesList(); });
-      }
-    }
-
     function openSiteModal() { toggleModal('siteModal', true); }
     async function saveSiteData() {
       const name = document.getElementById('formSiteName').value;
@@ -574,24 +571,6 @@
     }
 
     function openCreateModal() { toggleModal('createTaskModal', true); }
-    async function submitFullTaskPackage() {
-      const p = document.getElementById('mProject').value;
-      const item = document.getElementById('mItemName').value;
-      const date = document.getElementById('mStartDate').value;
-      if (!p || !item || !date) return;
-      const steps = [
-        { wbsNo: '1', stepTitle: 'Complete Technicals', assignedEmail: 'heeralal@domain.com', assignedName: 'Heera Lal Ji', durationDays: 2 },
-        { wbsNo: '2', stepTitle: 'Commercial Offer', assignedEmail: 'ronak@domain.com', assignedName: 'Ronak Ji', durationDays: 2 }
-      ];
-      await fetch(`${API_BASE}/api/pms/create-custom-package`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ projectName: p, mainItemName: item, pmsType: 'SUPPLY', startDate: date, totalQty: 1, steps })
-      });
-      toggleModal('createTaskModal', false);
-      loadDashboardData();
-    }
-
     function openAddMemberModal() {}
     function renderTeamView() {
       const container = document.getElementById('teamCardsContainer');
