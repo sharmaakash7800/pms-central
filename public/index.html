@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PMS Central Hub | Operations Portal</title>
+  <title>PMS Central Hub | Smart Task & Step Manager</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -16,7 +16,7 @@
 </head>
 <body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
 
-  <!-- Header -->
+  <!-- Navigation Header -->
   <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div class="flex justify-between h-16 items-center">
@@ -27,11 +27,11 @@
           </div>
           <div>
             <h1 class="text-base font-bold text-slate-900 leading-tight">PMS Central Hub</h1>
-            <p class="text-[11px] text-slate-400 font-medium">Task & Sub-Step Master Execution Portal</p>
+            <p class="text-[11px] text-slate-400 font-medium">Auto Sequential Dates & Doer Workflow</p>
           </div>
         </div>
 
-        <div class="flex items-center gap-2.5">
+        <div class="flex items-center gap-3">
           <!-- Role Selector -->
           <div class="flex items-center gap-2 bg-slate-100 p-1.5 rounded-xl border border-slate-200">
             <i data-lucide="user-check" class="w-4 h-4 text-slate-500 pl-1"></i>
@@ -42,15 +42,10 @@
             <input type="email" id="doerEmail" class="hidden bg-white text-xs border border-slate-300 rounded-lg px-2.5 py-1 outline-none font-medium w-48" placeholder="Enter doer email" value="heeralal@domain.com" oninput="loadDashboardData()">
           </div>
 
-          <!-- Buttons: Add Custom Task & Bulk Generator -->
-          <button onclick="toggleModal('customTaskModal', true)" class="bg-white hover:bg-slate-50 text-slate-700 border border-slate-300 text-xs font-bold px-3 py-2 rounded-xl shadow-xs flex items-center gap-1.5 transition">
-            <i data-lucide="plus" class="w-4 h-4 text-indigo-600"></i>
-            <span>+ New Task</span>
-          </button>
-          
-          <button onclick="toggleModal('bulkModal', true)" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow-md shadow-indigo-100 flex items-center gap-1.5 transition">
-            <i data-lucide="sparkles" class="w-4 h-4"></i>
-            <span>Bulk Generator</span>
+          <!-- Create Task & Steps Button -->
+          <button onclick="openCreateModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-md shadow-indigo-100 flex items-center gap-1.5 transition">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i>
+            <span>+ Create Task & Steps</span>
           </button>
         </div>
 
@@ -58,7 +53,7 @@
     </div>
   </header>
 
-  <!-- Main Content -->
+  <!-- Main View -->
   <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-1">
     
     <!-- Top Stats -->
@@ -93,7 +88,7 @@
       </div>
     </div>
 
-    <!-- Master Data Table -->
+    <!-- Master Table View -->
     <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden flex flex-col">
       <div class="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/60">
         <div class="flex items-center gap-2">
@@ -106,26 +101,26 @@
         </div>
       </div>
 
-      <!-- Table with Separate Task and Step Columns -->
       <div class="overflow-x-auto max-h-[640px] custom-scroll">
         <table class="w-full text-left border-collapse text-xs">
           <thead class="bg-slate-100/90 text-slate-700 uppercase font-bold sticky top-0 z-10 border-b border-slate-200 text-[11px] tracking-wide">
             <tr>
               <th class="py-3 px-3">Task ID</th>
-              <th class="py-3 px-3 min-w-[180px]">Main Task (Item)</th>
+              <th class="py-3 px-3 min-w-[200px]">Main Task</th>
               <th class="py-3 px-2 text-center">WBS</th>
-              <th class="py-3 px-4 min-w-[220px]">Step Title / Sub-task</th>
-              <th class="py-3 px-3">Owner</th>
+              <th class="py-3 px-4 min-w-[220px]">Step Title / Action</th>
+              <th class="py-3 px-3">Owner (Doer)</th>
               <th class="py-3 px-3 min-w-[160px]">Start – End Date</th>
+              <th class="py-3 px-2 text-center">Days</th>
               <th class="py-3 px-2 text-center">Target Qty</th>
               <th class="py-3 px-2 text-center">Recv Qty</th>
               <th class="py-3 px-3">Attachment</th>
               <th class="py-3 px-3">Status</th>
-              <th class="py-3 px-3 text-center min-w-[120px]">Action</th>
+              <th class="py-3 px-3 text-center min-w-[90px]">Action</th>
             </tr>
           </thead>
           <tbody id="tableRows" class="divide-y divide-slate-100">
-            <tr><td colspan="11" class="text-center py-10 text-slate-400">Loading records...</td></tr>
+            <tr><td colspan="12" class="text-center py-10 text-slate-400">Loading database records...</td></tr>
           </tbody>
         </table>
       </div>
@@ -133,147 +128,98 @@
 
   </main>
 
-  <!-- Modal 1: Create Single Custom Task -->
-  <div id="customTaskModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 relative">
-      <button onclick="toggleModal('customTaskModal', false)" class="absolute right-4 top-4 text-slate-400 hover:text-slate-700"><i data-lucide="x" class="w-5 h-5"></i></button>
+  <!-- POPUP MODAL: Smart Step Builder with Auto Dates & Auto Doer -->
+  <div id="createTaskModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-4xl w-full p-6 shadow-2xl border border-slate-100 relative max-h-[92vh] flex flex-col">
       
-      <div class="flex items-center gap-2 mb-4">
-        <i data-lucide="plus-circle" class="w-5 h-5 text-indigo-600"></i>
-        <h3 class="text-base font-bold text-slate-900">Create New Main Task</h3>
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div class="flex items-center gap-2">
+          <div class="bg-indigo-50 p-2 rounded-xl text-indigo-600">
+            <i data-lucide="plus-square" class="w-5 h-5"></i>
+          </div>
+          <div>
+            <h3 class="text-base font-bold text-slate-900">Create Main Task & Configure Steps</h3>
+            <p class="text-xs text-slate-400">Auto sequential date calculation & instant Doer selection</p>
+          </div>
+        </div>
+        <button onclick="toggleModal('createTaskModal', false)" class="text-slate-400 hover:text-slate-700 p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
       </div>
 
-      <form onsubmit="event.preventDefault(); submitSingleTask();" class="space-y-3.5">
-        <div>
-          <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Project Name</label>
-          <input type="text" id="ctProject" required class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-indigo-500" value="Substation & Plant Modernization">
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Main Task / Item Name</label>
-          <input type="text" id="ctItem" required class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-indigo-500" placeholder="e.g. Supply of 33kV Vacuum Circuit Breaker">
-        </div>
-        <div class="grid grid-cols-3 gap-2.5">
-          <div>
-            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">PMS Type</label>
-            <select id="ctType" class="w-full border border-slate-200 rounded-xl px-2.5 py-2 text-xs outline-none">
-              <option value="SUPPLY">SUPPLY</option>
-              <option value="SERVICE">SERVICE</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Start Date</label>
-            <input type="date" id="ctStart" required class="w-full border border-slate-200 rounded-xl px-2.5 py-2 text-xs outline-none">
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Target Qty</label>
-            <input type="number" id="ctQty" required value="1" min="1" class="w-full border border-slate-200 rounded-xl px-2.5 py-2 text-xs outline-none">
-          </div>
-        </div>
-        <button type="submit" id="btnSingleTaskSubmit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl shadow-md transition flex items-center justify-center gap-2 text-xs">
-          <span>Create Task in DB</span>
-        </button>
-      </form>
-      <div id="singleTaskAlert" class="mt-3"></div>
-    </div>
-  </div>
-
-  <!-- Modal 2: Add Sub-Step to Existing Task -->
-  <div id="addStepModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 relative">
-      <button onclick="toggleModal('addStepModal', false)" class="absolute right-4 top-4 text-slate-400 hover:text-slate-700"><i data-lucide="x" class="w-5 h-5"></i></button>
-      
-      <div class="flex items-center gap-2 mb-3">
-        <i data-lucide="list-plus" class="w-5 h-5 text-indigo-600"></i>
-        <h3 class="text-base font-bold text-slate-900">Add Sub-Step to Task</h3>
-      </div>
-      <p id="asParentTaskLabel" class="text-xs text-slate-600 mb-3 bg-indigo-50/70 p-2.5 rounded-xl border border-indigo-100 font-semibold"></p>
-
-      <form onsubmit="event.preventDefault(); submitAddStep();" class="space-y-3">
-        <input type="hidden" id="asTaskId">
+      <!-- Form Body -->
+      <form onsubmit="event.preventDefault(); submitFullTaskPackage();" class="overflow-y-auto custom-scroll py-4 space-y-4 flex-1 pr-1">
         
-        <div class="grid grid-cols-3 gap-2.5">
-          <div>
-            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">WBS No</label>
-            <input type="text" id="asWbs" required class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none" placeholder="e.g. 1">
+        <!-- Section 1: Main Task Information -->
+        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200/80 space-y-3">
+          <span class="text-xs font-extrabold text-indigo-700 uppercase tracking-wider flex items-center gap-1.5">
+            <i data-lucide="package" class="w-4 h-4"></i> Step 1: Main Task Details
+          </span>
+          
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Project Name</label>
+              <input type="text" id="mProject" required class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-indigo-500 font-medium" value="Substation & Plant Modernization">
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Main Task / Item Name</label>
+              <input type="text" id="mItemName" required class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-indigo-500 font-bold" placeholder="e.g. Supply of 11 kV Extension Panel">
+            </div>
           </div>
-          <div class="col-span-2">
-            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Owner Name</label>
-            <input type="text" id="asOwnerName" required class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none" placeholder="e.g. Heera Lal Ji">
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Workflow Type</label>
+              <select id="mType" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold outline-none">
+                <option value="SUPPLY">SUPPLY PMS</option>
+                <option value="SERVICE">SERVICE PMS</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-indigo-700 uppercase mb-1">📅 First Step Start Date</label>
+              <input type="date" id="mStartDate" required onchange="recalculateAllStepDates()" class="w-full bg-white border-2 border-indigo-200 rounded-xl px-3 py-2 text-xs font-bold text-indigo-900 outline-none">
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Target Total Qty</label>
+              <input type="number" id="mQty" required value="1" min="1" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono outline-none">
+            </div>
           </div>
         </div>
 
-        <div>
-          <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Step Title / Task Description</label>
-          <input type="text" id="asTitle" required class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none" placeholder="e.g. Drawings & Technical Submissions">
-        </div>
-
-        <div>
-          <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Owner Email</label>
-          <input type="email" id="asOwnerEmail" required class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none" placeholder="e.g. heeralal@domain.com">
-        </div>
-
-        <div class="grid grid-cols-2 gap-2.5">
-          <div>
-            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Planned Start</label>
-            <input type="date" id="asStart" required class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none">
+        <!-- Section 2: Step Generator Wizard Bar -->
+        <div class="bg-indigo-50/60 p-3.5 rounded-xl border border-indigo-100 flex flex-wrap items-center justify-between gap-3">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold text-slate-800">How many steps do you need?</span>
+            <input type="number" id="quickStepCount" min="1" max="30" value="3" class="w-16 bg-white border border-indigo-300 rounded-lg px-2 py-1 text-xs font-bold text-center text-indigo-900 outline-none">
+            <button type="button" onclick="generateBatchSteps(document.getElementById('quickStepCount').value)" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-xs transition">
+              Generate Step Rows
+            </button>
           </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Planned End</label>
-            <input type="date" id="asEnd" required class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none">
-          </div>
+          <button type="button" onclick="addSingleStepRow()" class="text-indigo-700 hover:text-indigo-900 text-xs font-bold flex items-center gap-1">
+            <i data-lucide="plus" class="w-4 h-4"></i> + Add 1 Step
+          </button>
         </div>
 
-        <button type="submit" id="btnAddStepSubmit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl shadow-md transition text-xs flex items-center justify-center gap-1.5">
-          <span>Add Step to MongoDB</span>
-        </button>
+        <!-- Section 3: Step Rows Container -->
+        <div class="space-y-2.5">
+          <div id="stepsContainer" class="space-y-2.5"></div>
+        </div>
+
+        <div id="formModalAlert"></div>
+
+        <!-- Footer Actions -->
+        <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+          <button type="button" onclick="toggleModal('createTaskModal', false)" class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition">Cancel</button>
+          <button type="submit" id="btnSaveFullTask" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-2.5 rounded-xl shadow-md transition text-xs flex items-center gap-1.5">
+            <i data-lucide="check" class="w-4 h-4"></i>
+            <span>Save Complete Task in MongoDB</span>
+          </button>
+        </div>
+
       </form>
-      <div id="addStepAlert" class="mt-3"></div>
     </div>
   </div>
 
-  <!-- Modal 3: Bulk Task Generator Modal -->
-  <div id="bulkModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-100 relative">
-      <button onclick="toggleModal('bulkModal', false)" class="absolute right-4 top-4 text-slate-400 hover:text-slate-700"><i data-lucide="x" class="w-5 h-5"></i></button>
-      
-      <div class="flex items-center gap-2 mb-4">
-        <i data-lucide="sparkles" class="w-5 h-5 text-indigo-600"></i>
-        <h3 class="text-base font-bold text-slate-900">Bulk PMS Task Generator</h3>
-      </div>
-
-      <form onsubmit="event.preventDefault(); submitBulk();" class="space-y-3.5">
-        <div>
-          <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Project Name</label>
-          <input type="text" id="pName" required class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-indigo-500" value="Substation & Plant Modernization">
-        </div>
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">PMS Workflow</label>
-            <select id="pType" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-medium outline-none">
-              <option value="SUPPLY">Supply PMS</option>
-              <option value="SERVICE">Service PMS</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Start Date</label>
-            <input type="date" id="pStartDate" required class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none">
-          </div>
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Items List (1 per line)</label>
-          <textarea id="pItems" rows="4" required class="w-full border border-slate-200 rounded-xl p-2.5 text-xs font-mono outline-none focus:border-indigo-500 custom-scroll">Supply of 11kV Switchboard
-Supply of Power Cables 3Cx300
-Supply of 2 MVA Transformer</textarea>
-        </div>
-        <button type="submit" id="btnModalSubmit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl shadow-md transition flex items-center justify-center gap-2 text-xs">
-          <span>Generate & Save in MongoDB</span>
-        </button>
-      </form>
-      <div id="modalAlert" class="mt-3"></div>
-    </div>
-  </div>
-
-  <!-- Modal 4: Doer Action / Remark / Qty / Attachment Modal -->
+  <!-- Doer Edit Modal -->
   <div id="doerModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 relative">
       <button onclick="toggleModal('doerModal', false)" class="absolute right-4 top-4 text-slate-400 hover:text-slate-700"><i data-lucide="x" class="w-5 h-5"></i></button>
@@ -322,16 +268,252 @@ Supply of 2 MVA Transformer</textarea>
   </div>
 
   <script>
-    const todayStr = new Date().toISOString().slice(0, 10);
-    document.getElementById('pStartDate').value = todayStr;
-    document.getElementById('ctStart').value = todayStr;
-    document.getElementById('asStart').value = todayStr;
-    document.getElementById('asEnd').value = todayStr;
+    // Master Team Directory (Doer Name -> Email Mapping)
+    const DOER_DIRECTORY = [
+      { name: "Heera Lal Ji", email: "heeralal@domain.com" },
+      { name: "Ronak Ji", email: "ronak@domain.com" },
+      { name: "Aarti Bala", email: "aarti@domain.com" },
+      { name: "Mukesh Sharma", email: "mukesh@domain.com" },
+      { name: "Custom / Other", email: "" }
+    ];
+
+    const todayDate = new Date().toISOString().slice(0, 10);
+    document.getElementById('mStartDate').value = todayDate;
 
     let allData = [];
 
     function toggleModal(id, show) {
       document.getElementById(id).classList.toggle('hidden', !show);
+    }
+
+    function openCreateModal() {
+      document.getElementById('mStartDate').value = new Date().toISOString().slice(0, 10);
+      generateBatchSteps(3); // Start with 3 standard steps
+      document.getElementById('formModalAlert').innerHTML = '';
+      toggleModal('createTaskModal', true);
+    }
+
+    // Generate N Steps in 1 Click
+    function generateBatchSteps(count) {
+      const num = parseInt(count, 10) || 1;
+      const container = document.getElementById('stepsContainer');
+      container.innerHTML = '';
+
+      const defaultTitles = [
+        "Complete Technicals with approved make submitted to Commercial",
+        "Commercial Offer & Vendor Negotiations",
+        "Offer Evaluation by Technical Team",
+        "Management Discussion and Approval",
+        "NFA Request for Approval",
+        "Issue PO",
+        "Drawings, GA, GTP & other submission",
+        "Submit the Process Engineering Drawing",
+        "Process Engineering Approval & Clearance",
+        "Advance Payment to Vendor as per PO",
+        "Manufacturing / Material Readiness",
+        "Conduct Inspection",
+        "Dispatch Clearance",
+        "Balance / Stage Payment to Vendor",
+        "Material Delivery at Site"
+      ];
+
+      for (let i = 1; i <= num; i++) {
+        const title = defaultTitles[i - 1] || `Execution Sub-Step #${i}`;
+        const defaultDoer = DOER_DIRECTORY[(i - 1) % (DOER_DIRECTORY.length - 1)];
+        addStepCard(i, title, defaultDoer.name, defaultDoer.email, 2);
+      }
+      recalculateAllStepDates();
+    }
+
+    function addSingleStepRow() {
+      const container = document.getElementById('stepsContainer');
+      const nextIndex = container.children.length + 1;
+      addStepCard(nextIndex, `Sub-Step #${nextIndex}`, "Heera Lal Ji", "heeralal@domain.com", 2);
+      recalculateAllStepDates();
+    }
+
+    // Render individual step card
+    function addStepCard(wbs, title, doerName, doerEmail, durationDays) {
+      const container = document.getElementById('stepsContainer');
+      const row = document.createElement('div');
+      row.className = 'step-card bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs space-y-2.5 relative';
+
+      // Doer Options HTML
+      let doerOptions = '';
+      DOER_DIRECTORY.forEach(d => {
+        const sel = (d.name === doerName) ? 'selected' : '';
+        doerOptions += `<option value="${d.name}" data-email="${d.email}" ${sel}>${d.name}</option>`;
+      });
+
+      row.innerHTML = `
+        <div class="flex items-center justify-between pb-1.5 border-b border-slate-100">
+          <div class="flex items-center gap-2">
+            <span class="w-6 h-6 bg-indigo-100 text-indigo-700 font-bold rounded-lg flex items-center justify-center text-xs font-mono step-index">${wbs}</span>
+            <span class="text-xs font-bold text-slate-800">WBS Step #${wbs}</span>
+          </div>
+          <button type="button" onclick="this.closest('.step-card').remove(); renumberAndRecalculate();" class="text-rose-400 hover:text-rose-600 text-xs flex items-center gap-1 font-semibold">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Remove
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-2.5">
+          <div class="md:col-span-2">
+            <label class="block text-[10px] font-bold text-slate-500 uppercase">WBS No</label>
+            <input type="text" class="step-wbs w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-indigo-500 font-mono" value="${wbs}">
+          </div>
+          <div class="md:col-span-10">
+            <label class="block text-[10px] font-bold text-slate-500 uppercase">Step Title / Description</label>
+            <input type="text" class="step-title w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-indigo-500 font-medium" placeholder="e.g. Drawings & Technical Approvals" value="${title}">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-2.5 bg-slate-50 p-2.5 rounded-lg border border-slate-100 items-center">
+          
+          <!-- Doer Selection -->
+          <div class="md:col-span-3">
+            <label class="block text-[10px] font-bold text-indigo-700 uppercase">👤 Select Doer</label>
+            <select onchange="onDoerChange(this)" class="step-doer-select w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-semibold outline-none">
+              ${doerOptions}
+            </select>
+          </div>
+
+          <!-- Auto Email -->
+          <div class="md:col-span-3">
+            <label class="block text-[10px] font-bold text-slate-500 uppercase">✉️ Doer Email (Auto)</label>
+            <input type="email" class="step-email w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs outline-none text-slate-600 font-medium" placeholder="doer@domain.com" value="${doerEmail}">
+          </div>
+
+          <!-- Duration in Days -->
+          <div class="md:col-span-2">
+            <label class="block text-[10px] font-bold text-amber-700 uppercase">⏳ Duration (Days)</label>
+            <input type="number" min="1" value="${durationDays || 2}" oninput="recalculateAllStepDates()" class="step-days w-full bg-white border-2 border-amber-200 rounded-lg px-2 py-1.5 text-xs font-extrabold text-amber-900 text-center outline-none">
+          </div>
+
+          <!-- Auto Calculated Date Range -->
+          <div class="md:col-span-4">
+            <label class="block text-[10px] font-bold text-emerald-700 uppercase">🗓️ Auto Calculated Timeline</label>
+            <div class="step-date-preview text-[11px] font-bold text-emerald-900 bg-white border border-emerald-200 px-2.5 py-1.5 rounded-lg text-center font-mono">
+              Auto calculating...
+            </div>
+            <input type="hidden" class="step-start-hidden">
+            <input type="hidden" class="step-end-hidden">
+          </div>
+
+        </div>
+      `;
+
+      container.appendChild(row);
+      lucide.createIcons();
+    }
+
+    // Auto-fetch email on selecting Doer Name
+    function onDoerChange(selectElem) {
+      const selectedOption = selectElem.options[selectElem.selectedIndex];
+      const email = selectedOption.getAttribute('data-email');
+      const card = selectElem.closest('.step-card');
+      const emailInput = card.querySelector('.step-email');
+
+      if (email) {
+        emailInput.value = email;
+      } else {
+        emailInput.value = '';
+        emailInput.focus();
+      }
+    }
+
+    // Sequential Date Calculation Engine
+    function recalculateAllStepDates() {
+      const baseStartVal = document.getElementById('mStartDate').value;
+      if (!baseStartVal) return;
+
+      let currentCursor = new Date(baseStartVal + 'T09:00:00');
+      const cards = document.querySelectorAll('#stepsContainer .step-card');
+
+      cards.forEach((card) => {
+        const daysInput = card.querySelector('.step-days');
+        const days = Math.max(1, parseInt(daysInput.value, 10) || 1);
+
+        const stepStart = new Date(currentCursor);
+        const stepEnd = new Date(stepStart);
+        stepEnd.setDate(stepEnd.getDate() + days);
+
+        // Store hidden ISO dates
+        card.querySelector('.step-start-hidden').value = stepStart.toISOString();
+        card.querySelector('.step-end-hidden').value = stepEnd.toISOString();
+
+        // Display user-friendly preview
+        const sStr = stepStart.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+        const eStr = stepEnd.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+        card.querySelector('.step-date-preview').innerText = `${sStr} ➔ ${eStr} (${days} Days)`;
+
+        // Next step begins when this step finishes
+        currentCursor = new Date(stepEnd);
+      });
+    }
+
+    function renumberAndRecalculate() {
+      const cards = document.querySelectorAll('#stepsContainer .step-card');
+      cards.forEach((c, i) => {
+        const idx = i + 1;
+        c.querySelector('.step-index').innerText = idx;
+        c.querySelector('.step-wbs').value = idx;
+      });
+      recalculateAllStepDates();
+    }
+
+    // Save Complete Package in MongoDB
+    async function submitFullTaskPackage() {
+      const btn = document.getElementById('btnSaveFullTask');
+      const alertBox = document.getElementById('formModalAlert');
+      btn.disabled = true;
+
+      const cards = document.querySelectorAll('#stepsContainer .step-card');
+      if (cards.length === 0) {
+        alertBox.innerHTML = `<div class="p-2.5 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl text-xs">Please add at least 1 step.</div>`;
+        btn.disabled = false;
+        return;
+      }
+
+      const stepsData = [];
+      cards.forEach(c => {
+        stepsData.push({
+          wbsNo: c.querySelector('.step-wbs').value,
+          stepTitle: c.querySelector('.step-title').value,
+          assignedName: c.querySelector('.step-doer-select').value,
+          assignedEmail: c.querySelector('.step-email').value,
+          durationDays: c.querySelector('.step-days').value,
+          plannedStartDate: c.querySelector('.step-start-hidden').value,
+          plannedEndDate: c.querySelector('.step-end-hidden').value
+        });
+      });
+
+      const payload = {
+        projectName: document.getElementById('mProject').value,
+        mainItemName: document.getElementById('mItemName').value,
+        pmsType: document.getElementById('mType').value,
+        startDate: document.getElementById('mStartDate').value,
+        totalQty: document.getElementById('mQty').value,
+        steps: stepsData
+      };
+
+      try {
+        const res = await fetch('/api/pms/create-custom-package', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (json.success) {
+          toggleModal('createTaskModal', false);
+          loadDashboardData();
+        } else {
+          alertBox.innerHTML = `<div class="p-2.5 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl text-xs">${json.error}</div>`;
+        }
+      } catch (err) {
+        alertBox.innerHTML = `<div class="p-2.5 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl text-xs">Error: ${err.message}</div>`;
+      } finally {
+        btn.disabled = false;
+      }
     }
 
     function handleRoleSwitch() {
@@ -357,7 +539,7 @@ Supply of 2 MVA Transformer</textarea>
       let url = '/api/pms/all';
       if (role === 'DOER') {
         if (!email) {
-          tbody.innerHTML = `<tr><td colspan="11" class="py-8 text-center text-amber-600 font-medium">Enter Doer Email to view assigned steps.</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="12" class="py-8 text-center text-amber-600 font-medium">Enter Doer Email to view assigned steps.</td></tr>`;
           return;
         }
         url = `/api/pms/my-tasks?email=${encodeURIComponent(email)}`;
@@ -368,7 +550,7 @@ Supply of 2 MVA Transformer</textarea>
         const json = await res.json();
 
         if (!json.success || json.data.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="11" class="py-12 text-center text-slate-400 font-medium">No tasks found. Click "+ New Task" or "Bulk Generator" to add tasks.</td></tr>`;
+          tbody.innerHTML = `<tr><td colspan="12" class="py-12 text-center text-slate-400 font-medium">No tasks found. Click "+ Create Task & Steps" to start.</td></tr>`;
           updateStats(0, 0, 0, 0);
           return;
         }
@@ -376,7 +558,7 @@ Supply of 2 MVA Transformer</textarea>
         allData = json.data;
         renderGrid(allData, role);
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="11" class="py-8 text-center text-rose-500 font-medium">Error connecting to API: ${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="12" class="py-8 text-center text-rose-500 font-medium">Error connecting to API: ${err.message}</td></tr>`;
       }
     }
 
@@ -396,18 +578,15 @@ Supply of 2 MVA Transformer</textarea>
                 <span>${item.mainItemName}</span>
               </td>
               <td class="py-2.5 px-2 text-center text-slate-400">-</td>
-              <td class="py-2.5 px-4 text-slate-500 text-[11px] italic font-normal">All WBS Workflow Steps</td>
+              <td class="py-2.5 px-4 text-slate-500 text-[11px] italic font-normal">Workflow Steps (${item.steps.length})</td>
               <td class="py-2.5 px-3"><span class="px-2 py-0.5 bg-indigo-100 text-indigo-800 text-[10px] font-bold rounded-md">${item.pmsType}</span></td>
               <td class="py-2.5 px-3 text-slate-700">${new Date(item.startDate).toLocaleDateString('en-GB')}</td>
+              <td class="py-2.5 px-2 text-center text-slate-400">-</td>
               <td class="py-2.5 px-2 text-center font-extrabold text-indigo-900">${item.totalQty || 1}</td>
               <td class="py-2.5 px-2 text-center text-slate-400">-</td>
               <td class="py-2.5 px-3 text-slate-400">-</td>
               <td class="py-2.5 px-3"><span class="px-2 py-0.5 text-[10px] font-semibold bg-white border border-indigo-200 text-indigo-700 rounded-md">${item.steps.length} Steps</span></td>
-              <td class="py-2.5 px-3 text-center">
-                <button onclick="openAddStepModal('${item.uniqueId}', '${item.mainItemName.replace(/'/g, "\\'")}', '${item.steps.length + 1}')" class="px-2.5 py-1 bg-white hover:bg-indigo-600 hover:text-white text-indigo-700 rounded-lg text-[11px] font-bold border border-indigo-300 shadow-xs transition">
-                  + Add Step
-                </button>
-              </td>
+              <td class="py-2.5 px-3 text-center text-slate-400">-</td>
             </tr>
           `;
 
@@ -415,6 +594,9 @@ Supply of 2 MVA Transformer</textarea>
           item.steps.forEach(s => {
             totalSteps++;
             if (s.status === 'Completed') completed++; else pending++;
+
+            const sDateFormatted = new Date(s.plannedStartDate).toLocaleDateString('en-GB');
+            const eDateFormatted = new Date(s.plannedEndDate).toLocaleDateString('en-GB');
 
             html += `
               <tr class="hover:bg-slate-50/90 transition">
@@ -430,7 +612,8 @@ Supply of 2 MVA Transformer</textarea>
                     ${s.assignedName || s.assignedEmail}
                   </span>
                 </td>
-                <td class="py-2 px-3 text-slate-600">${new Date(s.plannedStartDate).toLocaleDateString('en-GB')} – ${new Date(s.plannedEndDate).toLocaleDateString('en-GB')}</td>
+                <td class="py-2 px-3 text-slate-600 text-[11px] font-mono">${sDateFormatted} – ${eDateFormatted}</td>
+                <td class="py-2 px-2 text-center font-bold text-amber-800">${s.durationDays || 1}d</td>
                 <td class="py-2 px-2 text-center text-slate-400 font-mono">${item.totalQty || 1}</td>
                 <td class="py-2 px-2 text-center font-bold text-slate-800">${s.receivedQty || 0}</td>
                 <td class="py-2 px-3">
@@ -452,6 +635,9 @@ Supply of 2 MVA Transformer</textarea>
           const s = d.step;
           if (s.status === 'Completed') completed++; else pending++;
 
+          const sDateFormatted = new Date(s.plannedStartDate).toLocaleDateString('en-GB');
+          const eDateFormatted = new Date(s.plannedEndDate).toLocaleDateString('en-GB');
+
           html += `
             <tr class="hover:bg-slate-50 transition">
               <td class="py-2.5 px-3 font-mono text-indigo-600 font-bold">${d.uniqueId}</td>
@@ -462,7 +648,8 @@ Supply of 2 MVA Transformer</textarea>
                 ${s.remarks ? `<div class="text-[11px] text-amber-700 mt-0.5">💬 Remark: ${s.remarks}</div>` : ''}
               </td>
               <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-indigo-50 text-indigo-700">${s.assignedName || s.assignedEmail}</span></td>
-              <td class="py-2.5 px-3 text-slate-600">${new Date(s.plannedStartDate).toLocaleDateString('en-GB')} – ${new Date(s.plannedEndDate).toLocaleDateString('en-GB')}</td>
+              <td class="py-2.5 px-3 text-slate-600 text-[11px] font-mono">${sDateFormatted} – ${eDateFormatted}</td>
+              <td class="py-2.5 px-2 text-center font-bold text-amber-800">${s.durationDays || 1}d</td>
               <td class="py-2.5 px-2 text-center text-slate-500">${d.totalQty || 1}</td>
               <td class="py-2.5 px-2 text-center font-extrabold text-slate-900">${s.receivedQty || 0}</td>
               <td class="py-2.5 px-3">
@@ -480,85 +667,6 @@ Supply of 2 MVA Transformer</textarea>
 
       tbody.innerHTML = html;
       lucide.createIcons();
-    }
-
-    function openAddStepModal(taskId, taskName, nextWbs) {
-      document.getElementById('asTaskId').value = taskId;
-      document.getElementById('asParentTaskLabel').innerText = `${taskId} : ${taskName}`;
-      document.getElementById('asWbs').value = nextWbs;
-      document.getElementById('asTitle').value = '';
-      document.getElementById('asOwnerName').value = '';
-      document.getElementById('asOwnerEmail').value = '';
-      document.getElementById('addStepAlert').innerHTML = '';
-      toggleModal('addStepModal', true);
-    }
-
-    async function submitSingleTask() {
-      const btn = document.getElementById('btnSingleTaskSubmit');
-      const alertBox = document.getElementById('singleTaskAlert');
-      btn.disabled = true;
-
-      const payload = {
-        projectName: document.getElementById('ctProject').value,
-        mainItemName: document.getElementById('ctItem').value,
-        pmsType: document.getElementById('ctType').value,
-        startDate: document.getElementById('ctStart').value,
-        totalQty: document.getElementById('ctQty').value
-      };
-
-      try {
-        const res = await fetch('/api/pms/create-task', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        const json = await res.json();
-        if (json.success) {
-          toggleModal('customTaskModal', false);
-          loadDashboardData();
-        } else {
-          alertBox.innerHTML = `<div class="p-2 bg-rose-50 text-rose-700 rounded-lg text-xs">${json.error}</div>`;
-        }
-      } catch (err) {
-        alertBox.innerHTML = `<div class="p-2 bg-rose-50 text-rose-700 rounded-lg text-xs">Error: ${err.message}</div>`;
-      } finally {
-        btn.disabled = false;
-      }
-    }
-
-    async function submitAddStep() {
-      const btn = document.getElementById('btnAddStepSubmit');
-      const alertBox = document.getElementById('addStepAlert');
-      btn.disabled = true;
-
-      const payload = {
-        uniqueId: document.getElementById('asTaskId').value,
-        wbsNo: document.getElementById('asWbs').value,
-        stepTitle: document.getElementById('asTitle').value,
-        assignedName: document.getElementById('asOwnerName').value,
-        assignedEmail: document.getElementById('asOwnerEmail').value,
-        plannedStartDate: document.getElementById('asStart').value,
-        plannedEndDate: document.getElementById('asEnd').value
-      };
-
-      try {
-        const res = await fetch('/api/pms/add-step', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        const json = await res.json();
-        if (json.success) {
-          toggleModal('addStepModal', false);
-          loadDashboardData();
-        } else {
-          alertBox.innerHTML = `<div class="p-2 bg-rose-50 text-rose-700 rounded-lg text-xs">${json.error}</div>`;
-        }
-      } catch (err) {
-        alertBox.innerHTML = `<div class="p-2 bg-rose-50 text-rose-700 rounded-lg text-xs">Error: ${err.message}</div>`;
-      } finally {
-        btn.disabled = false;
-      }
     }
 
     function openDoerModal(taskId, stepId, title, status, qty, attach, remarks) {
@@ -596,38 +704,6 @@ Supply of 2 MVA Transformer</textarea>
         const json = await res.json();
         if (json.success) {
           toggleModal('doerModal', false);
-          loadDashboardData();
-        } else {
-          alertBox.innerHTML = `<div class="p-2 bg-rose-50 text-rose-700 rounded-lg text-xs">${json.error}</div>`;
-        }
-      } catch (err) {
-        alertBox.innerHTML = `<div class="p-2 bg-rose-50 text-rose-700 rounded-lg text-xs">Error: ${err.message}</div>`;
-      } finally {
-        btn.disabled = false;
-      }
-    }
-
-    async function submitBulk() {
-      const btn = document.getElementById('btnModalSubmit');
-      const alertBox = document.getElementById('modalAlert');
-      btn.disabled = true;
-
-      const payload = {
-        projectName: document.getElementById('pName').value,
-        pmsType: document.getElementById('pType').value,
-        rawItemsText: document.getElementById('pItems').value,
-        startDate: document.getElementById('pStartDate').value
-      };
-
-      try {
-        const res = await fetch('/api/pms/create-bulk', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        const json = await res.json();
-        if (json.success) {
-          toggleModal('bulkModal', false);
           loadDashboardData();
         } else {
           alertBox.innerHTML = `<div class="p-2 bg-rose-50 text-rose-700 rounded-lg text-xs">${json.error}</div>`;
