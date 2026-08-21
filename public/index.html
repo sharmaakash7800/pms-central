@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PMS Central Hub | Sites & Operations Console</title>
+  <title>PMS Central Hub | Stable Operations Console</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -57,7 +57,7 @@
 
           <div>
             <h1 class="text-xs font-extrabold text-slate-900 dark:text-white leading-none">PMS Central Hub</h1>
-            <p class="text-[9px] text-slate-400 font-medium">Sites & Project Directory</p>
+            <p class="text-[9px] text-slate-400 font-medium">Stable Operations Console</p>
           </div>
         </div>
 
@@ -202,7 +202,7 @@
       <div id="vendorCardsContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2"></div>
     </div>
 
-    <!-- VIEW 4: SITES & PROJECTS DIRECTORY (With Search Bar Added) -->
+    <!-- VIEW 4: SITES & PROJECTS DIRECTORY -->
     <div id="viewSites" class="view-section hidden space-y-2.5">
       <div class="bg-white dark:bg-darkcard p-3 rounded-xl border border-slate-200 dark:border-darkborder flex flex-wrap items-center justify-between gap-2">
         <div class="flex items-center gap-2">
@@ -419,7 +419,7 @@
     </div>
   </div>
 
-  <!-- Modal: Create Task & Steps -->
+  <!-- Modal: Create Task & Steps (Fixed Datalist Input for Site) -->
   <div id="createTaskModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
     <div class="bg-white dark:bg-darkcard rounded-2xl max-w-3xl w-full p-4 shadow-2xl border border-slate-100 dark:border-darkborder relative max-h-[92vh] flex flex-col">
       <div class="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-darkborder">
@@ -431,13 +431,13 @@
         <div class="bg-slate-50 dark:bg-slate-800/80 p-2.5 rounded-xl border border-slate-200 dark:border-darkborder space-y-2">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
             <div>
-              <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Site / Project Name</label>
-              <input type="text" id="mProject" required list="projectSuggestions" class="w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded-lg px-2 py-1 text-xs outline-none focus:border-indigo-500 font-bold dark:text-white" value="EV Charging_CLZS">
+              <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Site / Project Name *</label>
+              <input type="text" id="mProject" required list="projectSuggestions" class="w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded-lg px-2.5 py-1 text-xs outline-none focus:border-indigo-500 font-bold dark:text-white" placeholder="Select or type site name">
               <datalist id="projectSuggestions"></datalist>
             </div>
             <div>
-              <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Main Task Name</label>
-              <input type="text" id="mItemName" required class="w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded-lg px-2 py-1 text-xs outline-none focus:border-indigo-500 font-bold dark:text-white" placeholder="e.g. Supply of 11 kV Extension Panel">
+              <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Main Task Name *</label>
+              <input type="text" id="mItemName" required class="w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded-lg px-2.5 py-1 text-xs outline-none focus:border-indigo-500 font-bold dark:text-white" placeholder="e.g. Supply of 11 kV Extension Panel">
             </div>
           </div>
 
@@ -504,7 +504,7 @@
     </div>
   </div>
 
-  <!-- Modal: Doer Edit Execution (Strict PO Step Condition) -->
+  <!-- Modal: Doer Edit Execution -->
   <div id="doerModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
     <div class="bg-white dark:bg-darkcard rounded-2xl max-w-sm w-full p-4 shadow-2xl border border-slate-100 dark:border-darkborder relative">
       <button onclick="toggleModal('doerModal', false)" class="absolute right-3 top-3 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"><i data-lucide="x" class="w-4 h-4"></i></button>
@@ -1110,6 +1110,86 @@
       }
     }
 
+    function renderTeamView() {
+      const container = document.getElementById('teamCardsContainer');
+      if (activeDoers.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-400 py-4">No team members.</p>';
+        return;
+      }
+
+      let html = '';
+      activeDoers.forEach(d => {
+        html += `
+          <div class="bg-white dark:bg-darkcard p-2.5 rounded-xl border border-slate-200 dark:border-darkborder shadow-2xs flex items-center justify-between text-xs">
+            <div class="flex items-center gap-2">
+              <div class="w-7 h-7 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold flex items-center justify-center text-[10px]">
+                ${d.name.charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <h4 class="font-bold text-slate-900 dark:text-white text-xs">${d.name}</h4>
+                <p class="text-[9px] text-slate-400 font-mono">${d.email}</p>
+                <span class="inline-block text-[8px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950 px-1 py-0.2 rounded mt-0.5">${d.role || 'Executive'}</span>
+              </div>
+            </div>
+            
+            <div class="flex items-center gap-1">
+              <button onclick="openEditDoerModal('${d._id}', '${d.name.replace(/'/g, "\\'")}', '${d.email}', '${(d.role || '').replace(/'/g, "\\'")}')" class="text-slate-400 hover:text-indigo-600 p-1 rounded-md transition" title="Edit Member">
+                <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
+              </button>
+              <button onclick="removeDoer('${d._id}')" class="text-slate-300 hover:text-rose-600 p-1 rounded-md transition" title="Remove">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+      lucide.createIcons();
+    }
+
+    function openEditDoerModal(id, name, email, role) {
+      document.getElementById('editDoerId').value = id;
+      document.getElementById('editDoerName').value = name;
+      document.getElementById('editDoerEmail').value = email;
+      document.getElementById('editDoerRole').value = role;
+      document.getElementById('editDoerAlert').innerHTML = '';
+      toggleModal('editDoerModal', true);
+    }
+
+    async function saveEditedDoer() {
+      const btn = document.getElementById('btnSaveEditedDoer');
+      const id = document.getElementById('editDoerId').value;
+      btn.disabled = true;
+
+      const payload = {
+        name: document.getElementById('editDoerName').value.trim(),
+        email: document.getElementById('editDoerEmail').value.trim(),
+        role: document.getElementById('editDoerRole').value.trim()
+      };
+
+      try {
+        const url = id ? `${API_BASE}/api/doers/${id}` : `${API_BASE}/api/doers`;
+        const method = id ? 'PUT' : 'POST';
+
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (json.success) {
+          toggleModal('editDoerModal', false);
+          loadDoersList();
+        } else {
+          document.getElementById('editDoerAlert').innerHTML = `<div class="p-1 bg-rose-50 text-rose-700 text-[10px] rounded">${json.error}</div>`;
+        }
+      } catch (err) {
+        document.getElementById('editDoerAlert').innerHTML = `<div class="p-1 bg-rose-50 text-rose-700 text-[10px] rounded">${err.message}</div>`;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
     function calculateTimeRemaining(targetEndDate, status, actualDoneDate) {
       if (status === 'Completed') {
         const doneStr = actualDoneDate ? new Date(actualDoneDate).toLocaleDateString('en-GB') : '';
@@ -1183,7 +1263,7 @@
         optCompleted.disabled = false;
       }
 
-      // Strict condition: Vendor details only open on "Issue PO" or strictly Purchase Order steps
+      // Strict condition: Vendor details only open on "Issue PO" steps
       const isIssuePoStep = /(issue po|purchase order|place po)/i.test(title);
       document.getElementById('vendorFieldGroup').classList.toggle('hidden', !isIssuePoStep);
 
@@ -1307,7 +1387,7 @@
           });
 
           select.innerHTML = html;
-          datalist.innerHTML = dlHtml;
+          if (datalist) datalist.innerHTML = dlHtml;
           select.value = current || 'ALL';
         }
       } catch (err) {
