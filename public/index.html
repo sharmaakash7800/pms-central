@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PMS Central Hub | Resizable Column Console</title>
+  <title>PMS Central Hub | Pro Table Console</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -29,22 +29,6 @@
     .dark .custom-scroll::-webkit-scrollbar-thumb { background: #374151; }
     .nav-capsule-btn.active { color: #4f46e5; font-weight: 800; }
     .dark .nav-capsule-btn.active { color: #818cf8; }
-
-    /* Resizable Table Header Styling */
-    .resizing-table { table-layout: fixed; width: 100%; }
-    .resizing-table th { position: relative; user-select: none; }
-    .resizer {
-      position: absolute;
-      top: 0;
-      right: 0;
-      width: 6px;
-      cursor: col-resize;
-      user-select: none;
-      height: 100%;
-      background: transparent;
-      z-index: 10;
-    }
-    .resizer:hover, .resizing { background-color: #6366f1 !important; }
   </style>
 </head>
 <body class="bg-slate-100 text-slate-800 dark:bg-darkbg dark:text-slate-100 antialiased min-h-screen flex flex-col pb-20 text-xs">
@@ -53,7 +37,6 @@
   <header class="bg-white dark:bg-darkcard border-b border-slate-200 dark:border-darkborder sticky top-0 z-30 shadow-xs">
     <div class="max-w-7xl mx-auto px-3 sm:px-5">
       <div class="flex justify-between h-11 items-center">
-        
         <div class="flex items-center gap-2">
           <button onclick="toggleSideMenu(true)" class="p-1 rounded-lg border border-slate-200 dark:border-darkborder hover:bg-slate-50 dark:hover:bg-slate-800 transition text-slate-700 dark:text-slate-200">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -62,7 +45,6 @@
               <line x1="3" x2="21" y1="18" y2="18"></line>
             </svg>
           </button>
-
           <div class="bg-indigo-600 w-7 h-7 rounded-lg text-white flex items-center justify-center shrink-0 shadow-xs">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
@@ -70,10 +52,9 @@
               <polyline points="2 12 12 17 22 12"></polyline>
             </svg>
           </div>
-
           <div>
             <h1 class="text-xs font-extrabold text-slate-900 dark:text-white leading-none">PMS Central Hub</h1>
-            <p class="text-[9px] text-slate-400 font-medium">Resizable Columns & Grid View</p>
+            <p class="text-[9px] text-slate-400 font-medium">Pro Table Console</p>
           </div>
         </div>
 
@@ -87,13 +68,11 @@
               <option value="">Select Doer...</option>
             </select>
           </div>
-
           <button onclick="openCreateModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold px-2.5 py-1 rounded-lg shadow-xs flex items-center gap-1 transition">
             <i data-lucide="plus" class="w-3 h-3"></i>
             <span>+ Task</span>
           </button>
         </div>
-
       </div>
     </div>
   </header>
@@ -109,7 +88,7 @@
       <span class="text-[10px] bg-indigo-200 dark:bg-indigo-900 text-indigo-900 dark:text-indigo-200 px-2 py-0.5 rounded-full font-bold">Personalized View</span>
     </div>
 
-    <!-- VIEW 1: STRUCTURED TABLE VIEW WITH RESIZABLE COLUMNS -->
+    <!-- VIEW 1: STRUCTURED TABLE VIEW -->
     <div id="viewPmsBoard" class="view-section space-y-2">
       <div class="bg-white dark:bg-darkcard rounded-xl border border-slate-200 dark:border-darkborder p-2 flex flex-wrap items-center justify-between gap-1.5 shadow-2xs">
         <div class="flex flex-wrap items-center gap-1.5 flex-1 min-w-[280px]">
@@ -118,7 +97,6 @@
             <select id="filterByProject" onchange="applyFilters()" class="w-full bg-transparent text-[11px] font-bold text-slate-800 dark:text-slate-200 outline-none cursor-pointer">
               <option value="ALL">All Sites</option>
             </select>
-            <button onclick="addNewSitePrompt()" class="bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 hover:bg-indigo-600 hover:text-white text-[9px] font-bold px-1.5 py-0.2 rounded border border-indigo-200 dark:border-indigo-900 transition" title="Add Site">+ Site</button>
           </div>
 
           <div class="flex items-center gap-1 bg-indigo-50/70 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 rounded-lg px-2 py-0.5 min-w-[140px]">
@@ -141,22 +119,22 @@
         </div>
       </div>
 
-      <!-- Table Grid with Drag-Resizable Headers -->
+      <!-- Structured Table Grid Container -->
       <div class="bg-white dark:bg-darkcard rounded-xl border border-slate-200 dark:border-darkborder shadow-2xs overflow-hidden">
         <div class="overflow-x-auto max-h-[680px] custom-scroll">
-          <table id="pmsGridTable" class="resizing-table text-left border-collapse text-xs whitespace-normal">
+          <table class="w-full text-left border-collapse text-xs whitespace-normal">
             <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 uppercase font-bold sticky top-0 z-10 border-b border-slate-200 dark:border-darkborder text-[10px] tracking-wider">
               <tr>
-                <th class="py-3 px-3 w-24">Task ID<div class="resizer"></div></th>
-                <th class="py-3 px-3 w-40">Main Task Name<div class="resizer"></div></th>
-                <th class="py-3 px-2 text-center w-14">WBS<div class="resizer"></div></th>
-                <th class="py-3 px-3 w-56">Step Title / Action<div class="resizer"></div></th>
-                <th class="py-3 px-3 w-36">Assigned Doer<div class="resizer"></div></th>
-                <th class="py-3 px-3 w-36">Timeline<div class="resizer"></div></th>
-                <th class="py-3 px-3 w-32 text-center">Stopwatch<div class="resizer"></div></th>
-                <th class="py-3 px-3 w-40">Remarks / Notes<div class="resizer"></div></th>
-                <th class="py-3 px-3 w-28">Status<div class="resizer"></div></th>
-                <th class="py-3 px-3 text-center w-28">Action</th>
+                <th class="py-3 px-3 min-w-[90px]">Task ID</th>
+                <th class="py-3 px-3 min-w-[160px]">Main Task Name</th>
+                <th class="py-3 px-2 text-center w-12">WBS</th>
+                <th class="py-3 px-3 min-w-[220px]">Step Title / Action</th>
+                <th class="py-3 px-3 min-w-[140px]">Assigned Doer</th>
+                <th class="py-3 px-3 min-w-[140px]">Timeline</th>
+                <th class="py-3 px-3 min-w-[130px] text-center">Stopwatch</th>
+                <th class="py-3 px-3 min-w-[160px]">Remarks / Notes</th>
+                <th class="py-3 px-3 min-w-[100px]">Status</th>
+                <th class="py-3 px-3 text-center min-w-[110px]">Action</th>
               </tr>
             </thead>
             <tbody id="tableRows" class="divide-y divide-slate-100 dark:divide-darkborder">
@@ -183,24 +161,8 @@
             <select id="reviewPmsSelector" onchange="renderSpecificPmsReview()" class="bg-indigo-50 dark:bg-slate-800 border border-indigo-200 dark:border-indigo-800 rounded-lg px-2 py-0.5 text-xs font-extrabold text-indigo-950 dark:text-indigo-200 outline-none cursor-pointer"></select>
           </div>
         </div>
-
-        <div class="grid grid-cols-2 sm:grid-cols-5 gap-1.5 pt-1.5 border-t border-slate-100 dark:border-darkborder">
-          <div class="bg-slate-50 dark:bg-slate-800/80 p-1.5 rounded-lg border text-center"><p class="text-[8px] uppercase font-bold text-slate-400">Progress</p><h4 class="text-xs font-extrabold text-indigo-600" id="kpiProgress">0%</h4></div>
-          <div class="bg-emerald-50 p-1.5 rounded-lg border text-center"><p class="text-[8px] uppercase font-bold text-emerald-700">Done</p><h4 class="text-xs font-extrabold text-emerald-800" id="kpiCompleted">0</h4></div>
-          <div class="bg-amber-50 p-1.5 rounded-lg border text-center"><p class="text-[8px] uppercase font-bold text-amber-700">Active</p><h4 class="text-xs font-extrabold text-amber-800" id="kpiInProgress">0</h4></div>
-          <div class="bg-rose-50 p-1.5 rounded-lg border text-center"><p class="text-[8px] uppercase font-bold text-rose-700">Overdue</p><h4 class="text-xs font-extrabold text-rose-800" id="kpiDelayed">0</h4></div>
-          <div class="bg-slate-50 p-1.5 rounded-lg border text-center col-span-2 sm:col-span-1"><p class="text-[8px] uppercase font-bold text-slate-400">Pending</p><h4 class="text-xs font-extrabold text-slate-700" id="kpiPending">0</h4></div>
-        </div>
-
-        <div class="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
-          <div id="reviewProgressBar" class="bg-emerald-500 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
-        </div>
       </div>
-
       <div class="bg-white dark:bg-darkcard rounded-xl border p-3 space-y-2">
-        <div class="flex items-center justify-between pb-1.5 border-b text-[11px]">
-          <span class="font-bold text-slate-800 dark:text-slate-200">Step Stream (<span id="unifiedTotalBadge">0</span> Steps)</span>
-        </div>
         <div id="unifiedStepsBoxContainer" class="space-y-1.5 max-h-[640px] overflow-y-auto custom-scroll pr-1"></div>
       </div>
     </div>
@@ -303,13 +265,6 @@
             <option value="Delayed">Delayed</option>
           </select>
         </div>
-        <div id="vendorFieldGroup" class="hidden bg-amber-50/60 p-2 rounded-xl border border-amber-200 space-y-1.5">
-          <span class="text-[9px] font-extrabold text-amber-800 uppercase">Vendor & PO Details</span>
-          <div class="grid grid-cols-2 gap-1.5">
-            <input type="text" id="editVendorName" placeholder="Vendor Name" class="w-full border rounded px-1.5 py-0.5 text-xs">
-            <input type="text" id="editPoNumber" placeholder="PO Number" class="w-full border rounded px-1.5 py-0.5 text-xs font-mono">
-          </div>
-        </div>
         <div>
           <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Remarks</label>
           <textarea id="editRemarks" rows="2" class="w-full border rounded-lg p-1.5 text-xs outline-none dark:bg-slate-800 dark:text-white" placeholder="Notes..."></textarea>
@@ -320,10 +275,36 @@
     </div>
   </div>
 
+  <!-- Modal: Add/Edit Site -->
+  <div id="siteModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
+    <div class="bg-white dark:bg-darkcard rounded-2xl max-w-sm w-full p-4 shadow-2xl border relative">
+      <button onclick="toggleModal('siteModal', false)" class="absolute right-3 top-3 text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
+      <h3 class="text-xs font-bold text-slate-900 dark:text-white mb-2" id="modalSiteTitle">Add Site</h3>
+      <form onsubmit="event.preventDefault(); saveSiteData();" class="space-y-2">
+        <input type="hidden" id="editSiteId">
+        <input type="text" id="formSiteName" required placeholder="Site Name" class="w-full border rounded px-2 py-1 text-xs">
+        <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-1 rounded text-xs">Save Site</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Create Task -->
+  <div id="createTaskModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
+    <div class="bg-white dark:bg-darkcard rounded-2xl max-w-md w-full p-4 shadow-2xl border relative">
+      <button onclick="toggleModal('createTaskModal', false)" class="absolute right-3 top-3 text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
+      <h3 class="text-xs font-bold text-slate-900 dark:text-white mb-2">Create Task</h3>
+      <form onsubmit="event.preventDefault(); submitFullTaskPackage();" class="space-y-2">
+        <input type="text" id="mProject" required placeholder="Site Name" class="w-full border rounded px-2 py-1 text-xs">
+        <input type="text" id="mItemName" required placeholder="Task Name" class="w-full border rounded px-2 py-1 text-xs">
+        <input type="date" id="mStartDate" required class="w-full border rounded px-2 py-1 text-xs">
+        <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-1 rounded text-xs">Create</button>
+      </form>
+    </div>
+  </div>
+
   <script>
     let activeDoers = [];
     let allData = [];
-    let allVendors = [];
     let allSitesList = [];
 
     const API_BASE = window.location.origin.startsWith('file:') 
@@ -367,34 +348,6 @@
     }
 
     function onDoerUserChange() { applyFilters(); }
-
-    // Column Resizing Logic Script
-    document.addEventListener('DOMContentLoaded', function () {
-      const table = document.getElementById('pmsGridTable');
-      if (!table) return;
-      const cols = table.querySelectorAll('th');
-      cols.forEach((col) => {
-        const resizer = col.querySelector('.resizer');
-        if (!resizer) return;
-        let x = 0, w = 0;
-        resizer.addEventListener('mousedown', function (e) {
-          x = e.clientX;
-          w = col.offsetWidth;
-          resizer.classList.add('resizing');
-          document.addEventListener('mousemove', mouseMove);
-          document.addEventListener('mouseup', mouseUp);
-        });
-        function mouseMove(e) {
-          const dx = e.clientX - x;
-          col.style.width = `${w + dx}px`;
-        }
-        function mouseUp() {
-          resizer.classList.remove('resizing');
-          document.removeEventListener('mousemove', mouseMove);
-          document.removeEventListener('mouseup', mouseUp);
-        }
-      });
-    });
 
     window.collapsedTasks = {};
     function toggleTaskCollapse(uniqueId) {
@@ -453,46 +406,30 @@
               statusLabel = '🚨 Overdue';
             }
 
-            const v = s.vendorDetails || {};
-            const vName = (v.vendorName || '').replace(/'/g, "\\'");
-            const vPerson = (v.contactPerson || '').replace(/'/g, "\\'");
-            const vPhone = (v.phone || '').replace(/'/g, "\\'");
-            const poNum = (v.poNumber || '').replace(/'/g, "\\'");
-
             html += `
               <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition align-top">
                 <td class="py-3 px-3 text-slate-400 font-mono text-[10px]">${item.uniqueId}</td>
                 <td class="py-3 px-3 text-slate-500 dark:text-slate-400 text-[11px] whitespace-normal break-words">${item.mainItemName}</td>
                 <td class="py-3 px-2 text-center font-mono font-bold text-slate-800 dark:text-slate-200 bg-slate-50/50">${s.wbsNo}</td>
-                
-                <td class="py-3 px-3 text-slate-800 dark:text-slate-200 font-medium whitespace-normal break-words">
-                  <div>${s.stepTitle}</div>
-                  ${v.vendorName ? `<div class="text-[10px] text-indigo-600 font-semibold mt-0.5">🏢 Vendor: ${v.vendorName}</div>` : ''}
-                </td>
-
+                <td class="py-3 px-3 text-slate-800 dark:text-slate-200 font-medium whitespace-normal break-words"><div>${s.stepTitle}</div></td>
                 <td class="py-3 px-3 whitespace-normal break-words">
                   <div class="font-bold text-slate-800 dark:text-slate-200">${s.assignedName || 'Unassigned'}</div>
                   <div class="text-[9px] text-slate-400 font-mono">${s.assignedEmail || ''}</div>
                 </td>
-
                 <td class="py-3 px-3 text-slate-600 dark:text-slate-400 text-[10px] font-mono whitespace-nowrap">
                   ${new Date(s.plannedStartDate).toLocaleDateString('en-GB')} ➔ ${new Date(s.plannedEndDate).toLocaleDateString('en-GB')} (${s.durationDays}d)
                 </td>
-
                 <td class="py-3 px-3 text-center">
                   <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono border ${timer.textClass}">
                     ${timer.label}
                   </span>
                 </td>
-
                 <td class="py-3 px-3 text-slate-600 dark:text-slate-300 text-[11px] whitespace-normal break-words italic">
                   ${s.remarks ? `💬 ${s.remarks}` : '<span class="text-slate-300">-</span>'}
                 </td>
-
                 <td class="py-3 px-3 whitespace-nowrap">
                   <span class="px-2 py-0.5 text-[9px] font-bold rounded ${statusBadgeClass}">${statusLabel}</span>
                 </td>
-
                 <td class="py-3 px-3 text-center whitespace-nowrap">
                   <button onclick="openDoerModal('${item.uniqueId}', '${s._id}', '${s.stepTitle.replace(/'/g, "\\'")}', '${s.status}')" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white dark:bg-darkcard hover:bg-slate-50 text-slate-700 dark:text-slate-200 rounded-full text-[11px] font-bold shadow-xs border transition">
                     <span class="text-amber-500">⚡</span> Actions ▾
@@ -575,6 +512,25 @@
       }
     }
 
+    async function loadSitesList() {
+      const container = document.getElementById('sitesCardsContainer');
+      const res = await fetch(`${API_BASE}/api/sites`);
+      const json = await res.json();
+      if (json.success) {
+        allSitesList = json.data;
+        let html = '';
+        allSitesList.forEach(s => {
+          html += `
+            <div class="bg-white dark:bg-darkcard p-3 rounded-xl border shadow-2xs space-y-1">
+              <h4 class="font-bold text-indigo-600 text-xs">📍 ${s.siteName}</h4>
+              <p class="text-[10px] text-slate-500 font-mono">Company: ${s.companyName || 'MAHESHWARI DISTRIBUTORS'}</p>
+            </div>
+          `;
+        });
+        container.innerHTML = html || '<p class="text-xs text-slate-400">No sites found.</p>';
+      }
+    }
+
     async function loadDoersList() {
       const res = await fetch(`${API_BASE}/api/doers`);
       const json = await res.json();
@@ -598,17 +554,59 @@
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ siteName: name.trim() })
-        }).then(() => renderProjectFilterDropdown());
+        }).then(() => { renderProjectFilterDropdown(); loadSitesList(); });
       }
     }
 
-    function exportToCSV() { loadDashboardData(); }
+    function openSiteModal() { toggleModal('siteModal', true); }
+    async function saveSiteData() {
+      const name = document.getElementById('formSiteName').value;
+      if (name) {
+        await fetch(`${API_BASE}/api/sites`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ siteName: name.trim() })
+        });
+        toggleModal('siteModal', false);
+        loadSitesList();
+        renderProjectFilterDropdown();
+      }
+    }
+
+    function openCreateModal() { toggleModal('createTaskModal', true); }
+    async function submitFullTaskPackage() {
+      const p = document.getElementById('mProject').value;
+      const item = document.getElementById('mItemName').value;
+      const date = document.getElementById('mStartDate').value;
+      if (!p || !item || !date) return;
+      const steps = [
+        { wbsNo: '1', stepTitle: 'Complete Technicals', assignedEmail: 'heeralal@domain.com', assignedName: 'Heera Lal Ji', durationDays: 2 },
+        { wbsNo: '2', stepTitle: 'Commercial Offer', assignedEmail: 'ronak@domain.com', assignedName: 'Ronak Ji', durationDays: 2 }
+      ];
+      await fetch(`${API_BASE}/api/pms/create-custom-package`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ projectName: p, mainItemName: item, pmsType: 'SUPPLY', startDate: date, totalQty: 1, steps })
+      });
+      toggleModal('createTaskModal', false);
+      loadDashboardData();
+    }
+
+    function openAddMemberModal() {}
+    function renderTeamView() {
+      const container = document.getElementById('teamCardsContainer');
+      let html = '';
+      activeDoers.forEach(d => {
+        html += `<div class="bg-white dark:bg-darkcard p-3 rounded-xl border"><h4 class="font-bold text-xs">${d.name}</h4><p class="text-[10px] text-slate-400">${d.email}</p></div>`;
+      });
+      container.innerHTML = html;
+    }
     function renderVendorsView() {}
-    function loadSitesList() {}
-    function renderTeamView() {}
+    function exportToCSV() { loadDashboardData(); }
 
     initTheme();
     loadDoersList();
+    loadSitesList();
     loadDashboardData();
     lucide.createIcons();
   </script>
