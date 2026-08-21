@@ -1,51 +1,84 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PMS Central Hub | Smart Task & Step Manager</title>
+  <title>PMS Central Hub | Operations Command Center</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            darkbg: '#0b0f19',
+            darkcard: '#151d30',
+            darkborder: '#232f48'
+          }
+        }
+      }
+    }
+  </script>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
-    body { font-family: 'Plus Jakarta Sans', sans-serif; }
-    .custom-scroll::-webkit-scrollbar { width: 6px; height: 6px; }
-    .custom-scroll::-webkit-scrollbar-track { background: #f8fafc; }
+    body { font-family: 'Plus Jakarta Sans', sans-serif; transition: background-color 0.2s ease, color 0.2s ease; }
+    .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
+    .custom-scroll::-webkit-scrollbar-track { background: transparent; }
     .custom-scroll::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .dark .custom-scroll::-webkit-scrollbar-thumb { background: #475569; }
+    .nav-capsule-btn.active { color: #4f46e5; font-weight: 800; }
+    .dark .nav-capsule-btn.active { color: #818cf8; }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col">
+<body class="bg-slate-100 text-slate-800 dark:bg-darkbg dark:text-slate-100 antialiased min-h-screen flex flex-col pb-24">
 
-  <!-- Navigation Header -->
-  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+  <!-- Header -->
+  <header class="bg-white dark:bg-darkcard border-b border-slate-200 dark:border-darkborder sticky top-0 z-30 shadow-xs">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex justify-between h-16 items-center">
+      <div class="flex justify-between h-14 items-center">
         
+        <!-- Logo & Title Section (Direct Vector SVG) -->
         <div class="flex items-center gap-3">
-          <div class="bg-indigo-600 p-2.5 rounded-xl text-white shadow-md shadow-indigo-100 flex items-center justify-center">
-            <i data-lucide="layers" class="w-5 h-5"></i>
+          <button onclick="toggleSideMenu(true)" class="p-2 rounded-xl border border-slate-200 dark:border-darkborder hover:bg-slate-100 dark:hover:bg-slate-800 transition text-slate-700 dark:text-slate-200 shadow-xs flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="4" x2="20" y1="12" y2="12"></line>
+              <line x1="4" x2="20" y1="6" y2="6"></line>
+              <line x1="4" x2="20" y1="18" y2="18"></line>
+            </svg>
+          </button>
+
+          <div class="bg-indigo-600 dark:bg-indigo-500 w-9 h-9 rounded-xl text-white shadow-md flex items-center justify-center shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+              <polyline points="2 17 12 22 22 17"></polyline>
+              <polyline points="2 12 12 17 22 12"></polyline>
+            </svg>
           </div>
-          <div>
-            <h1 class="text-base font-bold text-slate-900 leading-tight">PMS Central Hub</h1>
-            <p class="text-[11px] text-slate-400 font-medium">Auto Sequential Dates & Doer Workflow</p>
+
+          <div class="flex flex-col justify-center">
+            <h1 class="text-sm font-extrabold text-slate-900 dark:text-white leading-none tracking-tight">PMS Central Hub</h1>
+            <p class="text-[10px] text-slate-400 font-medium mt-1">Execution, Vendor PO & Stopwatch Tracking</p>
           </div>
         </div>
 
-        <div class="flex items-center gap-3">
-          <!-- Role Selector -->
-          <div class="flex items-center gap-2 bg-slate-100 p-1.5 rounded-xl border border-slate-200">
-            <i data-lucide="user-check" class="w-4 h-4 text-slate-500 pl-1"></i>
-            <select id="userRole" class="bg-transparent text-xs font-bold text-slate-700 outline-none cursor-pointer" onchange="handleRoleSwitch()">
-              <option value="ADMIN">Super Admin (All View)</option>
-              <option value="DOER">Doer Portal (My Tasks)</option>
+        <!-- Right Controls -->
+        <div class="flex items-center gap-2">
+          <!-- Role View Selector -->
+          <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg border border-slate-200 dark:border-darkborder">
+            <select id="userRole" class="bg-transparent text-xs font-bold text-slate-700 dark:text-slate-200 outline-none cursor-pointer" onchange="handleRoleSwitch()">
+              <option value="ADMIN">Super Admin</option>
+              <option value="DOER">Doer Portal</option>
             </select>
-            <input type="email" id="doerEmail" class="hidden bg-white text-xs border border-slate-300 rounded-lg px-2.5 py-1 outline-none font-medium w-48" placeholder="Enter doer email" value="heeralal@domain.com" oninput="loadDashboardData()">
+            <select id="doerDropdownSelect" class="hidden bg-white dark:bg-darkcard text-xs border border-slate-300 dark:border-darkborder rounded px-1.5 py-0.5 outline-none font-semibold text-indigo-900 dark:text-indigo-300" onchange="loadDashboardData()">
+              <option value="">Select Doer...</option>
+            </select>
           </div>
 
-          <!-- Create Task & Steps Button -->
-          <button onclick="openCreateModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-md shadow-indigo-100 flex items-center gap-1.5 transition">
-            <i data-lucide="plus-circle" class="w-4 h-4"></i>
-            <span>+ Create Task & Steps</span>
+          <!-- Create Task Button -->
+          <button onclick="openCreateModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-xs flex items-center gap-1 transition">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+            <span>+ Create Task</span>
           </button>
         </div>
 
@@ -53,247 +86,735 @@
     </div>
   </header>
 
-  <!-- Main View -->
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-1">
+  <!-- Main View Area -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 w-full flex-1">
     
-    <!-- Top Stats -->
-    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-6">
-      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-        <div>
-          <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Tasks</p>
-          <h3 class="text-2xl font-extrabold text-slate-900 mt-0.5" id="statTasks">0</h3>
+    <!-- VIEW 1: ACTIVE PMS EXECUTION BOARD (Default) -->
+    <div id="viewPmsBoard" class="view-section">
+      <div class="bg-white dark:bg-darkcard rounded-xl border border-slate-200 dark:border-darkborder shadow-xs p-2.5 mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex flex-wrap items-center gap-2 flex-1 min-w-[280px]">
+          <div class="flex items-center gap-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkborder rounded-lg px-2 py-1 min-w-[160px]">
+            <span class="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase">Site:</span>
+            <select id="filterByProject" onchange="applyFilters()" class="w-full bg-transparent text-xs font-bold text-slate-800 dark:text-slate-200 outline-none cursor-pointer">
+              <option value="ALL">All Projects / Sites</option>
+            </select>
+          </div>
+
+          <div class="flex items-center gap-1 bg-indigo-50/70 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 rounded-lg px-2 py-1 min-w-[160px]">
+            <span class="text-[10px] font-bold text-indigo-700 dark:text-indigo-300 uppercase">Doer:</span>
+            <select id="filterByDoer" onchange="applyFilters()" class="w-full bg-transparent text-xs font-bold text-indigo-950 dark:text-indigo-200 outline-none cursor-pointer">
+              <option value="ALL">All Team Members</option>
+            </select>
+          </div>
         </div>
-        <div class="bg-indigo-50 p-2.5 rounded-xl text-indigo-600"><i data-lucide="package" class="w-5 h-5"></i></div>
+
+        <div class="flex items-center gap-1.5">
+          <input type="text" id="searchInput" placeholder="Search task, step, WBS..." oninput="applyFilters()" class="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkborder rounded-lg px-2.5 py-1 text-xs outline-none focus:border-indigo-500 dark:text-slate-100 w-44 font-medium">
+
+          <button onclick="exportToCSV()" class="bg-white dark:bg-darkcard hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200 dark:border-darkborder rounded-lg px-2.5 py-1 text-xs font-bold flex items-center gap-1 shadow-xs transition">
+            <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"></i>
+            <span>CSV</span>
+          </button>
+
+          <button onclick="loadDashboardData()" class="p-1.5 text-slate-500 dark:text-slate-400 hover:text-indigo-600 border border-slate-200 dark:border-darkborder rounded-lg hover:bg-white dark:hover:bg-slate-800 transition" title="Refresh">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
       </div>
-      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-        <div>
-          <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Total Sub-Steps</p>
-          <h3 class="text-2xl font-extrabold text-blue-600 mt-0.5" id="statSteps">0</h3>
+
+      <!-- Grid Table -->
+      <div class="bg-white dark:bg-darkcard rounded-xl border border-slate-200 dark:border-darkborder shadow-xs overflow-hidden">
+        <div class="overflow-x-auto max-h-[680px] custom-scroll">
+          <table class="w-full text-left border-collapse text-xs">
+            <thead class="bg-slate-100 dark:bg-slate-800/90 text-slate-700 dark:text-slate-300 uppercase font-bold sticky top-0 z-10 border-b border-slate-200 dark:border-darkborder text-[10px] tracking-wider">
+              <tr>
+                <th class="py-2.5 px-3">Task ID</th>
+                <th class="py-2.5 px-3 min-w-[170px]">Main Task</th>
+                <th class="py-2.5 px-1.5 text-center">WBS</th>
+                <th class="py-2.5 px-3 min-w-[200px]">Step Title / Action</th>
+                <th class="py-2.5 px-2.5 min-w-[150px]">Owner & Done Time</th>
+                <th class="py-2.5 px-2.5 min-w-[130px]">Start – End</th>
+                <th class="py-2.5 px-3 min-w-[140px] text-center bg-indigo-50/50 dark:bg-indigo-950/40 text-indigo-900 dark:text-indigo-300 border-x border-indigo-100 dark:border-darkborder">⏱️ Stopwatch</th>
+                <th class="py-2.5 px-1.5 text-center">Days</th>
+                <th class="py-2.5 px-1.5 text-center">Qty</th>
+                <th class="py-2.5 px-2 text-center">Proof</th>
+                <th class="py-2.5 px-2.5">Status</th>
+                <th class="py-2.5 px-2 text-center min-w-[70px]">Action</th>
+              </tr>
+            </thead>
+            <tbody id="tableRows" class="divide-y divide-slate-100 dark:divide-darkborder">
+              <tr><td colspan="12" class="text-center py-8 text-slate-400">Loading database records...</td></tr>
+            </tbody>
+          </table>
         </div>
-        <div class="bg-blue-50 p-2.5 rounded-xl text-blue-600"><i data-lucide="list-ordered" class="w-5 h-5"></i></div>
-      </div>
-      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-        <div>
-          <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Pending Action</p>
-          <h3 class="text-2xl font-extrabold text-amber-500 mt-0.5" id="statPending">0</h3>
-        </div>
-        <div class="bg-amber-50 p-2.5 rounded-xl text-amber-500"><i data-lucide="clock" class="w-5 h-5"></i></div>
-      </div>
-      <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex items-center justify-between">
-        <div>
-          <p class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Completed Steps</p>
-          <h3 class="text-2xl font-extrabold text-emerald-600 mt-0.5" id="statCompleted">0</h3>
-        </div>
-        <div class="bg-emerald-50 p-2.5 rounded-xl text-emerald-600"><i data-lucide="check-circle" class="w-5 h-5"></i></div>
       </div>
     </div>
 
-    <!-- Master Table View -->
-    <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden flex flex-col">
-      <div class="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/60">
+    <!-- VIEW 2: EXECUTION HISTORY -->
+    <div id="viewHistory" class="view-section hidden space-y-3">
+      <div class="bg-white dark:bg-darkcard p-3 rounded-xl border border-slate-200 dark:border-darkborder flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
-          <h2 class="font-bold text-slate-900 text-sm" id="tableTitle">Super Admin Timeline (All Tasks & Steps)</h2>
+          <span class="text-lg">📜</span>
+          <h2 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Completed PMS Execution History</h2>
         </div>
-        <div class="flex items-center gap-2">
-          <input type="text" id="searchInput" placeholder="Search task, step, WBS, owner..." oninput="filterTable()" class="bg-white border border-slate-200 rounded-xl px-3 py-1.5 text-xs outline-none focus:border-indigo-500 w-64">
-          <button onclick="loadDashboardData()" class="p-1.5 text-slate-500 hover:text-indigo-600 border border-slate-200 rounded-xl hover:bg-white transition"><i data-lucide="refresh-cw" class="w-4 h-4"></i></button>
-        </div>
+        <span id="historyTotalCountBadge" class="bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 px-2.5 py-0.5 rounded-full text-xs font-bold font-mono">0 Done Steps</span>
       </div>
+      <div id="historyCardsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+    </div>
 
-      <div class="overflow-x-auto max-h-[640px] custom-scroll">
-        <table class="w-full text-left border-collapse text-xs">
-          <thead class="bg-slate-100/90 text-slate-700 uppercase font-bold sticky top-0 z-10 border-b border-slate-200 text-[11px] tracking-wide">
-            <tr>
-              <th class="py-3 px-3">Task ID</th>
-              <th class="py-3 px-3 min-w-[200px]">Main Task</th>
-              <th class="py-3 px-2 text-center">WBS</th>
-              <th class="py-3 px-4 min-w-[220px]">Step Title / Action</th>
-              <th class="py-3 px-3">Owner (Doer)</th>
-              <th class="py-3 px-3 min-w-[160px]">Start – End Date</th>
-              <th class="py-3 px-2 text-center">Days</th>
-              <th class="py-3 px-2 text-center">Target Qty</th>
-              <th class="py-3 px-2 text-center">Recv Qty</th>
-              <th class="py-3 px-3">Attachment</th>
-              <th class="py-3 px-3">Status</th>
-              <th class="py-3 px-3 text-center min-w-[90px]">Action</th>
-            </tr>
-          </thead>
-          <tbody id="tableRows" class="divide-y divide-slate-100">
-            <tr><td colspan="12" class="text-center py-10 text-slate-400">Loading database records...</td></tr>
-          </tbody>
-        </table>
+    <!-- VIEW 3: VENDORS DIRECTORY -->
+    <div id="viewVendors" class="view-section hidden space-y-3">
+      <div class="bg-white dark:bg-darkcard p-3 rounded-xl border border-slate-200 dark:border-darkborder flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-lg">🏢</span>
+          <h2 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Vendor & Purchase Order (PO) Directory</h2>
+        </div>
+        <span id="vendorTotalCountBadge" class="bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 px-2.5 py-0.5 rounded-full text-xs font-bold font-mono">0 Vendors</span>
       </div>
+      <div id="vendorCardsContainer" class="grid grid-cols-1 md:grid-cols-3 gap-3"></div>
+    </div>
+
+    <!-- VIEW 4: TEAM DIRECTORY -->
+    <div id="viewTeam" class="view-section hidden space-y-3">
+      <div class="bg-white dark:bg-darkcard p-3 rounded-xl border border-slate-200 dark:border-darkborder flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="text-lg">👥</span>
+          <h2 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Team & Doer Master Directory</h2>
+        </div>
+        <button onclick="toggleSideMenu(true)" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-1 rounded-lg transition">+ Add Member</button>
+      </div>
+      <div id="teamCardsContainer" class="grid grid-cols-1 md:grid-cols-3 gap-3"></div>
     </div>
 
   </main>
 
-  <!-- POPUP MODAL: Smart Step Builder with Auto Dates & Auto Doer -->
-  <div id="createTaskModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-4xl w-full p-6 shadow-2xl border border-slate-100 relative max-h-[92vh] flex flex-col">
+  <!-- FLOATING BOTTOM CAPSULE NAVIGATION BAR -->
+  <div class="fixed bottom-4 left-1/2 -translate-x-1/2 z-40">
+    <div class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded-full shadow-2xl px-6 py-2 flex items-center gap-8">
       
-      <!-- Modal Header -->
-      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
-        <div class="flex items-center gap-2">
-          <div class="bg-indigo-50 p-2 rounded-xl text-indigo-600">
-            <i data-lucide="plus-square" class="w-5 h-5"></i>
-          </div>
-          <div>
-            <h3 class="text-base font-bold text-slate-900">Create Main Task & Configure Steps</h3>
-            <p class="text-xs text-slate-400">Auto sequential date calculation & instant Doer selection</p>
-          </div>
-        </div>
-        <button onclick="toggleModal('createTaskModal', false)" class="text-slate-400 hover:text-slate-700 p-1"><i data-lucide="x" class="w-5 h-5"></i></button>
+      <button onclick="switchTab('viewPmsBoard')" id="tabBtn-viewPmsBoard" class="nav-capsule-btn active flex flex-col items-center gap-0.5 text-xs text-slate-500 hover:text-indigo-600 transition">
+        <span class="text-sm">📦</span>
+        <span class="text-[11px]">Tasks</span>
+      </button>
+
+      <button onclick="switchTab('viewHistory')" id="tabBtn-viewHistory" class="nav-capsule-btn flex flex-col items-center gap-0.5 text-xs text-slate-500 hover:text-indigo-600 transition">
+        <span class="text-sm">📋</span>
+        <span class="text-[11px]">History</span>
+      </button>
+
+      <button onclick="switchTab('viewVendors')" id="tabBtn-viewVendors" class="nav-capsule-btn flex flex-col items-center gap-0.5 text-xs text-slate-500 hover:text-indigo-600 transition">
+        <span class="text-sm">🏢</span>
+        <span class="text-[11px]">Vendors</span>
+      </button>
+
+      <button onclick="switchTab('viewTeam')" id="tabBtn-viewTeam" class="nav-capsule-btn flex flex-col items-center gap-0.5 text-xs text-slate-500 hover:text-indigo-600 transition">
+        <span class="text-sm">👥</span>
+        <span class="text-[11px]">Team</span>
+      </button>
+
+    </div>
+  </div>
+
+  <!-- LEFT NAVIGATION DRAWER -->
+  <div id="sideMenuDrawer" class="fixed inset-0 z-50 hidden">
+    <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs transition-opacity" onclick="toggleSideMenu(false)"></div>
+    <div class="fixed left-0 top-0 bottom-0 max-w-xs w-full bg-white dark:bg-darkcard shadow-2xl z-50 flex flex-col p-5 border-r border-slate-200 dark:border-darkborder animate-in slide-in-from-left duration-150">
+      
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-darkborder">
+        <span class="text-[11px] font-extrabold text-slate-400 uppercase tracking-wider">Navigation Menu</span>
+        <button onclick="toggleSideMenu(false)" class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"><i data-lucide="x" class="w-4 h-4"></i></button>
       </div>
 
-      <!-- Form Body -->
-      <form onsubmit="event.preventDefault(); submitFullTaskPackage();" class="overflow-y-auto custom-scroll py-4 space-y-4 flex-1 pr-1">
-        
-        <!-- Section 1: Main Task Information -->
-        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200/80 space-y-3">
-          <span class="text-xs font-extrabold text-indigo-700 uppercase tracking-wider flex items-center gap-1.5">
-            <i data-lucide="package" class="w-4 h-4"></i> Step 1: Main Task Details
-          </span>
-          
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div class="py-3 space-y-1.5">
+        <button onclick="toggleSideMenu(false); switchTab('viewPmsBoard')" class="w-full text-left px-3 py-2 rounded-xl text-slate-700 dark:text-slate-200 font-bold text-xs flex items-center gap-2.5 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+          <span>📦</span>
+          <span>PMS Execution Board</span>
+        </button>
+
+        <button onclick="toggleSideMenu(false); switchTab('viewHistory')" class="w-full text-left px-3 py-2 rounded-xl text-slate-700 dark:text-slate-200 font-bold text-xs flex items-center gap-2.5 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+          <span>📋</span>
+          <span>Supplier & Step History</span>
+        </button>
+
+        <button onclick="toggleSideMenu(false); switchTab('viewVendors')" class="w-full text-left px-3 py-2 rounded-xl text-slate-700 dark:text-slate-200 font-bold text-xs flex items-center gap-2.5 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+          <span>🏢</span>
+          <span>Vendors Directory & POs</span>
+        </button>
+
+        <button onclick="toggleSideMenu(false); switchTab('viewTeam')" class="w-full text-left px-3 py-2 rounded-xl text-slate-700 dark:text-slate-200 font-bold text-xs flex items-center gap-2.5 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+          <span>👥</span>
+          <span>Team Directory</span>
+        </button>
+      </div>
+
+      <div class="mt-auto pt-4 border-t border-slate-100 dark:border-darkborder space-y-3">
+        <span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider block">Preferences & Settings</span>
+
+        <div>
+          <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-1">🌐 Language:</label>
+          <select class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkborder rounded-lg px-2.5 py-1 text-xs font-semibold dark:text-white outline-none">
+            <option value="en">English</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-1">🎨 Appearance:</label>
+          <button onclick="toggleDarkMode()" class="w-full bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-darkborder rounded-lg py-1.5 text-xs font-bold text-slate-700 dark:text-slate-200 flex items-center justify-center gap-1.5 transition">
+            <span id="drawerThemeIcon">🌙</span>
+            <span id="drawerThemeLabel">Toggle Dark Mode</span>
+          </button>
+        </div>
+
+        <form onsubmit="event.preventDefault(); addNewDoerFromDrawer();" class="space-y-1.5 bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-200 dark:border-darkborder">
+          <span class="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase">+ Quick Add Doer</span>
+          <input type="text" id="drwName" required placeholder="Name" class="w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded px-2 py-0.5 text-xs dark:text-white">
+          <input type="email" id="drwEmail" required placeholder="Email" class="w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded px-2 py-0.5 text-xs dark:text-white font-mono">
+          <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-1 rounded text-xs">+ Save</button>
+        </form>
+
+        <div class="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold flex items-center gap-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> MongoDB Live Connected
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Modal: Create Task & Steps -->
+  <div id="createTaskModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-darkcard rounded-2xl max-w-4xl w-full p-5 shadow-2xl border border-slate-100 dark:border-darkborder relative max-h-[92vh] flex flex-col">
+      
+      <div class="flex items-center justify-between pb-2.5 border-b border-slate-100 dark:border-darkborder">
+        <div class="flex items-center gap-2">
+          <div class="bg-indigo-50 dark:bg-indigo-950 p-1.5 rounded-lg text-indigo-600 dark:text-indigo-400">
+            <i data-lucide="plus-square" class="w-4 h-4"></i>
+          </div>
+          <h3 class="text-sm font-bold text-slate-900 dark:text-white">Create Main Task & Steps</h3>
+        </div>
+        <button onclick="toggleModal('createTaskModal', false)" class="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+
+      <form onsubmit="event.preventDefault(); submitFullTaskPackage();" class="overflow-y-auto custom-scroll py-3 space-y-3 flex-1 pr-1">
+        <div class="bg-slate-50 dark:bg-slate-800/80 p-3 rounded-xl border border-slate-200 dark:border-darkborder space-y-2.5">
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-2.5">
             <div>
-              <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Project Name</label>
-              <input type="text" id="mProject" required class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-indigo-500 font-medium" value="Substation & Plant Modernization">
+              <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-0.5">Site / Project Name</label>
+              <input type="text" id="mProject" required list="projectSuggestions" class="w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-indigo-500 font-bold dark:text-white" value="EV Charging_CLZS">
+              <datalist id="projectSuggestions"></datalist>
             </div>
             <div>
-              <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Main Task / Item Name</label>
-              <input type="text" id="mItemName" required class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none focus:border-indigo-500 font-bold" placeholder="e.g. Supply of 11 kV Extension Panel">
+              <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-0.5">Main Task / Item Name</label>
+              <input type="text" id="mItemName" required class="w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-indigo-500 font-bold dark:text-white" placeholder="e.g. Supply of 11 kV Extension Panel">
             </div>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-2.5">
             <div>
-              <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Workflow Type</label>
-              <select id="mType" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold outline-none">
+              <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-0.5">Category</label>
+              <select id="mType" class="w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded-lg px-2 py-1.5 text-xs font-semibold outline-none dark:text-white">
                 <option value="SUPPLY">SUPPLY PMS</option>
                 <option value="SERVICE">SERVICE PMS</option>
               </select>
             </div>
             <div>
-              <label class="block text-[11px] font-bold text-indigo-700 uppercase mb-1">📅 First Step Start Date</label>
-              <input type="date" id="mStartDate" required onchange="recalculateAllStepDates()" class="w-full bg-white border-2 border-indigo-200 rounded-xl px-3 py-2 text-xs font-bold text-indigo-900 outline-none">
+              <label class="block text-[10px] font-bold text-indigo-700 dark:text-indigo-400 uppercase mb-0.5">📅 First Step Start Date</label>
+              <input type="date" id="mStartDate" required onchange="recalculateAllStepDates()" class="w-full bg-white dark:bg-darkcard border-2 border-indigo-200 dark:border-indigo-800 rounded-lg px-2 py-1 text-xs font-bold text-indigo-900 dark:text-indigo-300 outline-none">
             </div>
             <div>
-              <label class="block text-[11px] font-bold text-slate-600 uppercase mb-1">Target Total Qty</label>
-              <input type="number" id="mQty" required value="1" min="1" class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-mono outline-none">
+              <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-0.5">Target Qty</label>
+              <input type="number" id="mQty" required value="1" min="1" class="w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded-lg px-2 py-1 text-xs font-mono outline-none dark:text-white">
             </div>
           </div>
         </div>
 
-        <!-- Section 2: Step Generator Wizard Bar -->
-        <div class="bg-indigo-50/60 p-3.5 rounded-xl border border-indigo-100 flex flex-wrap items-center justify-between gap-3">
+        <div class="bg-indigo-50/60 dark:bg-indigo-950/40 p-2.5 rounded-xl border border-indigo-100 dark:border-indigo-900 flex items-center justify-between">
           <div class="flex items-center gap-2">
-            <span class="text-xs font-bold text-slate-800">How many steps do you need?</span>
-            <input type="number" id="quickStepCount" min="1" max="30" value="3" class="w-16 bg-white border border-indigo-300 rounded-lg px-2 py-1 text-xs font-bold text-center text-indigo-900 outline-none">
-            <button type="button" onclick="generateBatchSteps(document.getElementById('quickStepCount').value)" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-3 py-1.5 rounded-lg shadow-xs transition">
-              Generate Step Rows
+            <span class="text-xs font-bold text-slate-800 dark:text-slate-200">Total Steps:</span>
+            <input type="number" id="quickStepCount" min="1" max="30" value="5" class="w-14 bg-white dark:bg-darkcard border border-indigo-300 dark:border-indigo-800 rounded px-1.5 py-0.5 text-xs font-bold text-center text-indigo-900 dark:text-indigo-300 outline-none">
+            <button type="button" onclick="generateBatchSteps(document.getElementById('quickStepCount').value)" class="bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold px-2.5 py-1 rounded transition">
+              Generate Rows
             </button>
           </div>
-          <button type="button" onclick="addSingleStepRow()" class="text-indigo-700 hover:text-indigo-900 text-xs font-bold flex items-center gap-1">
-            <i data-lucide="plus" class="w-4 h-4"></i> + Add 1 Step
+          <button type="button" onclick="addSingleStepRow()" class="text-indigo-700 dark:text-indigo-400 hover:underline text-xs font-bold flex items-center gap-1">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i> + Add 1 Step
           </button>
         </div>
 
-        <!-- Section 3: Step Rows Container -->
-        <div class="space-y-2.5">
-          <div id="stepsContainer" class="space-y-2.5"></div>
-        </div>
+        <div id="stepsContainer" class="space-y-2"></div>
 
-        <div id="formModalAlert"></div>
-
-        <!-- Footer Actions -->
-        <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
-          <button type="button" onclick="toggleModal('createTaskModal', false)" class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition">Cancel</button>
-          <button type="submit" id="btnSaveFullTask" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-2.5 rounded-xl shadow-md transition text-xs flex items-center gap-1.5">
-            <i data-lucide="check" class="w-4 h-4"></i>
-            <span>Save Complete Task in MongoDB</span>
+        <div class="pt-2.5 border-t border-slate-100 dark:border-darkborder flex items-center justify-end gap-2">
+          <button type="button" onclick="toggleModal('createTaskModal', false)" class="px-3 py-1.5 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition">Cancel</button>
+          <button type="submit" id="btnSaveFullTask" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 py-1.5 rounded-lg shadow-sm transition text-xs flex items-center gap-1">
+            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+            <span>Save in DB</span>
           </button>
         </div>
-
       </form>
     </div>
   </div>
 
-  <!-- Doer Edit Modal -->
+  <!-- Doer Edit Execution Modal -->
   <div id="doerModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-100 relative">
-      <button onclick="toggleModal('doerModal', false)" class="absolute right-4 top-4 text-slate-400 hover:text-slate-700"><i data-lucide="x" class="w-5 h-5"></i></button>
+    <div class="bg-white dark:bg-darkcard rounded-2xl max-w-md w-full p-5 shadow-2xl border border-slate-100 dark:border-darkborder relative">
+      <button onclick="toggleModal('doerModal', false)" class="absolute right-4 top-4 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200"><i data-lucide="x" class="w-4 h-4"></i></button>
       
-      <div class="flex items-center gap-2 mb-3">
-        <i data-lucide="edit-3" class="w-5 h-5 text-indigo-600"></i>
-        <h3 class="text-base font-bold text-slate-900">Update Step Execution</h3>
+      <div class="flex items-center gap-2 mb-2.5">
+        <i data-lucide="edit-3" class="w-4 h-4 text-indigo-600 dark:text-indigo-400"></i>
+        <h3 class="text-sm font-bold text-slate-900 dark:text-white">Update Step Execution</h3>
       </div>
-      <p id="modalStepTitle" class="text-xs text-slate-500 mb-4 bg-slate-50 p-2.5 rounded-xl border border-slate-100 font-medium"></p>
+      <p id="modalStepTitle" class="text-xs text-slate-500 dark:text-slate-400 mb-3 bg-slate-50 dark:bg-slate-800 p-2 rounded-lg border border-slate-100 dark:border-darkborder font-medium"></p>
 
-      <form onsubmit="event.preventDefault(); saveDoerExecution();" class="space-y-3">
+      <form onsubmit="event.preventDefault(); saveDoerExecution();" class="space-y-2.5">
         <input type="hidden" id="editTaskId">
         <input type="hidden" id="editStepId">
 
         <div>
-          <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Status</label>
-          <select id="editStatus" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold outline-none">
+          <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-0.5">Status</label>
+          <select id="editStatus" class="w-full border border-slate-200 dark:border-darkborder dark:bg-slate-800 dark:text-white rounded-lg px-2.5 py-1.5 text-xs font-bold outline-none">
             <option value="Pending">Pending</option>
             <option value="In Progress">In Progress</option>
-            <option value="Completed">Completed</option>
+            <option value="Completed">Completed (Mark Finished)</option>
             <option value="Delayed">Delayed</option>
           </select>
         </div>
 
-        <div>
-          <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Received Quantity</label>
-          <input type="number" id="editQty" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none" placeholder="e.g. 50">
+        <!-- Vendor Input Group (Auto shown for PO/Vendor steps) -->
+        <div id="vendorFieldGroup" class="hidden bg-amber-50/60 dark:bg-slate-800/80 p-3 rounded-xl border border-amber-200 dark:border-amber-900/60 space-y-2">
+          <span class="text-[10px] font-extrabold text-amber-800 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1">
+            <i data-lucide="store" class="w-3 h-3"></i> Vendor & PO Information
+          </span>
+          <div class="grid grid-cols-2 gap-2">
+            <input type="text" id="editVendorName" placeholder="Vendor Name" class="w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded px-2 py-1 text-xs dark:text-white font-medium">
+            <input type="text" id="editPoNumber" placeholder="PO Number" class="w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded px-2 py-1 text-xs dark:text-white font-mono">
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <input type="text" id="editVendorPerson" placeholder="Contact Person" class="w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded px-2 py-1 text-xs dark:text-white">
+            <input type="text" id="editVendorPhone" placeholder="Phone Number" class="w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded px-2 py-1 text-xs dark:text-white">
+          </div>
+        </div>
+
+        <div id="recvQtyFieldGroup" class="hidden">
+          <label class="block text-[10px] font-bold text-emerald-800 dark:text-emerald-400 uppercase mb-0.5">📦 Received Quantity</label>
+          <input type="number" id="editQty" class="w-full border border-emerald-300 dark:border-emerald-800 dark:bg-slate-800 dark:text-white rounded-lg px-2.5 py-1.5 text-xs font-bold text-slate-900 outline-none" placeholder="Enter quantity">
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Attachment Link (Google Drive / Doc)</label>
-          <input type="url" id="editAttachment" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs outline-none" placeholder="https://drive.google.com/...">
+          <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-0.5">Attachment (File or Link)</label>
+          <div class="space-y-1.5">
+            <div class="flex items-center gap-2">
+              <label class="cursor-pointer bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-200 border border-slate-300 dark:border-darkborder px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1 transition">
+                <i data-lucide="upload" class="w-3 h-3 text-indigo-600 dark:text-indigo-400"></i>
+                <span>Browse</span>
+                <input type="file" id="editFileInput" onchange="handleLocalFileUpload(event)" class="hidden">
+              </label>
+              <span id="fileUploadStatus" class="text-[10px] text-slate-500 truncate flex-1 font-mono">No file</span>
+            </div>
+            <input type="text" id="editAttachment" class="w-full border border-slate-200 dark:border-darkborder dark:bg-slate-800 dark:text-white rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-indigo-500 font-mono" placeholder="Or paste URL link">
+          </div>
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-slate-600 uppercase mb-1">Execution Remarks / Punch Points</label>
-          <textarea id="editRemarks" rows="3" class="w-full border border-slate-200 rounded-xl p-2.5 text-xs outline-none" placeholder="Enter remarks..."></textarea>
+          <label class="block text-[10px] font-bold text-slate-600 dark:text-slate-400 uppercase mb-0.5">Remarks</label>
+          <textarea id="editRemarks" rows="2" class="w-full border border-slate-200 dark:border-darkborder dark:bg-slate-800 dark:text-white rounded-lg p-2 text-xs outline-none focus:border-indigo-500" placeholder="Enter remarks..."></textarea>
         </div>
 
-        <button type="submit" id="btnDoerSave" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl shadow-md transition text-xs flex items-center justify-center gap-1.5">
+        <button type="submit" id="btnDoerSave" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-lg shadow-sm transition text-xs flex items-center justify-center gap-1">
           <span>Save Execution Details</span>
         </button>
       </form>
-      <div id="doerAlert" class="mt-3"></div>
+      <div id="doerAlert" class="mt-2"></div>
     </div>
   </div>
 
   <script>
-    // Master Team Directory (Doer Name -> Email Mapping)
-    const DOER_DIRECTORY = [
-      { name: "Heera Lal Ji", email: "heeralal@domain.com" },
-      { name: "Ronak Ji", email: "ronak@domain.com" },
-      { name: "Aarti Bala", email: "aarti@domain.com" },
-      { name: "Mukesh Sharma", email: "mukesh@domain.com" },
-      { name: "Custom / Other", email: "" }
-    ];
+    let activeDoers = [];
+    let allData = [];
+    let allVendors = [];
+    let allProjectSites = ["EV Charging_CLZS", "DSC Smelter", "DSC Common-RD", "SKM", "Debari", "Zawar", "HO", "Agucha", "All Site Cable Tray", "NFA_PO"];
 
     const todayDate = new Date().toISOString().slice(0, 10);
     document.getElementById('mStartDate').value = todayDate;
 
-    let allData = [];
+    const API_BASE = window.location.origin.startsWith('file:') 
+      ? 'https://pms-central-kini.onrender.com' 
+      : '';
+
+    function switchTab(viewId) {
+      document.querySelectorAll('.view-section').forEach(v => v.classList.add('hidden'));
+      document.querySelectorAll('.nav-capsule-btn').forEach(b => b.classList.remove('active'));
+
+      document.getElementById(viewId).classList.remove('hidden');
+      const btn = document.getElementById(`tabBtn-${viewId}`);
+      if (btn) btn.classList.add('active');
+
+      if (viewId === 'viewHistory') renderHistoryView();
+      if (viewId === 'viewVendors') renderVendorsView();
+      if (viewId === 'viewTeam') renderTeamView();
+    }
+
+    function toggleSideMenu(show) {
+      document.getElementById('sideMenuDrawer').classList.toggle('hidden', !show);
+    }
 
     function toggleModal(id, show) {
       document.getElementById(id).classList.toggle('hidden', !show);
     }
 
+    function initTheme() {
+      const isDark = localStorage.getItem('pms_theme') === 'dark' || 
+        (!('pms_theme' in localStorage) && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+        document.getElementById('drawerThemeIcon').innerText = '☀️';
+        document.getElementById('drawerThemeLabel').innerText = 'Switch to Day Mode';
+      } else {
+        document.documentElement.classList.remove('dark');
+        document.getElementById('drawerThemeIcon').innerText = '🌙';
+        document.getElementById('drawerThemeLabel').innerText = 'Switch to Dark Mode';
+      }
+      lucide.createIcons();
+    }
+
+    function toggleDarkMode() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('pms_theme', isDark ? 'dark' : 'light');
+      initTheme();
+    }
+
+    async function renderHistoryView() {
+      const container = document.getElementById('historyCardsContainer');
+      container.innerHTML = '<p class="text-xs text-slate-400 py-4">Fetching execution records...</p>';
+
+      try {
+        const res = await fetch(`${API_BASE}/api/pms/history`);
+        const json = await res.json();
+        document.getElementById('historyTotalCountBadge').innerText = `${json.data ? json.data.length : 0} Done Steps`;
+
+        if (!json.success || json.data.length === 0) {
+          container.innerHTML = '<p class="text-xs text-slate-400 py-6">No completed steps recorded yet.</p>';
+          return;
+        }
+
+        let html = '';
+        json.data.forEach(h => {
+          const s = h.step;
+          const doneStr = s.actualEndDate ? new Date(s.actualEndDate).toLocaleString('en-GB') : 'Completed';
+
+          html += `
+            <div class="bg-white dark:bg-darkcard p-3.5 rounded-xl border border-slate-200 dark:border-darkborder shadow-xs space-y-1.5">
+              <div class="flex items-center justify-between font-bold">
+                <span class="text-indigo-600 dark:text-indigo-400 font-mono text-xs">${h.uniqueId} (#${s.wbsNo})</span>
+                <span class="text-[10px] text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950 px-2 py-0.5 rounded-full font-bold">✓ ${doneStr}</span>
+              </div>
+              <h4 class="font-bold text-slate-900 dark:text-white text-xs">${s.stepTitle}</h4>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 font-medium">📦 Item: ${h.mainItemName} (${h.projectName || 'General'})</p>
+              
+              <div class="flex items-center justify-between text-[11px] text-slate-600 dark:text-slate-300 pt-1.5 border-t border-slate-100 dark:border-darkborder">
+                <span>👤 Done by: <b>${s.assignedName || s.assignedEmail}</b></span>
+                ${s.receivedQty ? `<span class="font-bold text-emerald-600">Recv: ${s.receivedQty}</span>` : ''}
+              </div>
+              ${s.remarks ? `<p class="text-[11px] text-amber-700 dark:text-amber-400 italic">💬 "${s.remarks}"</p>` : ''}
+            </div>
+          `;
+        });
+        container.innerHTML = html;
+        lucide.createIcons();
+      } catch (err) {
+        container.innerHTML = `<p class="text-rose-500 text-xs py-4">${err.message}</p>`;
+      }
+    }
+
+    async function renderVendorsView() {
+      const container = document.getElementById('vendorCardsContainer');
+      container.innerHTML = '<p class="text-xs text-slate-400 py-4">Fetching vendor directory...</p>';
+
+      try {
+        const res = await fetch(`${API_BASE}/api/vendors`);
+        const json = await res.json();
+        allVendors = json.data || [];
+        document.getElementById('vendorTotalCountBadge').innerText = `${allVendors.length} Vendors`;
+
+        if (allVendors.length === 0) {
+          container.innerHTML = '<p class="text-xs text-slate-400 py-6">No vendors recorded yet. Vendors are saved automatically when PO steps are updated.</p>';
+          return;
+        }
+
+        let html = '';
+        allVendors.forEach(v => {
+          html += `
+            <div class="bg-white dark:bg-darkcard p-3.5 rounded-xl border border-slate-200 dark:border-darkborder shadow-xs space-y-1.5">
+              <div class="flex items-center justify-between font-bold">
+                <span class="text-amber-700 dark:text-amber-400 text-xs">${v.vendorName}</span>
+                ${v.poNumber ? `<span class="text-[10px] bg-amber-50 dark:bg-amber-950 text-amber-800 dark:text-amber-300 font-mono px-2 py-0.5 rounded font-bold">PO: ${v.poNumber}</span>` : ''}
+              </div>
+              ${v.contactPerson ? `<p class="text-[11px] text-slate-700 dark:text-slate-300">👤 Contact: <b>${v.contactPerson}</b></p>` : ''}
+              ${v.phone ? `<p class="text-[11px] text-slate-600 dark:text-slate-400 font-mono">📞 ${v.phone}</p>` : ''}
+              ${v.relatedTaskId ? `<p class="text-[10px] text-slate-400 font-mono pt-1">Task: ${v.relatedTaskId}</p>` : ''}
+            </div>
+          `;
+        });
+        container.innerHTML = html;
+        lucide.createIcons();
+      } catch (err) {
+        container.innerHTML = `<p class="text-rose-500 text-xs py-4">${err.message}</p>`;
+      }
+    }
+
+    function renderTeamView() {
+      const container = document.getElementById('teamCardsContainer');
+      if (activeDoers.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-400 py-6">No team members.</p>';
+        return;
+      }
+
+      let html = '';
+      activeDoers.forEach(d => {
+        html += `
+          <div class="bg-white dark:bg-darkcard p-3.5 rounded-xl border border-slate-200 dark:border-darkborder shadow-xs flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 font-bold flex items-center justify-center text-xs">
+                ${d.name.charAt(0).toUpperCase()}
+              </div>
+              <div>
+                <h4 class="font-bold text-slate-900 dark:text-white text-xs">${d.name}</h4>
+                <p class="text-[10px] text-slate-400 font-mono">${d.email}</p>
+                <span class="inline-block text-[9px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950 px-1.5 py-0.2 rounded mt-0.5">${d.role}</span>
+              </div>
+            </div>
+            <button onclick="removeDoer('${d._id}')" class="text-slate-300 hover:text-rose-600 p-1" title="Remove Member">
+              <i data-lucide="trash-2" class="w-4 h-4"></i>
+            </button>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+      lucide.createIcons();
+    }
+
+    function calculateTimeRemaining(targetEndDate, status, actualDoneDate) {
+      if (status === 'Completed') {
+        const doneStr = actualDoneDate ? new Date(actualDoneDate).toLocaleDateString('en-GB') : '';
+        return { label: `✓ Done ${doneStr}`, type: 'completed', textClass: 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border-emerald-200 dark:border-emerald-800' };
+      }
+
+      const diff = new Date(targetEndDate).getTime() - Date.now();
+      const isPast = diff < 0;
+      const absDiff = Math.abs(diff);
+
+      const days = Math.floor(absDiff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((absDiff / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((absDiff / (1000 * 60)) % 60);
+      const seconds = Math.floor((absDiff / 1000) % 60);
+
+      let formatted = days > 0 ? `${days}d ${hours}h ${minutes}m` : `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+
+      if (isPast) {
+        return {
+          label: `🚨 Overdue: ${formatted}`,
+          type: 'overdue',
+          textClass: 'text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 border-rose-200 dark:border-rose-800 font-bold animate-pulse'
+        };
+      } else {
+        return {
+          label: `⏳ Left: ${formatted}`,
+          type: 'active',
+          textClass: days < 2 ? 'text-amber-800 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/60 border-amber-200 dark:border-amber-800 font-bold' : 'text-indigo-800 dark:text-indigo-300 bg-indigo-50/70 dark:bg-indigo-950/60 border-indigo-200 dark:border-indigo-800 font-semibold'
+        };
+      }
+    }
+
+    setInterval(() => {
+      document.querySelectorAll('.stopwatch-cell').forEach(cell => {
+        const endDate = cell.getAttribute('data-end-date');
+        const status = cell.getAttribute('data-status');
+        const actualDone = cell.getAttribute('data-actual-end');
+        if (endDate) {
+          const res = calculateTimeRemaining(endDate, status, actualDone);
+          cell.className = `stopwatch-cell inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-mono border ${res.textClass}`;
+          cell.innerText = res.label;
+        }
+      });
+    }, 1000);
+
+    function openDoerModal(taskId, stepId, title, status, qty, attach, remarks, vName = '', vPerson = '', vPhone = '', poNum = '') {
+      document.getElementById('editTaskId').value = taskId;
+      document.getElementById('editStepId').value = stepId;
+      document.getElementById('modalStepTitle').innerText = `${taskId} : ${title}`;
+      document.getElementById('editStatus').value = status;
+      document.getElementById('editQty').value = qty;
+      document.getElementById('editAttachment').value = attach;
+      document.getElementById('editRemarks').value = remarks;
+      
+      document.getElementById('editVendorName').value = vName || '';
+      document.getElementById('editVendorPerson').value = vPerson || '';
+      document.getElementById('editVendorPhone').value = vPhone || '';
+      document.getElementById('editPoNumber').value = poNum || '';
+
+      document.getElementById('fileUploadStatus').innerText = attach ? (attach.startsWith('data:') ? 'Local file attached' : 'Link attached') : 'No file';
+      document.getElementById('editFileInput').value = '';
+      document.getElementById('doerAlert').innerHTML = '';
+
+      const isPoStep = /(po|vendor|purchase order|procurement)/i.test(title);
+      document.getElementById('vendorFieldGroup').classList.toggle('hidden', !isPoStep);
+
+      const isDeliveryStep = /(delivery|readiness|dispatch|receipt|received|material delivery|clearance)/i.test(title);
+      document.getElementById('recvQtyFieldGroup').classList.toggle('hidden', !isDeliveryStep);
+
+      toggleModal('doerModal', true);
+    }
+
+    function handleLocalFileUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      if (file.size > 15 * 1024 * 1024) {
+        alert('File size exceeds 15 MB.');
+        return;
+      }
+
+      document.getElementById('fileUploadStatus').innerText = `Attached: ${file.name}`;
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('editAttachment').value = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    }
+
+    async function saveDoerExecution() {
+      const btn = document.getElementById('btnDoerSave');
+      btn.disabled = true;
+
+      const payload = {
+        uniqueId: document.getElementById('editTaskId').value,
+        stepId: document.getElementById('editStepId').value,
+        status: document.getElementById('editStatus').value,
+        receivedQty: document.getElementById('editQty').value,
+        attachmentUrl: document.getElementById('editAttachment').value,
+        remarks: document.getElementById('editRemarks').value,
+        vendorDetails: {
+          vendorName: document.getElementById('editVendorName').value.trim(),
+          contactPerson: document.getElementById('editVendorPerson').value.trim(),
+          phone: document.getElementById('editVendorPhone').value.trim(),
+          poNumber: document.getElementById('editPoNumber').value.trim()
+        }
+      };
+
+      try {
+        const res = await fetch(`${API_BASE}/api/pms/update-step`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (json.success) {
+          toggleModal('doerModal', false);
+          loadDashboardData();
+        } else {
+          document.getElementById('doerAlert').innerHTML = `<div class="p-1.5 bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-300 rounded text-xs">${json.error}</div>`;
+        }
+      } catch (err) {
+        document.getElementById('doerAlert').innerHTML = `<div class="p-1.5 bg-rose-50 dark:bg-rose-950 text-rose-700 dark:text-rose-300 rounded text-xs">${err.message}</div>`;
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    async function loadDoersList() {
+      try {
+        const res = await fetch(`${API_BASE}/api/doers`);
+        const json = await res.json();
+        if (json.success) {
+          activeDoers = json.data;
+          renderDoerFilterDropdown(activeDoers);
+          renderDoerHeaderDropdown(activeDoers);
+        }
+      } catch (err) {
+        console.error('Error fetching doers:', err);
+      }
+    }
+
+    function renderDoerHeaderDropdown(doers) {
+      const select = document.getElementById('doerDropdownSelect');
+      let html = '<option value="">Select Doer...</option>';
+      doers.forEach(d => {
+        html += `<option value="${d.email}">${d.name} (${d.email})</option>`;
+      });
+      select.innerHTML = html;
+    }
+
+    function renderDoerFilterDropdown(doers) {
+      const select = document.getElementById('filterByDoer');
+      const current = select.value;
+      let html = '<option value="ALL">All Team Members</option>';
+      doers.forEach(d => {
+        html += `<option value="${d.name}">${d.name}</option>`;
+      });
+      select.innerHTML = html;
+      select.value = current || 'ALL';
+    }
+
+    function renderProjectFilterDropdown() {
+      const select = document.getElementById('filterByProject');
+      const current = select.value;
+      const datalist = document.getElementById('projectSuggestions');
+
+      let html = '<option value="ALL">All Projects / Sites</option>';
+      let dlHtml = '';
+
+      allProjectSites.forEach(p => {
+        html += `<option value="${p}">${p}</option>`;
+        dlHtml += `<option value="${p}">`;
+      });
+
+      select.innerHTML = html;
+      datalist.innerHTML = dlHtml;
+      select.value = current || 'ALL';
+    }
+
+    async function addNewDoerFromDrawer() {
+      const payload = {
+        name: document.getElementById('drwName').value,
+        email: document.getElementById('drwEmail').value
+      };
+
+      try {
+        const res = await fetch(`${API_BASE}/api/doers`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (json.success) {
+          document.getElementById('drwName').value = '';
+          document.getElementById('drwEmail').value = '';
+          loadDoersList();
+          alert('Member saved!');
+        }
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function removeDoer(id) {
+      if (!confirm('Remove this member?')) return;
+      try {
+        const res = await fetch(`${API_BASE}/api/doers/${id}`, { method: 'DELETE' });
+        const json = await res.json();
+        if (json.success) {
+          loadDoersList();
+          renderTeamView();
+        }
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
     function openCreateModal() {
       document.getElementById('mStartDate').value = new Date().toISOString().slice(0, 10);
-      generateBatchSteps(3); // Start with 3 standard steps
-      document.getElementById('formModalAlert').innerHTML = '';
+      generateBatchSteps(5);
       toggleModal('createTaskModal', true);
     }
 
-    // Generate N Steps in 1 Click
     function generateBatchSteps(count) {
       const num = parseInt(count, 10) || 1;
       const container = document.getElementById('stepsContainer');
@@ -303,23 +824,23 @@
         "Complete Technicals with approved make submitted to Commercial",
         "Commercial Offer & Vendor Negotiations",
         "Offer Evaluation by Technical Team",
+        "Discussion and Negotiation with Vendor",
         "Management Discussion and Approval",
-        "NFA Request for Approval",
         "Issue PO",
-        "Drawings, GA, GTP & other submission",
-        "Submit the Process Engineering Drawing",
+        "Drawings, GA, GTP & other submissions",
+        "Submit Process Engineering Drawing",
         "Process Engineering Approval & Clearance",
         "Advance Payment to Vendor as per PO",
         "Manufacturing / Material Readiness",
         "Conduct Inspection",
         "Dispatch Clearance",
-        "Balance / Stage Payment to Vendor",
+        "Balance Payment to Vendor",
         "Material Delivery at Site"
       ];
 
       for (let i = 1; i <= num; i++) {
-        const title = defaultTitles[i - 1] || `Execution Sub-Step #${i}`;
-        const defaultDoer = DOER_DIRECTORY[(i - 1) % (DOER_DIRECTORY.length - 1)];
+        const title = defaultTitles[i - 1] || `Step #${i}`;
+        const defaultDoer = activeDoers.length > 0 ? activeDoers[(i - 1) % activeDoers.length] : { name: "Heera Lal Ji", email: "heeralal@domain.com" };
         addStepCard(i, title, defaultDoer.name, defaultDoer.email, 2);
       }
       recalculateAllStepDates();
@@ -328,77 +849,58 @@
     function addSingleStepRow() {
       const container = document.getElementById('stepsContainer');
       const nextIndex = container.children.length + 1;
-      addStepCard(nextIndex, `Sub-Step #${nextIndex}`, "Heera Lal Ji", "heeralal@domain.com", 2);
+      const defaultDoer = activeDoers[0] || { name: "Heera Lal Ji", email: "heeralal@domain.com" };
+      addStepCard(nextIndex, `Step #${nextIndex}`, defaultDoer.name, defaultDoer.email, 2);
       recalculateAllStepDates();
     }
 
-    // Render individual step card
     function addStepCard(wbs, title, doerName, doerEmail, durationDays) {
       const container = document.getElementById('stepsContainer');
       const row = document.createElement('div');
-      row.className = 'step-card bg-white p-3.5 rounded-xl border border-slate-200 shadow-xs space-y-2.5 relative';
+      row.className = 'step-card bg-white dark:bg-darkcard p-2.5 rounded-xl border border-slate-200 dark:border-darkborder shadow-xs space-y-2 relative';
 
-      // Doer Options HTML
       let doerOptions = '';
-      DOER_DIRECTORY.forEach(d => {
-        const sel = (d.name === doerName) ? 'selected' : '';
+      activeDoers.forEach(d => {
+        const sel = (d.name === doerName || d.email === doerEmail) ? 'selected' : '';
         doerOptions += `<option value="${d.name}" data-email="${d.email}" ${sel}>${d.name}</option>`;
       });
+      doerOptions += `<option value="Custom" data-email="">+ Custom Name</option>`;
 
       row.innerHTML = `
-        <div class="flex items-center justify-between pb-1.5 border-b border-slate-100">
-          <div class="flex items-center gap-2">
-            <span class="w-6 h-6 bg-indigo-100 text-indigo-700 font-bold rounded-lg flex items-center justify-center text-xs font-mono step-index">${wbs}</span>
-            <span class="text-xs font-bold text-slate-800">WBS Step #${wbs}</span>
-          </div>
-          <button type="button" onclick="this.closest('.step-card').remove(); renumberAndRecalculate();" class="text-rose-400 hover:text-rose-600 text-xs flex items-center gap-1 font-semibold">
-            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Remove
+        <div class="flex items-center justify-between pb-1 border-b border-slate-100 dark:border-darkborder">
+          <span class="text-xs font-bold text-slate-800 dark:text-slate-200">WBS Step #${wbs}</span>
+          <button type="button" onclick="this.closest('.step-card').remove(); renumberAndRecalculate();" class="text-rose-400 hover:text-rose-600 text-xs">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
           </button>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-12 gap-2.5">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-2">
           <div class="md:col-span-2">
-            <label class="block text-[10px] font-bold text-slate-500 uppercase">WBS No</label>
-            <input type="text" class="step-wbs w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-indigo-500 font-mono" value="${wbs}">
+            <input type="text" class="step-wbs w-full border border-slate-200 dark:border-darkborder dark:bg-slate-800 dark:text-white rounded px-2 py-1 text-xs font-mono font-bold" value="${wbs}">
           </div>
           <div class="md:col-span-10">
-            <label class="block text-[10px] font-bold text-slate-500 uppercase">Step Title / Description</label>
-            <input type="text" class="step-title w-full border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs outline-none focus:border-indigo-500 font-medium" placeholder="e.g. Drawings & Technical Approvals" value="${title}">
+            <input type="text" class="step-title w-full border border-slate-200 dark:border-darkborder dark:bg-slate-800 dark:text-white rounded px-2 py-1 text-xs font-medium" placeholder="Step title" value="${title}">
           </div>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-12 gap-2.5 bg-slate-50 p-2.5 rounded-lg border border-slate-100 items-center">
-          
-          <!-- Doer Selection -->
-          <div class="md:col-span-3">
-            <label class="block text-[10px] font-bold text-indigo-700 uppercase">👤 Select Doer</label>
-            <select onchange="onDoerChange(this)" class="step-doer-select w-full bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-xs font-semibold outline-none">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-2 bg-slate-50 dark:bg-slate-800/80 p-2 rounded-lg items-center">
+          <div class="md:col-span-4">
+            <select onchange="onDoerChange(this)" class="step-doer-select w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded px-2 py-1 text-xs font-semibold dark:text-white">
               ${doerOptions}
             </select>
           </div>
-
-          <!-- Auto Email -->
-          <div class="md:col-span-3">
-            <label class="block text-[10px] font-bold text-slate-500 uppercase">✉️ Doer Email (Auto)</label>
-            <input type="email" class="step-email w-full bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs outline-none text-slate-600 font-medium" placeholder="doer@domain.com" value="${doerEmail}">
-          </div>
-
-          <!-- Duration in Days -->
-          <div class="md:col-span-2">
-            <label class="block text-[10px] font-bold text-amber-700 uppercase">⏳ Duration (Days)</label>
-            <input type="number" min="1" value="${durationDays || 2}" oninput="recalculateAllStepDates()" class="step-days w-full bg-white border-2 border-amber-200 rounded-lg px-2 py-1.5 text-xs font-extrabold text-amber-900 text-center outline-none">
-          </div>
-
-          <!-- Auto Calculated Date Range -->
           <div class="md:col-span-4">
-            <label class="block text-[10px] font-bold text-emerald-700 uppercase">🗓️ Auto Calculated Timeline</label>
-            <div class="step-date-preview text-[11px] font-bold text-emerald-900 bg-white border border-emerald-200 px-2.5 py-1.5 rounded-lg text-center font-mono">
-              Auto calculating...
+            <input type="email" class="step-email w-full bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded px-2 py-1 text-xs font-mono text-slate-600 dark:text-slate-300" placeholder="doer@domain.com" value="${doerEmail}">
+          </div>
+          <div class="md:col-span-4 flex items-center gap-1">
+            <input type="number" min="1" value="${durationDays || 2}" oninput="recalculateAllStepDates()" class="step-days w-16 bg-white dark:bg-darkcard border-2 border-amber-200 dark:border-amber-800 rounded px-1.5 py-1 text-xs font-bold text-center dark:text-white">
+            <span class="text-[10px] text-slate-500 dark:text-slate-400 font-bold">Days</span>
+            <div class="step-date-preview text-[10px] font-bold text-emerald-900 dark:text-emerald-300 bg-white dark:bg-darkcard border border-emerald-200 dark:border-emerald-800 px-1.5 py-1 rounded text-center flex-1 font-mono truncate">
+              Auto...
             </div>
             <input type="hidden" class="step-start-hidden">
             <input type="hidden" class="step-end-hidden">
           </div>
-
         </div>
       `;
 
@@ -406,22 +908,15 @@
       lucide.createIcons();
     }
 
-    // Auto-fetch email on selecting Doer Name
     function onDoerChange(selectElem) {
       const selectedOption = selectElem.options[selectElem.selectedIndex];
       const email = selectedOption.getAttribute('data-email');
       const card = selectElem.closest('.step-card');
       const emailInput = card.querySelector('.step-email');
-
-      if (email) {
-        emailInput.value = email;
-      } else {
-        emailInput.value = '';
-        emailInput.focus();
-      }
+      if (email) emailInput.value = email;
+      else { emailInput.value = ''; emailInput.focus(); }
     }
 
-    // Sequential Date Calculation Engine
     function recalculateAllStepDates() {
       const baseStartVal = document.getElementById('mStartDate').value;
       if (!baseStartVal) return;
@@ -437,16 +932,13 @@
         const stepEnd = new Date(stepStart);
         stepEnd.setDate(stepEnd.getDate() + days);
 
-        // Store hidden ISO dates
         card.querySelector('.step-start-hidden').value = stepStart.toISOString();
         card.querySelector('.step-end-hidden').value = stepEnd.toISOString();
 
-        // Display user-friendly preview
         const sStr = stepStart.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
-        const eStr = stepEnd.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-        card.querySelector('.step-date-preview').innerText = `${sStr} ➔ ${eStr} (${days} Days)`;
+        const eStr = stepEnd.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+        card.querySelector('.step-date-preview').innerText = `${sStr} ➔ ${eStr}`;
 
-        // Next step begins when this step finishes
         currentCursor = new Date(stepEnd);
       });
     }
@@ -461,15 +953,13 @@
       recalculateAllStepDates();
     }
 
-    // Save Complete Package in MongoDB
     async function submitFullTaskPackage() {
       const btn = document.getElementById('btnSaveFullTask');
-      const alertBox = document.getElementById('formModalAlert');
       btn.disabled = true;
 
       const cards = document.querySelectorAll('#stepsContainer .step-card');
       if (cards.length === 0) {
-        alertBox.innerHTML = `<div class="p-2.5 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl text-xs">Please add at least 1 step.</div>`;
+        alert('Please add at least 1 step.');
         btn.disabled = false;
         return;
       }
@@ -487,8 +977,14 @@
         });
       });
 
+      const projectNameVal = document.getElementById('mProject').value.trim();
+      if (!allProjectSites.includes(projectNameVal)) {
+        allProjectSites.push(projectNameVal);
+        renderProjectFilterDropdown();
+      }
+
       const payload = {
-        projectName: document.getElementById('mProject').value,
+        projectName: projectNameVal,
         mainItemName: document.getElementById('mItemName').value,
         pmsType: document.getElementById('mType').value,
         startDate: document.getElementById('mStartDate').value,
@@ -497,7 +993,7 @@
       };
 
       try {
-        const res = await fetch('/api/pms/create-custom-package', {
+        const res = await fetch(`${API_BASE}/api/pms/create-custom-package`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload)
@@ -507,10 +1003,10 @@
           toggleModal('createTaskModal', false);
           loadDashboardData();
         } else {
-          alertBox.innerHTML = `<div class="p-2.5 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl text-xs">${json.error}</div>`;
+          alert(json.error);
         }
       } catch (err) {
-        alertBox.innerHTML = `<div class="p-2.5 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl text-xs">Error: ${err.message}</div>`;
+        alert(err.message);
       } finally {
         btn.disabled = false;
       }
@@ -518,31 +1014,24 @@
 
     function handleRoleSwitch() {
       const role = document.getElementById('userRole').value;
-      const doerEmail = document.getElementById('doerEmail');
-      const tableTitle = document.getElementById('tableTitle');
-
-      if (role === 'DOER') {
-        doerEmail.classList.remove('hidden');
-        tableTitle.innerText = 'Doer Task Workspace (My Action Steps)';
-      } else {
-        doerEmail.classList.add('hidden');
-        tableTitle.innerText = 'Super Admin Timeline (All Tasks & Steps)';
-      }
+      const doerDropdown = document.getElementById('doerDropdownSelect');
+      if (role === 'DOER') doerDropdown.classList.remove('hidden');
+      else doerDropdown.classList.add('hidden');
       loadDashboardData();
     }
 
     async function loadDashboardData() {
       const role = document.getElementById('userRole').value;
-      const email = document.getElementById('doerEmail').value;
+      const doerEmail = document.getElementById('doerDropdownSelect').value;
       const tbody = document.getElementById('tableRows');
 
-      let url = '/api/pms/all';
+      let url = `${API_BASE}/api/pms/all`;
       if (role === 'DOER') {
-        if (!email) {
-          tbody.innerHTML = `<tr><td colspan="12" class="py-8 text-center text-amber-600 font-medium">Enter Doer Email to view assigned steps.</td></tr>`;
+        if (!doerEmail) {
+          tbody.innerHTML = `<tr><td colspan="12" class="py-8 text-center text-indigo-700 dark:text-indigo-400 font-semibold">Please select your profile from the dropdown.</td></tr>`;
           return;
         }
-        url = `/api/pms/my-tasks?email=${encodeURIComponent(email)}`;
+        url = `${API_BASE}/api/pms/my-tasks?email=${encodeURIComponent(doerEmail)}`;
       }
 
       try {
@@ -550,186 +1039,232 @@
         const json = await res.json();
 
         if (!json.success || json.data.length === 0) {
-          tbody.innerHTML = `<tr><td colspan="12" class="py-12 text-center text-slate-400 font-medium">No tasks found. Click "+ Create Task & Steps" to start.</td></tr>`;
-          updateStats(0, 0, 0, 0);
+          tbody.innerHTML = `<tr><td colspan="12" class="py-10 text-center text-slate-400 font-medium">No records found. Click "+ Create Task" to begin.</td></tr>`;
           return;
         }
 
         allData = json.data;
-        renderGrid(allData, role);
+
+        allData.forEach(item => {
+          if (item.projectName && !allProjectSites.includes(item.projectName)) {
+            allProjectSites.push(item.projectName);
+          }
+        });
+        renderProjectFilterDropdown();
+        applyFilters();
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="12" class="py-8 text-center text-rose-500 font-medium">Error connecting to API: ${err.message}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="12" class="py-8 text-center text-rose-500 font-medium">Error: ${err.message}</td></tr>`;
       }
     }
 
-    function renderGrid(data, role) {
+    function applyFilters() {
+      const role = document.getElementById('userRole').value;
+      const selectedSite = document.getElementById('filterByProject').value;
+      const selectedDoer = document.getElementById('filterByDoer').value;
+      const search = document.getElementById('searchInput').value.toLowerCase();
+
+      let filtered = allData;
+      if (role === 'ADMIN' && selectedSite !== 'ALL') {
+        filtered = filtered.filter(t => (t.projectName || '').toLowerCase() === selectedSite.toLowerCase());
+      }
+
+      renderGrid(filtered, role, search, selectedDoer);
+    }
+
+    function renderGrid(data, role, search = '', selectedDoer = 'ALL') {
       const tbody = document.getElementById('tableRows');
       let html = '';
-      let totalSteps = 0, pending = 0, completed = 0;
 
       if (role === 'ADMIN') {
         data.forEach(item => {
-          // Parent Task Header Row
+          const matchesItem = item.mainItemName.toLowerCase().includes(search) || item.uniqueId.toLowerCase().includes(search);
+
+          const matchingSteps = item.steps.filter(s => {
+            const matchesDoer = (selectedDoer === 'ALL') || 
+              (s.assignedName && s.assignedName.toLowerCase().includes(selectedDoer.toLowerCase()));
+
+            if (!matchesDoer) return false;
+            if (!search) return true;
+
+            return matchesItem || 
+              s.stepTitle.toLowerCase().includes(search) || 
+              s.wbsNo.toLowerCase().includes(search) || 
+              (s.assignedName || '').toLowerCase().includes(search);
+          });
+
+          if (matchingSteps.length === 0) return;
+
+          // Main Task Header Row
           html += `
-            <tr class="bg-indigo-50/80 font-bold border-t-2 border-indigo-200">
-              <td class="py-2.5 px-3 font-mono text-indigo-700">${item.uniqueId}</td>
-              <td class="py-2.5 px-3 text-slate-900 flex items-center gap-1.5">
+            <tr class="bg-indigo-50/70 dark:bg-indigo-950/40 font-bold border-t-2 border-indigo-200 dark:border-indigo-900">
+              <td class="py-2 px-3 font-mono text-indigo-700 dark:text-indigo-400">${item.uniqueId}</td>
+              <td class="py-2 px-3 text-slate-900 dark:text-white flex items-center gap-1.5">
                 <span>📦</span>
                 <span>${item.mainItemName}</span>
+                <span class="text-[10px] text-slate-400 font-normal">(${item.projectName || 'General'})</span>
               </td>
-              <td class="py-2.5 px-2 text-center text-slate-400">-</td>
-              <td class="py-2.5 px-4 text-slate-500 text-[11px] italic font-normal">Workflow Steps (${item.steps.length})</td>
-              <td class="py-2.5 px-3"><span class="px-2 py-0.5 bg-indigo-100 text-indigo-800 text-[10px] font-bold rounded-md">${item.pmsType}</span></td>
-              <td class="py-2.5 px-3 text-slate-700">${new Date(item.startDate).toLocaleDateString('en-GB')}</td>
-              <td class="py-2.5 px-2 text-center text-slate-400">-</td>
-              <td class="py-2.5 px-2 text-center font-extrabold text-indigo-900">${item.totalQty || 1}</td>
-              <td class="py-2.5 px-2 text-center text-slate-400">-</td>
-              <td class="py-2.5 px-3 text-slate-400">-</td>
-              <td class="py-2.5 px-3"><span class="px-2 py-0.5 text-[10px] font-semibold bg-white border border-indigo-200 text-indigo-700 rounded-md">${item.steps.length} Steps</span></td>
-              <td class="py-2.5 px-3 text-center text-slate-400">-</td>
+              <td class="py-2 px-1.5 text-center text-slate-400">-</td>
+              <td class="py-2 px-3 text-slate-500 dark:text-slate-400 text-[10px] italic font-normal">Steps (${item.steps.length})</td>
+              <td class="py-2 px-2.5"><span class="px-1.5 py-0.5 bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 text-[9px] font-bold rounded">${item.pmsType}</span></td>
+              <td class="py-2 px-2.5 text-slate-700 dark:text-slate-300">${new Date(item.startDate).toLocaleDateString('en-GB')}</td>
+              <td class="py-2 px-3 text-center text-slate-400 font-mono text-[10px]">-</td>
+              <td class="py-2 px-1.5 text-center text-slate-400">-</td>
+              <td class="py-2 px-1.5 text-center font-extrabold text-indigo-900 dark:text-indigo-300">${item.totalQty || 1}</td>
+              <td class="py-2 px-2 text-slate-400 text-center">-</td>
+              <td class="py-2 px-2.5"><span class="px-1.5 py-0.5 text-[9px] font-semibold bg-white dark:bg-darkcard border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 rounded">${item.steps.length} Steps</span></td>
+              <td class="py-2 px-2 text-center text-slate-400">-</td>
             </tr>
           `;
 
-          // Step Sub-rows
-          item.steps.forEach(s => {
-            totalSteps++;
-            if (s.status === 'Completed') completed++; else pending++;
-
+          // Step Rows
+          matchingSteps.forEach(s => {
             const sDateFormatted = new Date(s.plannedStartDate).toLocaleDateString('en-GB');
             const eDateFormatted = new Date(s.plannedEndDate).toLocaleDateString('en-GB');
+            const timer = calculateTimeRemaining(s.plannedEndDate, s.status, s.actualEndDate);
+
+            const v = s.vendorDetails || {};
+            const vName = (v.vendorName || '').replace(/'/g, "\\'");
+            const vPerson = (v.contactPerson || '').replace(/'/g, "\\'");
+            const vPhone = (v.phone || '').replace(/'/g, "\\'");
+            const poNum = (v.poNumber || '').replace(/'/g, "\\'");
 
             html += `
-              <tr class="hover:bg-slate-50/90 transition">
-                <td class="py-2 px-3 text-slate-400 font-mono text-[11px]">${item.uniqueId}</td>
-                <td class="py-2 px-3 text-slate-500 text-[11px]">${item.mainItemName}</td>
-                <td class="py-2 px-2 text-center font-mono font-bold text-slate-800 bg-slate-50/50">${s.wbsNo}</td>
-                <td class="py-2 px-4 text-slate-800 font-medium">
+              <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
+                <td class="py-2 px-3 text-slate-400 font-mono text-[10px]">${item.uniqueId}</td>
+                <td class="py-2 px-3 text-slate-500 dark:text-slate-400 text-[11px]">${item.mainItemName}</td>
+                <td class="py-2 px-1.5 text-center font-mono font-bold text-slate-800 dark:text-slate-200 bg-slate-50/50 dark:bg-slate-800/40">${s.wbsNo}</td>
+                <td class="py-2 px-3 text-slate-800 dark:text-slate-200 font-medium">
                   <div>${s.stepTitle}</div>
-                  ${s.remarks ? `<div class="text-[11px] text-amber-700 mt-0.5">💬 ${s.remarks}</div>` : ''}
+                  ${v.vendorName ? `<div class="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold">🏢 Vendor: ${v.vendorName} (PO: ${v.poNumber || 'N/A'})</div>` : ''}
+                  ${s.remarks ? `<div class="text-[10px] text-amber-700 dark:text-amber-400">💬 ${s.remarks}</div>` : ''}
                 </td>
-                <td class="py-2 px-3">
-                  <span class="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
-                    ${s.assignedName || s.assignedEmail}
+
+                <td class="py-2 px-2.5">
+                  <div class="flex flex-col">
+                    <span class="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200 w-fit">
+                      ${s.assignedName || s.assignedEmail}
+                    </span>
+                    ${s.status === 'Completed' && s.actualEndDate ? `
+                      <span class="text-[9px] text-emerald-600 dark:text-emerald-400 font-mono font-bold mt-0.5">
+                        ✓ Done: ${new Date(s.actualEndDate).toLocaleDateString('en-GB')}
+                      </span>
+                    ` : ''}
+                  </div>
+                </td>
+
+                <td class="py-2 px-2.5 text-slate-600 dark:text-slate-400 text-[10px] font-mono">${sDateFormatted} – ${eDateFormatted}</td>
+                
+                <td class="py-2 px-3 text-center border-x border-slate-100 dark:border-darkborder">
+                  <span class="stopwatch-cell inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-mono border ${timer.textClass}" data-end-date="${s.plannedEndDate}" data-status="${s.status}" data-actual-end="${s.actualEndDate || ''}">
+                    ${timer.label}
                   </span>
                 </td>
-                <td class="py-2 px-3 text-slate-600 text-[11px] font-mono">${sDateFormatted} – ${eDateFormatted}</td>
-                <td class="py-2 px-2 text-center font-bold text-amber-800">${s.durationDays || 1}d</td>
-                <td class="py-2 px-2 text-center text-slate-400 font-mono">${item.totalQty || 1}</td>
-                <td class="py-2 px-2 text-center font-bold text-slate-800">${s.receivedQty || 0}</td>
-                <td class="py-2 px-3">
-                  ${s.attachmentUrl ? `<a href="${s.attachmentUrl}" target="_blank" class="text-indigo-600 hover:underline inline-flex items-center gap-1 font-semibold"><i data-lucide="paperclip" class="w-3.5 h-3.5"></i> View</a>` : `<span class="text-slate-300">-</span>`}
+
+                <td class="py-2 px-1.5 text-center font-bold text-amber-800 dark:text-amber-400">${s.durationDays || 1}d</td>
+                <td class="py-2 px-1.5 text-center font-bold text-slate-800 dark:text-slate-200">${s.receivedQty || 0}</td>
+                <td class="py-2 px-2 text-center">
+                  ${s.attachmentUrl ? `<a href="${s.attachmentUrl}" target="_blank" download="attachment" class="text-indigo-600 dark:text-indigo-400 hover:underline font-semibold"><i data-lucide="paperclip" class="w-3.5 h-3.5 inline"></i></a>` : `<span class="text-slate-300 dark:text-slate-600">-</span>`}
                 </td>
-                <td class="py-2 px-3"><span class="px-2 py-0.5 text-[10px] font-bold rounded-md ${s.status === 'Completed' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${s.status}</span></td>
-                <td class="py-2 px-3 text-center">
-                  <button onclick="openDoerModal('${item.uniqueId}', '${s._id}', '${s.stepTitle.replace(/'/g, "\\'")}', '${s.status}', '${s.receivedQty || 0}', '${s.attachmentUrl || ''}', '${(s.remarks || '').replace(/'/g, "\\'")}')" class="px-2.5 py-1 bg-slate-100 hover:bg-indigo-50 text-indigo-700 rounded-lg text-[11px] font-bold border border-slate-200">Edit</button>
+                <td class="py-2 px-2.5">
+                  <span class="px-1.5 py-0.5 text-[9px] font-bold rounded ${s.status === 'Completed' ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300' : 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300'}">
+                    ${s.status}
+                  </span>
+                </td>
+                <td class="py-2 px-2 text-center">
+                  <button onclick="openDoerModal('${item.uniqueId}', '${s._id}', '${s.stepTitle.replace(/'/g, "\\'")}', '${s.status}', '${s.receivedQty || 0}', '${(s.attachmentUrl || '').replace(/'/g, "\\'")}', '${(s.remarks || '').replace(/'/g, "\\'")}', '${vName}', '${vPerson}', '${vPhone}', '${poNum}')" class="px-2 py-0.5 bg-slate-100 dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-slate-700 text-indigo-700 dark:text-indigo-300 rounded text-[10px] font-bold border border-slate-200 dark:border-darkborder">Edit</button>
                 </td>
               </tr>
             `;
           });
         });
-        updateStats(data.length, totalSteps, pending, completed);
       } else {
-        // Doer View
         data.forEach(d => {
-          totalSteps++;
           const s = d.step;
-          if (s.status === 'Completed') completed++; else pending++;
-
           const sDateFormatted = new Date(s.plannedStartDate).toLocaleDateString('en-GB');
           const eDateFormatted = new Date(s.plannedEndDate).toLocaleDateString('en-GB');
+          const timer = calculateTimeRemaining(s.plannedEndDate, s.status, s.actualEndDate);
+
+          const v = s.vendorDetails || {};
+          const vName = (v.vendorName || '').replace(/'/g, "\\'");
+          const vPerson = (v.contactPerson || '').replace(/'/g, "\\'");
+          const vPhone = (v.phone || '').replace(/'/g, "\\'");
+          const poNum = (v.poNumber || '').replace(/'/g, "\\'");
 
           html += `
-            <tr class="hover:bg-slate-50 transition">
-              <td class="py-2.5 px-3 font-mono text-indigo-600 font-bold">${d.uniqueId}</td>
-              <td class="py-2.5 px-3 font-bold text-slate-900">${d.mainItemName}</td>
-              <td class="py-2.5 px-2 text-center font-mono font-bold text-slate-800">${s.wbsNo}</td>
-              <td class="py-2.5 px-4 text-slate-800">
-                <div class="font-bold text-slate-900">${s.stepTitle}</div>
-                ${s.remarks ? `<div class="text-[11px] text-amber-700 mt-0.5">💬 Remark: ${s.remarks}</div>` : ''}
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/60 transition">
+              <td class="py-2 px-3 font-mono text-indigo-600 dark:text-indigo-400 font-bold text-[10px]">${d.uniqueId}</td>
+              <td class="py-2 px-3 font-bold text-slate-900 dark:text-white text-[11px]">${d.mainItemName}</td>
+              <td class="py-2 px-1.5 text-center font-mono font-bold text-slate-800 dark:text-slate-200">${s.wbsNo}</td>
+              <td class="py-2 px-3 text-slate-800 dark:text-slate-200">
+                <div class="font-bold text-slate-900 dark:text-white">${s.stepTitle}</div>
+                ${v.vendorName ? `<div class="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold">🏢 Vendor: ${v.vendorName} (PO: ${v.poNumber || 'N/A'})</div>` : ''}
+                ${s.remarks ? `<div class="text-[10px] text-amber-700 dark:text-amber-400">💬 Remark: ${s.remarks}</div>` : ''}
               </td>
-              <td class="py-2.5 px-3"><span class="px-2 py-0.5 rounded-full text-[10px] font-medium bg-indigo-50 text-indigo-700">${s.assignedName || s.assignedEmail}</span></td>
-              <td class="py-2.5 px-3 text-slate-600 text-[11px] font-mono">${sDateFormatted} – ${eDateFormatted}</td>
-              <td class="py-2.5 px-2 text-center font-bold text-amber-800">${s.durationDays || 1}d</td>
-              <td class="py-2.5 px-2 text-center text-slate-500">${d.totalQty || 1}</td>
-              <td class="py-2.5 px-2 text-center font-extrabold text-slate-900">${s.receivedQty || 0}</td>
-              <td class="py-2.5 px-3">
-                ${s.attachmentUrl ? `<a href="${s.attachmentUrl}" target="_blank" class="text-indigo-600 hover:underline inline-flex items-center gap-1 font-semibold"><i data-lucide="paperclip" class="w-3.5 h-3.5"></i> Proof</a>` : `<span class="text-slate-300">-</span>`}
+              <td class="py-2 px-2.5">
+                <div class="flex flex-col">
+                  <span class="px-1.5 py-0.5 rounded text-[10px] font-medium bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 w-fit">${s.assignedName || s.assignedEmail}</span>
+                  ${s.status === 'Completed' && s.actualEndDate ? `
+                    <span class="text-[9px] text-emerald-600 dark:text-emerald-400 font-mono font-bold mt-0.5">
+                      ✓ Done: ${new Date(s.actualEndDate).toLocaleDateString('en-GB')}
+                    </span>
+                  ` : ''}
+                </div>
               </td>
-              <td class="py-2.5 px-3"><span class="px-2 py-0.5 text-[10px] font-bold rounded-md ${s.status === 'Completed' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">${s.status}</span></td>
-              <td class="py-2.5 px-3 text-center">
-                <button onclick="openDoerModal('${d.uniqueId}', '${s._id}', '${s.stepTitle.replace(/'/g, "\\'")}', '${s.status}', '${s.receivedQty || 0}', '${s.attachmentUrl || ''}', '${(s.remarks || '').replace(/'/g, "\\'")}')" class="px-2.5 py-1 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg text-[11px] font-bold shadow-xs">Update</button>
+              <td class="py-2 px-2.5 text-slate-600 dark:text-slate-400 text-[10px] font-mono">${sDateFormatted} – ${eDateFormatted}</td>
+              
+              <td class="py-2 px-3 text-center border-x border-slate-100 dark:border-darkborder">
+                <span class="stopwatch-cell inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-mono border ${timer.textClass}" data-end-date="${s.plannedEndDate}" data-status="${s.status}" data-actual-end="${s.actualEndDate || ''}">
+                  ${timer.label}
+                </span>
+              </td>
+
+              <td class="py-2 px-1.5 text-center font-bold text-amber-800 dark:text-amber-400">${s.durationDays || 1}d</td>
+              <td class="py-2 px-1.5 text-center font-extrabold text-slate-900 dark:text-white">${s.receivedQty || 0}</td>
+              <td class="py-2 px-2 text-center">
+                ${s.attachmentUrl ? `<a href="${s.attachmentUrl}" target="_blank" download="attachment" class="text-indigo-600 dark:text-indigo-400 hover:underline font-semibold"><i data-lucide="paperclip" class="w-3.5 h-3.5 inline"></i></a>` : `<span class="text-slate-300 dark:text-slate-600">-</span>`}
+              </td>
+              <td class="py-2 px-2.5"><span class="px-1.5 py-0.5 text-[9px] font-bold rounded ${s.status === 'Completed' ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300' : 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300'}">${s.status}</span></td>
+              <td class="py-2 px-2 text-center">
+                <button onclick="openDoerModal('${d.uniqueId}', '${s._id}', '${s.stepTitle.replace(/'/g, "\\'")}', '${s.status}', '${s.receivedQty || 0}', '${(s.attachmentUrl || '').replace(/'/g, "\\'")}', '${(s.remarks || '').replace(/'/g, "\\'")}', '${vName}', '${vPerson}', '${vPhone}', '${poNum}')" class="px-2 py-0.5 bg-indigo-600 text-white rounded text-[10px] font-bold">Update</button>
               </td>
             </tr>
           `;
         });
-        updateStats(data.length, totalSteps, pending, completed);
       }
 
       tbody.innerHTML = html;
       lucide.createIcons();
     }
 
-    function openDoerModal(taskId, stepId, title, status, qty, attach, remarks) {
-      document.getElementById('editTaskId').value = taskId;
-      document.getElementById('editStepId').value = stepId;
-      document.getElementById('modalStepTitle').innerText = `${taskId} : ${title}`;
-      document.getElementById('editStatus').value = status;
-      document.getElementById('editQty').value = qty;
-      document.getElementById('editAttachment').value = attach;
-      document.getElementById('editRemarks').value = remarks;
-      document.getElementById('doerAlert').innerHTML = '';
-      toggleModal('doerModal', true);
-    }
-
-    async function saveDoerExecution() {
-      const btn = document.getElementById('btnDoerSave');
-      const alertBox = document.getElementById('doerAlert');
-      btn.disabled = true;
-
-      const payload = {
-        uniqueId: document.getElementById('editTaskId').value,
-        stepId: document.getElementById('editStepId').value,
-        status: document.getElementById('editStatus').value,
-        receivedQty: document.getElementById('editQty').value,
-        attachmentUrl: document.getElementById('editAttachment').value,
-        remarks: document.getElementById('editRemarks').value
-      };
-
-      try {
-        const res = await fetch('/api/pms/update-step', {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        const json = await res.json();
-        if (json.success) {
-          toggleModal('doerModal', false);
-          loadDashboardData();
-        } else {
-          alertBox.innerHTML = `<div class="p-2 bg-rose-50 text-rose-700 rounded-lg text-xs">${json.error}</div>`;
-        }
-      } catch (err) {
-        alertBox.innerHTML = `<div class="p-2 bg-rose-50 text-rose-700 rounded-lg text-xs">Error: ${err.message}</div>`;
-      } finally {
-        btn.disabled = false;
+    function exportToCSV() {
+      if (!allData || allData.length === 0) {
+        alert('No data available.');
+        return;
       }
-    }
 
-    function updateStats(tasks, steps, p, c) {
-      document.getElementById('statTasks').innerText = tasks;
-      document.getElementById('statSteps').innerText = steps;
-      document.getElementById('statPending').innerText = p;
-      document.getElementById('statCompleted').innerText = c;
-    }
+      let csv = 'Project Site,Task ID,Main Task,WBS,Step Title,Owner,Vendor,PO Number,Start Date,End Date,Completion Date,Duration Days,Qty,Status,Remarks\n';
 
-    function filterTable() {
-      const q = document.getElementById('searchInput').value.toLowerCase();
-      const rows = document.querySelectorAll('#tableRows tr');
-      rows.forEach(r => {
-        r.style.display = r.innerText.toLowerCase().includes(q) ? '' : 'none';
+      allData.forEach(item => {
+        item.steps.forEach(s => {
+          const v = s.vendorDetails || {};
+          const compDate = s.actualEndDate ? new Date(s.actualEndDate).toLocaleDateString('en-GB') : '';
+          csv += `"${item.projectName || ''}","${item.uniqueId}","${item.mainItemName.replace(/"/g, '""')}","${s.wbsNo}","${s.stepTitle.replace(/"/g, '""')}","${s.assignedName || ''}","${v.vendorName || ''}","${v.poNumber || ''}","${new Date(s.plannedStartDate).toLocaleDateString('en-GB')}","${new Date(s.plannedEndDate).toLocaleDateString('en-GB')}","${compDate}","${s.durationDays}","${s.receivedQty || 0}","${s.status}","${(s.remarks || '').replace(/"/g, '""')}"\n`;
+        });
       });
+
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `PMS_Execution_Report_${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
     }
 
+    // Initialize Application
+    initTheme();
+    renderProjectFilterDropdown();
+    loadDoersList();
     loadDashboardData();
     lucide.createIcons();
   </script>
