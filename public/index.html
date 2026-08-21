@@ -390,7 +390,7 @@
 
   <!-- Modal: Create Task Package -->
   <div id="createTaskModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
-    <div class="bg-white dark:bg-darkcard rounded-2xl max-w-2xl w-full p-4 shadow-2xl border relative max-h-[90vh] flex flex-col">
+    <div class="bg-white dark:bg-darkcard rounded-2xl max-w-3xl w-full p-4 shadow-2xl border relative max-h-[92vh] flex flex-col">
       <div class="flex items-center justify-between pb-2 border-b">
         <h3 class="text-xs font-bold text-slate-900 dark:text-white">Create Main Task & Steps</h3>
         <button onclick="toggleModal('createTaskModal', false)" class="text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
@@ -428,7 +428,7 @@
         </div>
 
         <div class="bg-indigo-50/60 p-2 rounded-xl border flex items-center justify-between">
-          <span class="font-bold text-slate-700">Generate Default Steps (15 Steps):</span>
+          <span class="font-bold text-slate-700">Steps Count (Default 15 Steps):</span>
           <button type="button" onclick="generateBatchSteps(15)" class="bg-indigo-600 text-white font-bold px-3 py-1 rounded">Generate Steps</button>
         </div>
 
@@ -769,10 +769,10 @@
       document.getElementById('formProjectTitle').value = '';
       document.getElementById('formPoNumber').value = '';
       document.getElementById('formDataEntryOp').value = '';
-      document.getElementById('formProcCoord').value = '';
-      document.getElementById('formTechPerson').value = '';
-      document.getElementById('formPurchaser').value = '';
-      document.getElementById('formVre').value = '';
+      document.getElementById('formProcCoord').value = 'Tulsi Sen';
+      document.getElementById('formTechPerson').value = 'Heera lal Ji (8003698656)';
+      document.getElementById('formPurchaser').value = 'Ronak Ji (8107688615)';
+      document.getElementById('formVre').value = 'Aarti Bala (8824133320)';
       document.getElementById('formProjectOwner').value = '';
       document.getElementById('modalSiteTitle').innerText = 'Add New Site / Project';
       toggleModal('siteModal', true);
