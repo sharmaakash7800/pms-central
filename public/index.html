@@ -535,7 +535,6 @@
       });
     });
 
-    // PERSISTENT COLLAPSE STATE LOADED FROM LOCALSTORAGE
     let collapsedTasks = JSON.parse(localStorage.getItem('pms_collapsed_tasks') || '{}');
 
     function toggleTaskCollapse(uniqueId) {
@@ -897,8 +896,13 @@
     }
 
     function saveAsTemplate() {
-      const bulkText = document.getElementById('bulkStepsInput').value.trim();
-      if(!bulkText) return alert('Enter steps first!');
+      const stepCards = document.querySelectorAll('#stepsContainer .step-card');
+      if (stepCards.length === 0) return alert('No steps available to save!');
+      
+      let titles = [];
+      stepCards.forEach(c => titles.push(c.querySelector('.step-title').value.trim()));
+      const bulkText = titles.join('\n');
+
       const name = document.getElementById('mItemName').value.trim() || prompt('Enter Template Name:');
       if(!name) return;
 
@@ -948,9 +952,38 @@
       document.getElementById('mQty').value = task.totalQty || 1;
       document.getElementById('mStartDate').value = task.startDate ? new Date(task.startDate).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10);
 
+      // Render existing steps directly into step container for editing/removal
+      const container = document.getElementById('stepsContainer');
+      let html = '';
+      task.steps.sort(naturalWbsSort).forEach((s, i) => {
+        let doerOptions = '';
+        activeDoers.forEach(d => {
+          const selected = d.name === s.assignedName ? 'selected' : '';
+          doerOptions += `<option value="${d.name}" data-email="${d.email}" ${selected}>${d.name}</option>`;
+        });
+
+        html += `
+          <div class="step-card bg-slate-50 dark:bg-slate-800 p-2 rounded border space-y-1">
+            <div class="flex justify-between font-bold text-[10px]">
+              <span>#${i+1}</span>
+              <button type="button" onclick="this.closest('.step-card').remove();" class="text-rose-500">Remove</button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-1.5 items-center">
+              <input type="text" class="step-title md:col-span-7 border rounded px-1.5 py-0.5 text-xs dark:bg-slate-800 dark:text-white" value="${s.stepTitle}">
+              <select class="step-doer md:col-span-3 border rounded px-1.5 py-0.5 text-[11px] dark:bg-slate-800 dark:text-white">${doerOptions}</select>
+              <div class="md:col-span-2 flex items-center gap-1">
+                <input type="number" min="1" value="${s.durationDays || 2}" class="step-days w-full border rounded px-1 py-0.5 text-xs font-bold text-center dark:bg-slate-800 dark:text-white" title="Duration in Days">
+                <span class="text-[9px] text-slate-400">d</span>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+
+      // Populate textarea as well
       let titles = task.steps.sort(naturalWbsSort).map(s => s.stepTitle).join('\n');
       document.getElementById('bulkStepsInput').value = titles;
-      generateStepsFromBulkInput();
 
       updateTemplateDropdown();
       toggleModal('createTaskModal', true);
@@ -1033,6 +1066,7 @@
       container.appendChild(div);
     }
 
+    // STRICT DOM-BASED STEP SAVING (FIXES REMOVAL BUG)
     async function submitFullTaskPackage() {
       const editId = document.getElementById('editTaskIdField').value;
       const projectName = document.getElementById('mProject').value.trim();
@@ -1043,7 +1077,7 @@
 
       const stepCards = document.querySelectorAll('#stepsContainer .step-card');
       if (stepCards.length === 0) {
-        alert('Please paste your list and click "Generate From List" first.');
+        alert('Please generate or add at least one step.');
         return;
       }
 
