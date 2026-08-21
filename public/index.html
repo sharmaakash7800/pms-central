@@ -507,7 +507,6 @@
 
     function onDoerUserChange() { applyFilters(); }
 
-    // Column Resizing Logic
     document.addEventListener('DOMContentLoaded', function () {
       const table = document.getElementById('pmsGridTable');
       if (!table) return;
@@ -885,7 +884,6 @@
       select.innerHTML = html;
     }
 
-    // Template Functions for Step Reuse
     function updateTemplateDropdown() {
       const selector = document.getElementById('templateSelector');
       const templates = JSON.parse(localStorage.getItem('pms_saved_templates') || '[]');
@@ -952,15 +950,19 @@
       document.getElementById('mQty').value = task.totalQty || 1;
       document.getElementById('mStartDate').value = task.startDate ? new Date(task.startDate).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10);
 
-      // Render existing steps directly into step container for editing/removal
       const container = document.getElementById('stepsContainer');
       let html = '';
+      
       task.steps.sort(naturalWbsSort).forEach((s, i) => {
         let doerOptions = '';
-        activeDoers.forEach(d => {
-          const selected = d.name === s.assignedName ? 'selected' : '';
-          doerOptions += `<option value="${d.name}" data-email="${d.email}" ${selected}>${d.name}</option>`;
-        });
+        if (activeDoers && activeDoers.length > 0) {
+          activeDoers.forEach(d => {
+            const selected = (d.name === s.assignedName || d.email === s.assignedEmail) ? 'selected' : '';
+            doerOptions += `<option value="${d.name}" data-email="${d.email}" ${selected}>${d.name}</option>`;
+          });
+        } else {
+          doerOptions = `<option value="${s.assignedName || 'Unassigned'}" data-email="${s.assignedEmail || 'doer@domain.com'}">${s.assignedName || 'Unassigned'}</option>`;
+        }
 
         html += `
           <div class="step-card bg-slate-50 dark:bg-slate-800 p-2 rounded border space-y-1">
@@ -981,7 +983,6 @@
       });
       container.innerHTML = html;
 
-      // Populate textarea as well
       let titles = task.steps.sort(naturalWbsSort).map(s => s.stepTitle).join('\n');
       document.getElementById('bulkStepsInput').value = titles;
 
