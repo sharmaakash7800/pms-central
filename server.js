@@ -12,17 +12,15 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 connectDB();
 
-// Bulk Task Create API
+// 1. Bulk Task Generator
 app.post('/api/pms/create-bulk', async (req, res) => {
   try {
-    const { projectName, pmsType, rawItemsText, startDate, sheetId } = req.body;
+    const { projectName, pmsType, rawItemsText, startDate } = req.body;
     const items = (rawItemsText || '').split('\n').map(i => i.trim()).filter(i => i.length > 0);
 
     if (items.length === 0) return res.status(400).json({ error: 'Enter at least one item.' });
 
     const templates = await StepTemplate.find({ pmsType: pmsType || 'SUPPLY' }).sort({ stepNo: 1 });
-    if (templates.length === 0) return res.status(404).json({ error: 'No step templates found.' });
-
     const baseDate = new Date(startDate || new Date());
     const datePrefix = baseDate.toISOString().slice(0, 10).replace(/-/g, '');
 
@@ -45,16 +43,16 @@ app.post('/api/pms/create-bulk', async (req, res) => {
       for (const tpl of templates) {
         const stepStart = new Date(currentStepStart);
         const stepEnd = new Date(stepStart);
-        stepEnd.setDate(stepEnd.getDate() + tpl.defaultDurationDays);
+        stepEnd.setDate(stepEnd.getDate() + (tpl.defaultDurationDays || 1));
 
         generatedSteps.push({
           wbsNo: tpl.stepNo,
           stepTitle: tpl.stepTitle,
-          assignedEmail: tpl.defaultOwnerEmail,
-          assignedName: tpl.defaultOwnerName,
+          assignedEmail: tpl.defaultOwnerEmail || '',
+          assignedName: tpl.defaultOwnerName || '',
           plannedStartDate: stepStart,
           plannedEndDate: stepEnd,
-          durationDays: tpl.defaultDurationDays,
+          durationDays: tpl.defaultDurationDays || 1,
           status: 'Pending',
           remarks: '',
           receivedQty: 0,
@@ -71,7 +69,6 @@ app.post('/api/pms/create-bulk', async (req, res) => {
         mainItemName: item,
         startDate: baseDate,
         totalQty: 1,
-        sheetId: sheetId || '',
         steps: generatedSteps
       });
 
@@ -85,7 +82,75 @@ app.post('/api/pms/create-bulk', async (req, res) => {
   }
 });
 
-// Doer Task Update API (Remarks, Received Qty, Attachment, Status)
+// 2. Create Single Custom Task
+app.post('/api/pms/create-task', async (req, res) => {
+  try {
+    const { projectName, pmsType, mainItemName, startDate, totalQty } = req.body;
+    const baseDate = new Date(startDate || new Date());
+    const datePrefix = baseDate.toISOString().slice(0, 10).replace(/-/g, '');
+
+    const lastTask = await PmsTask.findOne({ uniqueId: new RegExp(`^PMS-${datePrefix}`) }).sort({ createdAt: -1 });
+    let counter = 1;
+    if (lastTask) {
+      const parts = lastTask.uniqueId.split('-');
+      counter = parseInt(parts[2], 10) + 1;
+    }
+
+    const uniqueId = `PMS-${datePrefix}-${String(counter).padStart(3, '0')}`;
+
+    const newTask = new PmsTask({
+      uniqueId,
+      projectName: projectName || 'General Project',
+      pmsType: pmsType || 'SUPPLY',
+      mainItemName,
+      startDate: baseDate,
+      totalQty: Number(totalQty) || 1,
+      steps: []
+    });
+
+    await newTask.save();
+    res.status(201).json({ success: true, data: newTask });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 3. Add Custom Step to Existing Task
+app.post('/api/pms/add-step', async (req, res) => {
+  try {
+    const { uniqueId, wbsNo, stepTitle, assignedEmail, assignedName, plannedStartDate, plannedEndDate, status } = req.body;
+    
+    const task = await PmsTask.findOne({ uniqueId });
+    if (!task) return res.status(404).json({ error: 'Task not found' });
+
+    const sDate = new Date(plannedStartDate);
+    const eDate = new Date(plannedEndDate);
+    const duration = Math.max(1, Math.round((eDate - sDate) / (1000 * 60 * 60 * 24)));
+
+    const newStep = {
+      wbsNo: wbsNo || String(task.steps.length + 1),
+      stepTitle,
+      assignedEmail: assignedEmail.toLowerCase(),
+      assignedName: assignedName || assignedEmail.split('@')[0],
+      plannedStartDate: sDate,
+      plannedEndDate: eDate,
+      durationDays: duration,
+      status: status || 'Pending',
+      remarks: '',
+      receivedQty: 0,
+      attachmentUrl: ''
+    };
+
+    task.steps.push(newStep);
+    await task.save();
+
+    res.status(201).json({ success: true, data: task });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4. Update Step Execution Details
 app.patch('/api/pms/update-step', async (req, res) => {
   try {
     const { uniqueId, stepId, status, remarks, receivedQty, attachmentUrl } = req.body;
@@ -114,7 +179,7 @@ app.patch('/api/pms/update-step', async (req, res) => {
   }
 });
 
-// Doer Fetch API
+// 5. Doer Filter API
 app.get('/api/pms/my-tasks', async (req, res) => {
   try {
     const { email } = req.query;
@@ -129,6 +194,7 @@ app.get('/api/pms/my-tasks', async (req, res) => {
           projectName: 1,
           pmsType: 1,
           mainItemName: 1,
+          totalQty: 1,
           step: '$steps'
         }
       },
@@ -141,7 +207,7 @@ app.get('/api/pms/my-tasks', async (req, res) => {
   }
 });
 
-// Admin All Tasks API
+// 6. Admin All Tasks API
 app.get('/api/pms/all', async (req, res) => {
   try {
     const all = await PmsTask.find().sort({ createdAt: -1 });
