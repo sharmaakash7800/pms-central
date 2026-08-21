@@ -380,7 +380,7 @@
         <button onclick="toggleModal('createTaskModal', false)" class="text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
       </div>
 
-      <form onsubmit="event.preventDefault(); submitFullTaskPackage();" class="overflow-y-auto custom-scroll py-2.5 space-y-2.5 flex-1 pr-1 text-xs">
+      <div class="overflow-y-auto custom-scroll py-2.5 space-y-2.5 flex-1 pr-1 text-xs">
         <input type="hidden" id="editTaskIdField">
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
@@ -439,9 +439,9 @@
 
         <div class="pt-2 border-t flex justify-end gap-1.5">
           <button type="button" onclick="toggleModal('createTaskModal', false)" class="px-2.5 py-1 font-bold text-slate-600">Cancel</button>
-          <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-1.5 rounded transition">Save in DB</button>
+          <button type="button" onclick="submitFullTaskPackage()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-1.5 rounded transition">Save in DB</button>
         </div>
-      </form>
+      </div>
     </div>
   </div>
 
@@ -834,7 +834,7 @@
         poNumber: document.getElementById('formPoNumber').value.trim(),
         dataEntryOperator: document.getElementById('formDataEntryOp').value.trim(),
         processCoordinator: document.getElementById('formProcCoord').value.trim(),
-        technicalPerson: document.getElementById('formTechnicalPerson').value.trim(),
+        technicalPerson: document.getElementById('formTechPerson').value.trim(),
         purchaserPerson: document.getElementById('formPurchaser').value.trim(),
         vrePerson: document.getElementById('formVre').value.trim(),
         projectOwner: document.getElementById('formProjectOwner').value.trim()
@@ -1066,14 +1066,18 @@
       container.appendChild(div);
     }
 
-    // STRICT DOM-BASED STEP SAVING (FIXES REMOVAL BUG)
     async function submitFullTaskPackage() {
-      const editId = document.getElementById('editTaskIdField').value;
+      const editId = document.getElementById('editTaskIdField').value.trim();
       const projectName = document.getElementById('mProject').value.trim();
       const mainItemName = document.getElementById('mItemName').value.trim();
       const startDate = document.getElementById('mStartDate').value;
       const pmsType = document.getElementById('mType').value;
       const totalQty = document.getElementById('mQty').value;
+
+      if (!projectName || !mainItemName || !startDate) {
+        alert('Please fill Site Name, Main Task Name, and Start Date.');
+        return;
+      }
 
       const stepCards = document.querySelectorAll('#stepsContainer .step-card');
       if (stepCards.length === 0) {
@@ -1082,7 +1086,7 @@
       }
 
       const steps = [];
-      let baseDate = new Date(startDate || new Date());
+      let baseDate = new Date(startDate);
 
       stepCards.forEach((card, idx) => {
         const title = card.querySelector('.step-title').value.trim() || `Step #${idx + 1}`;
@@ -1111,17 +1115,21 @@
       const url = editId ? `${API_BASE}/api/pms/update-package` : `${API_BASE}/api/pms/create-custom-package`;
       const method = editId ? 'PUT' : 'POST';
 
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const json = await res.json();
-      if(json.success) {
-        toggleModal('createTaskModal', false);
-        loadDashboardData();
-      } else {
-        alert(json.error);
+      try {
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if(json.success) {
+          toggleModal('createTaskModal', false);
+          loadDashboardData();
+        } else {
+          alert(json.error || 'Failed to save task.');
+        }
+      } catch (err) {
+        alert('Network error: ' + err.message);
       }
     }
 
