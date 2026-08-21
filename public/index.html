@@ -236,7 +236,10 @@
     <div id="viewTeam" class="view-section hidden space-y-2">
       <div class="bg-white dark:bg-darkcard p-2.5 rounded-xl border flex items-center justify-between">
         <span class="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">Team Directory</span>
-        <button onclick="openAddMemberModal()" class="bg-indigo-600 text-white text-[10px] font-bold px-2 py-0.5 rounded transition">+ Add Member</button>
+        <button onclick="openAddMemberModal()" class="bg-indigo-600 text-white text-[10px] font-bold px-2.5 py-1 rounded shadow-xs transition flex items-center gap-1">
+          <i data-lucide="plus" class="w-3 h-3"></i>
+          <span>+ Add Member</span>
+        </button>
       </div>
       <div id="teamCardsContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2"></div>
     </div>
@@ -309,11 +312,10 @@
         </div>
         <button type="submit" id="btnDoerSave" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-1.5 rounded-lg text-xs">Save Execution Details</button>
       </form>
-      <div id="doerAlert" class="mt-1.5"></div>
     </div>
   </div>
 
-  <!-- Modal: Add / Edit Site (With All Optional Fields) -->
+  <!-- Modal: Add / Edit Site -->
   <div id="siteModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
     <div class="bg-white dark:bg-darkcard rounded-2xl max-w-lg w-full p-4 shadow-2xl border relative max-h-[92vh] flex flex-col">
       <div class="flex items-center justify-between pb-2 border-b">
@@ -386,16 +388,70 @@
     </div>
   </div>
 
-  <!-- Modal: Create Task -->
+  <!-- Modal: Create Task Package -->
   <div id="createTaskModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
-    <div class="bg-white dark:bg-darkcard rounded-2xl max-w-md w-full p-4 shadow-2xl border relative">
-      <button onclick="toggleModal('createTaskModal', false)" class="absolute right-3 top-3 text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
-      <h3 class="text-xs font-bold text-slate-900 dark:text-white mb-2">Create Task Package</h3>
-      <form onsubmit="event.preventDefault(); submitFullTaskPackage();" class="space-y-2">
-        <input type="text" id="mProject" required placeholder="Site Name" class="w-full border rounded px-2 py-1 text-xs">
-        <input type="text" id="mItemName" required placeholder="Main Task Name" class="w-full border rounded px-2 py-1 text-xs">
-        <input type="date" id="mStartDate" required class="w-full border rounded px-2 py-1 text-xs">
-        <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-1 rounded text-xs">Save in DB</button>
+    <div class="bg-white dark:bg-darkcard rounded-2xl max-w-2xl w-full p-4 shadow-2xl border relative max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between pb-2 border-b">
+        <h3 class="text-xs font-bold text-slate-900 dark:text-white">Create Main Task & Steps</h3>
+        <button onclick="toggleModal('createTaskModal', false)" class="text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+
+      <form onsubmit="event.preventDefault(); submitFullTaskPackage();" class="overflow-y-auto custom-scroll py-2.5 space-y-2.5 flex-1 pr-1 text-xs">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Site / Project Name *</label>
+            <input type="text" id="mProject" required list="projectSuggestions" class="w-full border rounded px-2 py-1 font-bold dark:bg-slate-800 dark:text-white" value="EV Charging_CLZS">
+            <datalist id="projectSuggestions"></datalist>
+          </div>
+          <div>
+            <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Main Task Name *</label>
+            <input type="text" id="mItemName" required class="w-full border rounded px-2 py-1 font-bold dark:bg-slate-800 dark:text-white" placeholder="e.g. Supply of 11 kV Extension Panel">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+          <div>
+            <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Category</label>
+            <select id="mType" class="w-full border rounded px-2 py-1 font-semibold dark:bg-slate-800 dark:text-white">
+              <option value="SUPPLY">SUPPLY PMS</option>
+              <option value="SERVICE">SERVICE PMS</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[9px] font-bold text-indigo-600 uppercase mb-0.5">Start Date</label>
+            <input type="date" id="mStartDate" required class="w-full border rounded px-2 py-0.5 font-bold dark:bg-slate-800 dark:text-white">
+          </div>
+          <div>
+            <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Qty</label>
+            <input type="number" id="mQty" required value="1" min="1" class="w-full border rounded px-2 py-0.5 font-mono dark:bg-slate-800 dark:text-white">
+          </div>
+        </div>
+
+        <div class="bg-indigo-50/60 p-2 rounded-xl border flex items-center justify-between">
+          <span class="font-bold text-slate-700">Generate Default Steps (15 Steps):</span>
+          <button type="button" onclick="generateBatchSteps(15)" class="bg-indigo-600 text-white font-bold px-3 py-1 rounded">Generate Steps</button>
+        </div>
+
+        <div id="stepsContainer" class="space-y-1.5"></div>
+
+        <div class="pt-2 border-t flex justify-end gap-1.5">
+          <button type="button" onclick="toggleModal('createTaskModal', false)" class="px-2.5 py-1 font-bold text-slate-600">Cancel</button>
+          <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-1.5 rounded transition">Save Task in DB</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Add Team Member -->
+  <div id="addMemberModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
+    <div class="bg-white dark:bg-darkcard rounded-2xl max-w-sm w-full p-4 shadow-2xl border relative">
+      <button onclick="toggleModal('addMemberModal', false)" class="absolute right-3 top-3 text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
+      <h3 class="text-xs font-bold text-slate-900 dark:text-white mb-2">Add Team Member</h3>
+      <form onsubmit="event.preventDefault(); saveNewMember();" class="space-y-2 text-xs">
+        <input type="text" id="newMemberName" required placeholder="Full Name" class="w-full border rounded px-2 py-1 dark:bg-slate-800 dark:text-white">
+        <input type="email" id="newMemberEmail" required placeholder="Email Address" class="w-full border rounded px-2 py-1 dark:bg-slate-800 dark:text-white font-mono">
+        <input type="text" id="newMemberRole" placeholder="Role / Designation (e.g. Technical)" class="w-full border rounded px-2 py-1 dark:bg-slate-800 dark:text-white">
+        <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-1.5 rounded transition">Save Member</button>
       </form>
     </div>
   </div>
@@ -539,7 +595,7 @@
           sortedSteps.forEach(s => {
             const isCompleted = s.status === 'Completed';
             const isDelayed = (new Date(s.plannedEndDate) < now && !isCompleted) || s.status === 'Delayed';
-            const timer = calculateTimeRemaining(s.plannedEndDate, s.status, s.actualEndDate);
+            const timer = calculateTimeRemaining(s.plannedEndDate, s.status);
 
             let statusBadgeClass = 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300';
             let statusLabel = s.status;
@@ -798,17 +854,123 @@
       select.innerHTML = html;
     }
 
-    function openCreateModal() { toggleModal('createTaskModal', true); }
-    function openAddMemberModal() {}
+    function openCreateModal() {
+      document.getElementById('mStartDate').value = new Date().toISOString().slice(0, 10);
+      generateBatchSteps(15);
+      toggleModal('createTaskModal', true);
+    }
+
+    function generateBatchSteps(count) {
+      const container = document.getElementById('stepsContainer');
+      const defaultTitles = [
+        "Complete Technicals with approved make submitted to Commercial",
+        "Commercial Offer & Vendor Negotiations",
+        "Offer Evaluation by Technical Team",
+        "Discussion and Negotiation with Vendor",
+        "Management Discussion and Approval",
+        "Issue PO",
+        "Drawings, GA, GTP & other submissions",
+        "Submit Process Engineering Drawing",
+        "Process Engineering Approval & Clearance",
+        "Advance Payment to Vendor as per PO",
+        "Manufacturing / Material Readiness",
+        "Conduct Inspection",
+        "Dispatch Clearance",
+        "Balance Payment to Vendor",
+        "Material Delivery at Site"
+      ];
+
+      let html = '';
+      for(let i=0; i<count; i++) {
+        const title = defaultTitles[i] || `Step #${i+1}`;
+        html += `
+          <div class="step-card bg-slate-50 dark:bg-slate-800 p-2 rounded border space-y-1">
+            <div class="flex justify-between font-bold text-[10px]"><span>#${i+1}</span></div>
+            <input type="text" class="step-title w-full border rounded px-1.5 py-0.5 text-xs" value="${title}">
+          </div>
+        `;
+      }
+      container.innerHTML = html;
+    }
+
+    async function submitFullTaskPackage() {
+      const projectName = document.getElementById('mProject').value.trim();
+      const mainItemName = document.getElementById('mItemName').value.trim();
+      const startDate = document.getElementById('mStartDate').value;
+      const pmsType = document.getElementById('mType').value;
+      const totalQty = document.getElementById('mQty').value;
+
+      const stepCards = document.querySelectorAll('#stepsContainer .step-card');
+      const steps = [];
+      stepCards.forEach((card, idx) => {
+        const title = card.querySelector('.step-title').value;
+        const doer = activeDoers[idx % activeDoers.length] || { name: 'Heera Lal Ji', email: 'heeralal@domain.com' };
+        steps.push({
+          wbsNo: String(idx + 1),
+          stepTitle: title,
+          assignedName: doer.name,
+          assignedEmail: doer.email,
+          durationDays: 2
+        });
+      });
+
+      const payload = { projectName, mainItemName, pmsType, startDate, totalQty, steps };
+      const res = await fetch(`${API_BASE}/api/pms/create-custom-package`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const json = await res.json();
+      if(json.success) {
+        toggleModal('createTaskModal', false);
+        loadDashboardData();
+      } else {
+        alert(json.error);
+      }
+    }
+
+    function openAddMemberModal() {
+      document.getElementById('newMemberName').value = '';
+      document.getElementById('newMemberEmail').value = '';
+      document.getElementById('newMemberRole').value = '';
+      toggleModal('addMemberModal', true);
+    }
+
+    async function saveNewMember() {
+      const name = document.getElementById('newMemberName').value.trim();
+      const email = document.getElementById('newMemberEmail').value.trim();
+      const role = document.getElementById('newMemberRole').value.trim();
+
+      const res = await fetch(`${API_BASE}/api/doers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, role })
+      });
+      const json = await res.json();
+      if(json.success) {
+        toggleModal('addMemberModal', false);
+        loadDoersList();
+      } else {
+        alert(json.error);
+      }
+    }
+
     function renderTeamView() {
       const container = document.getElementById('teamCardsContainer');
       if (!container) return;
       let html = '';
       activeDoers.forEach(d => {
-        html += `<div class="bg-white dark:bg-darkcard p-3 rounded-xl border shadow-2xs"><h4 class="font-bold text-xs">${d.name}</h4><p class="text-[10px] text-slate-400 font-mono">${d.email}</p><span class="inline-block text-[8px] text-indigo-600 bg-indigo-50 px-1 py-0.2 rounded mt-1">${d.role || 'Executive'}</span></div>`;
+        html += `
+          <div class="bg-white dark:bg-darkcard p-3 rounded-xl border shadow-2xs">
+            <h4 class="font-bold text-xs">${d.name}</h4>
+            <p class="text-[10px] text-slate-400 font-mono">${d.email}</p>
+            <span class="inline-block text-[8px] text-indigo-600 bg-indigo-50 px-1 py-0.2 rounded mt-1">${d.role || 'Executive'}</span>
+          </div>
+        `;
       });
       container.innerHTML = html || '<p class="text-xs text-slate-400 py-4">No members found.</p>';
     }
+
     function renderVendorsView() {}
     function exportToCSV() { loadDashboardData(); }
 
