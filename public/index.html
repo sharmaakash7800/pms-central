@@ -181,24 +181,8 @@
             <select id="reviewPmsSelector" onchange="renderSpecificPmsReview()" class="bg-indigo-50 dark:bg-slate-800 border border-indigo-200 dark:border-indigo-800 rounded-lg px-2 py-0.5 text-xs font-extrabold text-indigo-950 dark:text-indigo-200 outline-none cursor-pointer"></select>
           </div>
         </div>
-
-        <div class="grid grid-cols-2 sm:grid-cols-5 gap-1.5 pt-1.5 border-t border-slate-100 dark:border-darkborder">
-          <div class="bg-slate-50 dark:bg-slate-800/80 p-1.5 rounded-lg border text-center"><p class="text-[8px] uppercase font-bold text-slate-400">Progress</p><h4 class="text-xs font-extrabold text-indigo-600" id="kpiProgress">0%</h4></div>
-          <div class="bg-emerald-50 p-1.5 rounded-lg border text-center"><p class="text-[8px] uppercase font-bold text-emerald-700">Done</p><h4 class="text-xs font-extrabold text-emerald-800" id="kpiCompleted">0</h4></div>
-          <div class="bg-amber-50 p-1.5 rounded-lg border text-center"><p class="text-[8px] uppercase font-bold text-amber-700">Active</p><h4 class="text-xs font-extrabold text-amber-800" id="kpiInProgress">0</h4></div>
-          <div class="bg-rose-50 p-1.5 rounded-lg border text-center"><p class="text-[8px] uppercase font-bold text-rose-700">Overdue</p><h4 class="text-xs font-extrabold text-rose-800" id="kpiDelayed">0</h4></div>
-          <div class="bg-slate-50 p-1.5 rounded-lg border text-center col-span-2 sm:col-span-1"><p class="text-[8px] uppercase font-bold text-slate-400">Pending</p><h4 class="text-xs font-extrabold text-slate-700" id="kpiPending">0</h4></div>
-        </div>
-
-        <div class="w-full bg-slate-100 dark:bg-slate-800 h-1.5 rounded-full overflow-hidden">
-          <div id="reviewProgressBar" class="bg-emerald-500 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
-        </div>
       </div>
-
       <div class="bg-white dark:bg-darkcard rounded-xl border p-3 space-y-2">
-        <div class="flex items-center justify-between pb-1.5 border-b text-[11px]">
-          <span class="font-bold text-slate-800 dark:text-slate-200">Step Stream (<span id="unifiedTotalBadge">0</span> Steps)</span>
-        </div>
         <div id="unifiedStepsBoxContainer" class="space-y-1.5 max-h-[640px] overflow-y-auto custom-scroll pr-1"></div>
       </div>
     </div>
@@ -427,7 +411,7 @@
           </div>
         </div>
 
-        <!-- Custom Steps List Box with Auto-Memory Save -->
+        <!-- Custom Steps List Box -->
         <div class="bg-indigo-50/60 p-2.5 rounded-xl border space-y-1.5">
           <label class="block font-bold text-indigo-900 dark:text-indigo-200">Custom Steps List (Saved automatically in browser memory):</label>
           <textarea id="bulkStepsInput" rows="5" class="w-full border rounded p-2 text-xs font-mono dark:bg-slate-900 dark:text-white" placeholder="Paste your step list here..."></textarea>
@@ -550,9 +534,11 @@
       renderStructuredTableGrid(allData);
     }
 
+    // STRICT SITE-WISE & DOER-WISE FILTERING LOGIC
     function renderStructuredTableGrid(data) {
       const tbody = document.getElementById('tableRows');
       const role = document.getElementById('userRole').value;
+      const selectedSite = document.getElementById('filterByProject').value;
       const doerEmail = document.getElementById('doerDropdownSelect').value.toLowerCase().trim();
 
       if (!data || data.length === 0) {
@@ -560,10 +546,21 @@
         return;
       }
 
+      // Filter tasks strictly by selected site
+      let filteredData = data;
+      if (selectedSite && selectedSite !== 'ALL') {
+        filteredData = data.filter(item => (item.projectName || '').toLowerCase().trim() === selectedSite.toLowerCase().trim());
+      }
+
+      if (!filteredData || filteredData.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="10" class="text-center py-10 text-slate-400">No tasks found for site: <b>${selectedSite}</b></td></tr>`;
+        return;
+      }
+
       let html = '';
       const now = new Date();
 
-      data.forEach(item => {
+      filteredData.forEach(item => {
         let sortedSteps = [...item.steps].sort(naturalWbsSort);
         if (role === 'DOER' && doerEmail) {
           sortedSteps = sortedSteps.filter(s => (s.assignedEmail || '').toLowerCase().trim() === doerEmail);
@@ -720,6 +717,8 @@
         allSitesList = json.data;
         const select = document.getElementById('filterByProject');
         const datalist = document.getElementById('projectSuggestions');
+        
+        const currentVal = select.value;
         let html = '<option value="ALL">All Sites</option>';
         let dlHtml = '';
         allSitesList.forEach(s => {
@@ -727,6 +726,7 @@
           dlHtml += `<option value="${s.siteName}">`;
         });
         select.innerHTML = html;
+        if (currentVal) select.value = currentVal;
         if (datalist) datalist.innerHTML = dlHtml;
       }
     }
@@ -877,7 +877,6 @@
       document.getElementById('mProject').value = '';
       document.getElementById('mItemName').value = '';
       
-      // Load saved list from browser memory if available
       const savedList = localStorage.getItem('pms_saved_steps_list') || '';
       document.getElementById('bulkStepsInput').value = savedList;
       
@@ -903,7 +902,6 @@
         return;
       }
 
-      // Save to browser memory permanently for other sites
       localStorage.setItem('pms_saved_steps_list', bulkText);
 
       const lines = bulkText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
