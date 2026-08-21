@@ -419,7 +419,7 @@
           </div>
           <div>
             <label class="block text-[9px] font-bold text-indigo-600 uppercase mb-0.5">Start Date</label>
-            <input type="date" id="mStartDate" required class="w-full border rounded px-2 py-0.5 font-bold dark:bg-slate-800 dark:text-white">
+            <input type="date" id="mStartDate" required onchange="recalculateAllStepDates()" class="w-full border rounded px-2 py-0.5 font-bold dark:bg-slate-800 dark:text-white">
           </div>
           <div>
             <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Qty</label>
@@ -428,15 +428,19 @@
         </div>
 
         <div class="bg-indigo-50/60 p-2 rounded-xl border flex items-center justify-between">
-          <span class="font-bold text-slate-700">Steps Count (Default 15 Steps):</span>
-          <button type="button" onclick="generateBatchSteps(15)" class="bg-indigo-600 text-white font-bold px-3 py-1 rounded">Generate Steps</button>
+          <div class="flex items-center gap-1.5">
+            <span class="font-bold text-slate-700">Steps Count:</span>
+            <input type="number" id="quickStepCount" min="1" max="30" value="15" class="w-14 border rounded px-1 py-0.5 font-bold text-center">
+            <button type="button" onclick="generateBatchSteps(document.getElementById('quickStepCount').value)" class="bg-indigo-600 text-white font-bold px-3 py-1 rounded">Generate</button>
+          </div>
+          <button type="button" onclick="addSingleStepRow()" class="text-indigo-600 font-bold">+1 Step</button>
         </div>
 
         <div id="stepsContainer" class="space-y-1.5"></div>
 
         <div class="pt-2 border-t flex justify-end gap-1.5">
           <button type="button" onclick="toggleModal('createTaskModal', false)" class="px-2.5 py-1 font-bold text-slate-600">Cancel</button>
-          <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-1.5 rounded transition">Save Task in DB</button>
+          <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-1.5 rounded transition">Save in DB</button>
         </div>
       </form>
     </div>
@@ -450,7 +454,7 @@
       <form onsubmit="event.preventDefault(); saveNewMember();" class="space-y-2 text-xs">
         <input type="text" id="newMemberName" required placeholder="Full Name" class="w-full border rounded px-2 py-1 dark:bg-slate-800 dark:text-white">
         <input type="email" id="newMemberEmail" required placeholder="Email Address" class="w-full border rounded px-2 py-1 dark:bg-slate-800 dark:text-white font-mono">
-        <input type="text" id="newMemberRole" placeholder="Role / Designation (e.g. Technical)" class="w-full border rounded px-2 py-1 dark:bg-slate-800 dark:text-white">
+        <input type="text" id="newMemberRole" placeholder="Role / Designation" class="w-full border rounded px-2 py-1 dark:bg-slate-800 dark:text-white">
         <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-1.5 rounded transition">Save Member</button>
       </form>
     </div>
@@ -707,9 +711,15 @@
       if (json.success) {
         allSitesList = json.data;
         const select = document.getElementById('filterByProject');
+        const datalist = document.getElementById('projectSuggestions');
         let html = '<option value="ALL">All Sites</option>';
-        allSitesList.forEach(s => html += `<option value="${s.siteName}">${s.siteName}</option>`);
+        let dlHtml = '';
+        allSitesList.forEach(s => {
+          html += `<option value="${s.siteName}">${s.siteName}</option>`;
+          dlHtml += `<option value="${s.siteName}">`;
+        });
         select.innerHTML = html;
+        if (datalist) datalist.innerHTML = dlHtml;
       }
     }
 
@@ -891,6 +901,18 @@
         `;
       }
       container.innerHTML = html;
+    }
+
+    function addSingleStepRow() {
+      const container = document.getElementById('stepsContainer');
+      const count = container.children.length + 1;
+      const div = document.createElement('div');
+      div.className = 'step-card bg-slate-50 dark:bg-slate-800 p-2 rounded border space-y-1';
+      div.innerHTML = `
+        <div class="flex justify-between font-bold text-[10px]"><span>#${count}</span></div>
+        <input type="text" class="step-title w-full border rounded px-1.5 py-0.5 text-xs dark:bg-slate-800 dark:text-white" value="Step #${count}">
+      `;
+      container.appendChild(div);
     }
 
     async function submitFullTaskPackage() {
