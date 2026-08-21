@@ -535,9 +535,12 @@
       });
     });
 
-    window.collapsedTasks = {};
+    // PERSISTENT COLLAPSE STATE LOADED FROM LOCALSTORAGE
+    let collapsedTasks = JSON.parse(localStorage.getItem('pms_collapsed_tasks') || '{}');
+
     function toggleTaskCollapse(uniqueId) {
       collapsedTasks[uniqueId] = !collapsedTasks[uniqueId];
+      localStorage.setItem('pms_collapsed_tasks', JSON.stringify(collapsedTasks));
       renderStructuredTableGrid(allData);
     }
 
