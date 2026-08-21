@@ -18,13 +18,18 @@ const VendorSchema = new mongoose.Schema({
   itemName: { type: String, default: '' }
 }, { timestamps: true });
 
-const StepTemplateSchema = new mongoose.Schema({
-  pmsType: { type: String, enum: ['SUPPLY', 'SERVICE'], required: true },
-  stepNo: { type: String, required: true },
-  stepTitle: { type: String, required: true },
-  defaultOwnerEmail: { type: String, default: '' },
-  defaultOwnerName: { type: String, default: '' },
-  defaultDurationDays: { type: Number, default: 1 }
+// Dedicated Site Master Schema with All Requested Metadata
+const SiteSchema = new mongoose.Schema({
+  siteName: { type: String, required: true, unique: true, trim: true },
+  companyName: { type: String, default: 'MAHESHWARI DISTRIBUTORS' },
+  projectTitle: { type: String, default: '' },
+  poNumber: { type: String, default: '' },
+  dataEntryOperator: { type: String, default: '' },
+  processCoordinator: { type: String, default: 'Tulsi Sen' },
+  technicalPerson: { type: String, default: 'Heera lal Ji (8003698656)' },
+  purchaserPerson: { type: String, default: 'Ronak Ji (8107688615)' },
+  vrePerson: { type: String, default: 'Aarti Bala (8824133320)' },
+  projectOwner: { type: String, default: '' }
 }, { timestamps: true });
 
 const SubStepSchema = new mongoose.Schema({
@@ -62,6 +67,6 @@ const PmsTaskSchema = new mongoose.Schema({
 module.exports = {
   Doer: mongoose.model('Doer', DoerSchema),
   Vendor: mongoose.model('Vendor', VendorSchema),
-  StepTemplate: mongoose.model('StepTemplate', StepTemplateSchema),
+  Site: mongoose.model('Site', SiteSchema),
   PmsTask: mongoose.model('PmsTask', PmsTaskSchema)
 };
