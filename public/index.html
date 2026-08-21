@@ -212,7 +212,7 @@
       <div id="vendorCardsContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2"></div>
     </div>
 
-    <!-- VIEW 4: SITES DIRECTORY (Clicking site name opens task creation modal) -->
+    <!-- VIEW 4: SITES DIRECTORY -->
     <div id="viewSites" class="view-section hidden space-y-2.5">
       <div class="bg-white dark:bg-darkcard p-3 rounded-xl border flex flex-wrap items-center justify-between gap-2">
         <div class="flex items-center gap-2">
@@ -388,11 +388,11 @@
     </div>
   </div>
 
-  <!-- Modal: Create Task Package -->
+  <!-- Modal: Create Task Package with Custom Steps List Area -->
   <div id="createTaskModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
     <div class="bg-white dark:bg-darkcard rounded-2xl max-w-3xl w-full p-4 shadow-2xl border relative max-h-[92vh] flex flex-col">
       <div class="flex items-center justify-between pb-2 border-b">
-        <h3 class="text-xs font-bold text-slate-900 dark:text-white">Create Main Task & Steps</h3>
+        <h3 class="text-xs font-bold text-slate-900 dark:text-white">Create Main Task & Custom Steps</h3>
         <button onclick="toggleModal('createTaskModal', false)" class="text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
       </div>
 
@@ -400,7 +400,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
           <div>
             <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Site / Project Name *</label>
-            <input type="text" id="mProject" required list="projectSuggestions" class="w-full border rounded px-2 py-1 font-bold dark:bg-slate-800 dark:text-white" value="EV Charging_CLZS">
+            <input type="text" id="mProject" required list="projectSuggestions" class="w-full border rounded px-2 py-1 font-bold dark:bg-slate-800 dark:text-white" value="">
             <datalist id="projectSuggestions"></datalist>
           </div>
           <div>
@@ -419,7 +419,7 @@
           </div>
           <div>
             <label class="block text-[9px] font-bold text-indigo-600 uppercase mb-0.5">Start Date</label>
-            <input type="date" id="mStartDate" required onchange="recalculateAllStepDates()" class="w-full border rounded px-2 py-0.5 font-bold dark:bg-slate-800 dark:text-white">
+            <input type="date" id="mStartDate" required class="w-full border rounded px-2 py-0.5 font-bold dark:bg-slate-800 dark:text-white">
           </div>
           <div>
             <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Qty</label>
@@ -427,13 +427,19 @@
           </div>
         </div>
 
-        <div class="bg-indigo-50/60 p-2 rounded-xl border flex items-center justify-between">
-          <div class="flex items-center gap-1.5">
-            <span class="font-bold text-slate-700">Steps Count:</span>
-            <input type="number" id="quickStepCount" min="1" max="30" value="15" class="w-14 border rounded px-1 py-0.5 font-bold text-center">
-            <button type="button" onclick="generateBatchSteps(document.getElementById('quickStepCount').value)" class="bg-indigo-600 text-white font-bold px-3 py-1 rounded">Generate</button>
+        <!-- Custom Steps List Box -->
+        <div class="bg-slate-50 dark:bg-slate-800 p-2.5 rounded-xl border space-y-1.5">
+          <label class="block font-bold text-slate-700 dark:text-slate-200">Custom Steps List (Enter one step title per line):</label>
+          <textarea id="bulkStepsInput" rows="5" class="w-full border rounded p-2 text-xs font-mono dark:bg-slate-900 dark:text-white" placeholder="Complete Technicals&#10;Commercial Offer & Vendor Negotiations&#10;Offer Evaluation by Technical Team"></textarea>
+          <div class="flex justify-between items-center pt-1">
+            <span class="text-[10px] text-slate-400">Type your custom steps above, then click generate.</span>
+            <button type="button" onclick="generateStepsFromBulkInput()" class="bg-indigo-600 text-white font-bold px-4 py-1 rounded shadow-xs">Generate From List</button>
           </div>
-          <button type="button" onclick="addSingleStepRow()" class="text-indigo-600 font-bold">+1 Step</button>
+        </div>
+
+        <div class="flex justify-between items-center">
+          <span class="font-bold text-slate-700 dark:text-slate-300">Generated Steps Table:</span>
+          <button type="button" onclick="addSingleStepRow()" class="text-indigo-600 font-bold text-[11px]">+1 Step</button>
         </div>
 
         <div id="stepsContainer" class="space-y-1.5"></div>
@@ -737,7 +743,6 @@
             html += `
               <div class="bg-white dark:bg-darkcard p-3 rounded-xl border border-slate-200 dark:border-darkborder shadow-2xs space-y-1.5 text-xs">
                 <div class="flex items-center justify-between font-bold">
-                  <!-- Clicking Site Name opens Task Creation modal with pre-filled site name -->
                   <span onclick="openCreateModalWithSite('${s.siteName.replace(/'/g, "\\'")}')" class="text-indigo-600 dark:text-indigo-400 text-xs font-extrabold cursor-pointer hover:underline" title="Click to create task for this site">📍 ${s.siteName}</span>
                   <div class="flex items-center gap-1">
                     <button onclick="openEditSiteModal('${s._id}', '${s.siteName.replace(/'/g, "\\'")}', '${(s.companyName || '').replace(/'/g, "\\'")}', '${(s.projectTitle || '').replace(/'/g, "\\'")}', '${(s.poNumber || '').replace(/'/g, "\\'")}', '${(s.dataEntryOperator || '').replace(/'/g, "\\'")}', '${(s.processCoordinator || '').replace(/'/g, "\\'")}', '${(s.technicalPerson || '').replace(/'/g, "\\'")}', '${(s.purchaserPerson || '').replace(/'/g, "\\'")}', '${(s.vrePerson || '').replace(/'/g, "\\'")}', '${(s.projectOwner || '').replace(/'/g, "\\'")}')" class="text-slate-400 hover:text-indigo-600 p-1" title="Edit Site">
@@ -867,41 +872,30 @@
 
     function openCreateModal() {
       document.getElementById('mStartDate').value = new Date().toISOString().slice(0, 10);
-      document.getElementById('mProject').value = 'EV Charging_CLZS';
+      document.getElementById('mProject').value = '';
       document.getElementById('mItemName').value = '';
-      generateBatchSteps(15);
+      document.getElementById('bulkStepsInput').value = '';
+      document.getElementById('stepsContainer').innerHTML = '';
       toggleModal('createTaskModal', true);
     }
 
-    // Function to open Task modal directly when clicking a site name in Sites Directory
     function openCreateModalWithSite(siteName) {
       openCreateModal();
       document.getElementById('mProject').value = siteName;
     }
 
-    function generateBatchSteps(count) {
+    function generateStepsFromBulkInput() {
+      const bulkText = document.getElementById('bulkStepsInput').value.trim();
       const container = document.getElementById('stepsContainer');
-      const defaultTitles = [
-        "Complete Technicals with approved make submitted to Commercial",
-        "Commercial Offer & Vendor Negotiations",
-        "Offer Evaluation by Technical Team",
-        "Discussion and Negotiation with Vendor",
-        "Management Discussion and Approval",
-        "Issue PO",
-        "Drawings, GA, GTP & other submissions",
-        "Submit Process Engineering Drawing",
-        "Process Engineering Approval & Clearance",
-        "Advance Payment to Vendor as per PO",
-        "Manufacturing / Material Readiness",
-        "Conduct Inspection",
-        "Dispatch Clearance",
-        "Balance Payment to Vendor",
-        "Material Delivery at Site"
-      ];
+      if (!bulkText) {
+        alert('Please enter at least one step title in the box.');
+        return;
+      }
 
+      const lines = bulkText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
       let html = '';
-      for(let i=0; i<count; i++) {
-        const title = defaultTitles[i] || `Step #${i+1}`;
+
+      lines.forEach((line, i) => {
         let doerOptions = '';
         activeDoers.forEach(d => {
           doerOptions += `<option value="${d.name}" data-email="${d.email}">${d.name}</option>`;
@@ -914,7 +908,7 @@
               <button type="button" onclick="this.closest('.step-card').remove();" class="text-rose-500">Remove</button>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-12 gap-1.5 items-center">
-              <input type="text" class="step-title md:col-span-7 border rounded px-1.5 py-0.5 text-xs dark:bg-slate-800 dark:text-white" value="${title}">
+              <input type="text" class="step-title md:col-span-7 border rounded px-1.5 py-0.5 text-xs dark:bg-slate-800 dark:text-white" value="${line}">
               <select class="step-doer md:col-span-3 border rounded px-1.5 py-0.5 text-[11px] dark:bg-slate-800 dark:text-white">${doerOptions}</select>
               <div class="md:col-span-2 flex items-center gap-1">
                 <input type="number" min="1" value="2" class="step-days w-full border rounded px-1 py-0.5 text-xs font-bold text-center dark:bg-slate-800 dark:text-white" title="Duration in Days">
@@ -923,7 +917,7 @@
             </div>
           </div>
         `;
-      }
+      });
       container.innerHTML = html;
     }
 
@@ -943,7 +937,7 @@
           <button type="button" onclick="this.closest('.step-card').remove();" class="text-rose-500">Remove</button>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-12 gap-1.5 items-center">
-          <input type="text" class="step-title md:col-span-7 border rounded px-1.5 py-0.5 text-xs dark:bg-slate-800 dark:text-white" value="Step #${count}">
+          <input type="text" class="step-title md:col-span-7 border rounded px-1.5 py-0.5 text-xs dark:bg-slate-800 dark:text-white" placeholder="Enter step title...">
           <select class="step-doer md:col-span-3 border rounded px-1.5 py-0.5 text-[11px] dark:bg-slate-800 dark:text-white">${doerOptions}</select>
           <div class="md:col-span-2 flex items-center gap-1">
             <input type="number" min="1" value="2" class="step-days w-full border rounded px-1 py-0.5 text-xs font-bold text-center dark:bg-slate-800 dark:text-white" title="Duration in Days">
@@ -962,11 +956,16 @@
       const totalQty = document.getElementById('mQty').value;
 
       const stepCards = document.querySelectorAll('#stepsContainer .step-card');
+      if (stepCards.length === 0) {
+        alert('Please add or generate at least one step.');
+        return;
+      }
+
       const steps = [];
       let baseDate = new Date(startDate || new Date());
 
       stepCards.forEach((card, idx) => {
-        const title = card.querySelector('.step-title').value;
+        const title = card.querySelector('.step-title').value.trim() || `Step #${idx + 1}`;
         const selectDoer = card.querySelector('.step-doer');
         const doerName = selectDoer.value;
         const doerEmail = selectDoer.options[selectDoer.selectedIndex].getAttribute('data-email') || 'doer@domain.com';
