@@ -36,13 +36,7 @@ app.post('/api/doers', async (req, res) => {
   try {
     const { name, email, role, phone } = req.body;
     if (!name || !email) return res.status(400).json({ error: 'Name and Email required.' });
-
-    const newDoer = new Doer({
-      name: name.trim(),
-      email: email.toLowerCase().trim(),
-      role: role ? role.trim() : 'Executive',
-      phone: phone || ''
-    });
+    const newDoer = new Doer({ name: name.trim(), email: email.toLowerCase().trim(), role: role ? role.trim() : 'Executive', phone: phone || '' });
     await newDoer.save();
     res.status(201).json({ success: true, data: newDoer });
   } catch (err) {
@@ -53,20 +47,7 @@ app.post('/api/doers', async (req, res) => {
 app.put('/api/doers/:id', async (req, res) => {
   try {
     const { name, email, role, phone } = req.body;
-    if (!name || !email) return res.status(400).json({ error: 'Name and Email required.' });
-
-    const updated = await Doer.findByIdAndUpdate(
-      req.params.id,
-      {
-        name: name.trim(),
-        email: email.toLowerCase().trim(),
-        role: role ? role.trim() : 'Executive',
-        phone: phone || ''
-      },
-      { new: true }
-    );
-
-    if (!updated) return res.status(404).json({ error: 'Member not found' });
+    const updated = await Doer.findByIdAndUpdate(req.params.id, { name: name.trim(), email: email.toLowerCase().trim(), role: role ? role.trim() : 'Executive', phone: phone || '' }, { new: true });
     res.json({ success: true, data: updated });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -87,27 +68,6 @@ app.get('/api/vendors', async (req, res) => {
   try {
     const vendors = await Vendor.find().sort({ createdAt: -1 });
     res.json({ success: true, data: vendors });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.post('/api/vendors', async (req, res) => {
-  try {
-    const { vendorName, contactPerson, phone, email, poNumber, relatedTaskId, itemName } = req.body;
-    if (!vendorName) return res.status(400).json({ error: 'Vendor Name is required.' });
-
-    const newVendor = new Vendor({
-      vendorName,
-      contactPerson,
-      phone,
-      email,
-      poNumber,
-      relatedTaskId,
-      itemName
-    });
-    await newVendor.save();
-    res.status(201).json({ success: true, data: newVendor });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
@@ -195,10 +155,7 @@ app.put('/api/sites/:id', async (req, res) => {
 
 app.delete('/api/sites/:id', async (req, res) => {
   try {
-    const site = await Site.findById(req.params.id);
-    if (site) {
-      await Site.findByIdAndDelete(req.params.id);
-    }
+    await Site.findByIdAndDelete(req.params.id);
     res.json({ success: true, message: 'Site deleted successfully.' });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -209,7 +166,6 @@ app.delete('/api/sites/:id', async (req, res) => {
 app.post('/api/pms/create-custom-package', async (req, res) => {
   try {
     const { projectName, mainItemName, pmsType, startDate, totalQty, steps } = req.body;
-
     if (!mainItemName) return res.status(400).json({ error: 'Main Task Name required.' });
     if (!steps || steps.length === 0) return res.status(400).json({ error: 'At least 1 step required.' });
 
@@ -220,9 +176,7 @@ app.post('/api/pms/create-custom-package', async (req, res) => {
     let counter = 1;
     if (lastTask) {
       const parts = lastTask.uniqueId.split('-');
-      if (parts.length >= 3) {
-        counter = parseInt(parts[2], 10) + 1;
-      }
+      if (parts.length >= 3) counter = parseInt(parts[2], 10) + 1;
     }
 
     const uniqueId = `PMS-${datePrefix}-${String(counter).padStart(3, '0')}`;
@@ -233,7 +187,6 @@ app.post('/api/pms/create-custom-package', async (req, res) => {
       const stepStart = new Date(currentCursor);
       const stepEnd = new Date(stepStart);
       stepEnd.setDate(stepEnd.getDate() + days);
-
       currentCursor = new Date(stepEnd);
 
       return {
@@ -244,12 +197,7 @@ app.post('/api/pms/create-custom-package', async (req, res) => {
         plannedStartDate: stepStart,
         plannedEndDate: stepEnd,
         durationDays: days,
-        status: 'Pending',
-        remarks: '',
-        receivedQty: 0,
-        attachmentUrl: '',
-        actualEndDate: null,
-        vendorDetails: { vendorName: '', contactPerson: '', phone: '', poNumber: '' }
+        status: 'Pending'
       };
     });
 
@@ -272,78 +220,28 @@ app.post('/api/pms/create-custom-package', async (req, res) => {
 
 app.patch('/api/pms/update-step', async (req, res) => {
   try {
-    const { uniqueId, stepId, status, remarks, receivedQty, attachmentUrl, vendorDetails } = req.body;
-
+    const { uniqueId, stepId, status, remarks } = req.body;
     const task = await PmsTask.findOne({ uniqueId });
     if (!task) return res.status(404).json({ error: 'Task not found' });
 
     const sortedSteps = [...task.steps].sort((a, b) => (parseInt(a.wbsNo, 10) || 0) - (parseInt(b.wbsNo, 10) || 0));
     const targetIndex = sortedSteps.findIndex(s => s._id.toString() === stepId.toString());
 
-    if (targetIndex === -1) return res.status(404).json({ error: 'Step not found' });
-
     if (status === 'Completed' && targetIndex > 0) {
       const prevStep = sortedSteps[targetIndex - 1];
       if (prevStep.status !== 'Completed') {
-        return res.status(400).json({
-          error: `Sequential Lock: Cannot complete Step #${sortedSteps[targetIndex].wbsNo} because previous Step #${prevStep.wbsNo} (${prevStep.stepTitle}) is not yet Completed.`
-        });
+        return res.status(400).json({ error: `Sequential Lock: Previous Step #${prevStep.wbsNo} is not Completed.` });
       }
     }
 
     const stepToUpdate = task.steps.id(stepId);
     stepToUpdate.status = status;
-    stepToUpdate.remarks = remarks;
-    stepToUpdate.receivedQty = Number(receivedQty) || 0;
-    stepToUpdate.attachmentUrl = attachmentUrl || '';
-
-    if (status === 'Completed') {
-      stepToUpdate.actualEndDate = new Date();
-    } else {
-      stepToUpdate.actualEndDate = null;
-    }
-
-    if (vendorDetails) {
-      stepToUpdate.vendorDetails = vendorDetails;
-      if (vendorDetails.vendorName) {
-        await Vendor.findOneAndUpdate(
-          { vendorName: vendorDetails.vendorName },
-          {
-            $set: {
-              contactPerson: vendorDetails.contactPerson,
-              phone: vendorDetails.phone,
-              poNumber: vendorDetails.poNumber,
-              relatedTaskId: uniqueId
-            }
-          },
-          { upsert: true, new: true }
-        );
-      }
-    }
+    if (remarks !== undefined) stepToUpdate.remarks = remarks;
+    if (status === 'Completed') stepToUpdate.actualEndDate = new Date();
+    else stepToUpdate.actualEndDate = null;
 
     await task.save();
     res.json({ success: true, data: task });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
-app.get('/api/pms/history', async (req, res) => {
-  try {
-    const history = await PmsTask.aggregate([
-      { $unwind: '$steps' },
-      { $match: { 'steps.status': 'Completed' } },
-      {
-        $project: {
-          uniqueId: 1,
-          projectName: 1,
-          mainItemName: 1,
-          step: '$steps'
-        }
-      },
-      { $sort: { 'step.actualEndDate': -1 } }
-    ]);
-    res.json({ success: true, count: history.length, data: history });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
