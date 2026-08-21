@@ -1,12 +1,16 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const path = require('path');
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-// MongoDB Connection (Apna connection string yahan check kar lein agar alag hai)
+// Serve static frontend files from 'public' folder
+app.use(express.static(path.join(__dirname, 'public')));
+
+// MongoDB Connection
 const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://sharmaaakash7800:your_password@cluster0.mongodb.net/pms?retryWrites=true&w=majority";
 
 mongoose.connect(MONGO_URI, {
@@ -14,7 +18,7 @@ mongoose.connect(MONGO_URI, {
   useUnifiedTopology: true
 }).then(() => console.log('MongoDB Connected')).catch(err => console.log('DB Error:', err));
 
-// Define Schema Directly in server.js to avoid Missing Model errors
+// Schema & Model
 const stepSchema = new mongoose.Schema({
   wbsNo: String,
   stepTitle: String,
