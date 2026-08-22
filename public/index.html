@@ -187,18 +187,14 @@
           <div class="flex items-center gap-2">
             <span class="text-base">🔍</span>
             <div>
-              <h2 class="text-xs font-bold text-slate-900 dark:text-white">PMS Review Console</h2>
-              <p class="text-[9px] text-slate-400">Sequential chronological inspection</p>
+              <h2 class="text-xs font-bold text-slate-900 dark:text-white">Master Review Console (All PMS Overview)</h2>
+              <p class="text-[9px] text-slate-400">Sequential chronological inspection across all company sites</p>
             </div>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400">Select PMS:</label>
-            <select id="reviewPmsSelector" onchange="renderSpecificPmsReview()" class="bg-indigo-50 dark:bg-slate-800 border border-indigo-200 dark:border-indigo-800 rounded-lg px-2 py-0.5 text-xs font-extrabold text-indigo-950 dark:text-indigo-200 outline-none cursor-pointer"></select>
           </div>
         </div>
       </div>
-      <div class="bg-white dark:bg-darkcard rounded-xl border p-3 space-y-2">
-        <div id="unifiedStepsBoxContainer" class="space-y-1.5 max-h-[640px] overflow-y-auto custom-scroll pr-1"></div>
+      <div class="bg-white dark:bg-darkcard rounded-xl border p-3 space-y-3">
+        <div id="unifiedStepsBoxContainer" class="space-y-3 max-h-[660px] overflow-y-auto custom-scroll pr-1"></div>
       </div>
     </div>
 
@@ -274,9 +270,7 @@
     <div class="bg-white dark:bg-darkcard rounded-2xl max-w-xs w-full p-4 shadow-2xl border relative">
       <button onclick="toggleModal('tabSettingsModal', false)" class="absolute right-3 top-3 text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
       <h3 class="text-xs font-bold text-slate-900 dark:text-white mb-3">Manage Tab Visibility</h3>
-      <div id="tabCheckboxesContainer" class="space-y-2 text-xs">
-        <!-- Rendered dynamically -->
-      </div>
+      <div id="tabCheckboxesContainer" class="space-y-2 text-xs"></div>
       <button onclick="toggleModal('tabSettingsModal', false)" class="w-full bg-indigo-600 text-white font-bold py-1.5 rounded transition mt-4">Save & Close</button>
     </div>
   </div>
@@ -485,7 +479,7 @@
       const btn = document.getElementById(`tabBtn-${viewId}`);
       if (btn) btn.classList.add('active');
 
-      if (viewId === 'viewReview') populateReviewPmsSelector();
+      if (viewId === 'viewReview') renderMasterReviewConsole();
       if (viewId === 'viewVendors') renderVendorsView();
       if (viewId === 'viewSites') loadSitesList();
       if (viewId === 'viewTeam') renderTeamView();
@@ -725,55 +719,68 @@
       }
     }
 
-    // --- REVIEW CONSOLE FIX ---
-    function populateReviewPmsSelector() {
-      const selector = document.getElementById('reviewPmsSelector');
-      if (!selector) return;
-      let html = '<option value="">-- Select Task Package --</option>';
-      allData.forEach(item => {
-        html += `<option value="${item.uniqueId}">${item.uniqueId} - ${item.mainItemName} (${item.projectName || 'General'})</option>`;
-      });
-      selector.innerHTML = html;
-      if(allData.length > 0 && !selector.value) {
-        selector.value = allData[0].uniqueId;
-        renderSpecificPmsReview();
-      }
-    }
-
-    function renderSpecificPmsReview() {
-      const selector = document.getElementById('reviewPmsSelector');
+    // --- ALL PMS MASTER REVIEW CONSOLE ---
+    function renderMasterReviewConsole() {
       const container = document.getElementById('unifiedStepsBoxContainer');
-      if (!selector || !container) return;
-      const uniqueId = selector.value;
-      const task = allData.find(t => t.uniqueId === uniqueId);
+      if (!container) return;
 
-      if (!task) {
-        container.innerHTML = '<p class="text-xs text-slate-400 py-6 text-center">Please select a task package to review.</p>';
+      if (!allData || allData.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-400 py-10 text-center">No tasks available for review.</p>';
         return;
       }
 
-      let html = `<div class="font-bold text-xs mb-2 text-indigo-700 dark:text-indigo-300">📦 ${task.uniqueId} : ${task.mainItemName}</div>`;
-      let sortedSteps = [...task.steps].sort(naturalWbsSort);
-
-      sortedSteps.forEach(s => {
-        const isCompleted = s.status === 'Completed';
-        let badgeClass = 'bg-amber-100 text-amber-800';
-        if(isCompleted) badgeClass = 'bg-emerald-100 text-emerald-800';
+      let html = '';
+      allData.forEach(task => {
+        let sortedSteps = [...task.steps].sort(naturalWbsSort);
+        let completedStepsCount = sortedSteps.filter(s => s.status === 'Completed').length;
+        let totalStepsCount = sortedSteps.length;
+        let progressPercent = totalStepsCount > 0 ? Math.round((completedStepsCount / totalStepsCount) * 100) : 0;
 
         html += `
-          <div class="bg-slate-50 dark:bg-slate-800 p-2 rounded-lg border flex items-center justify-between gap-2 text-xs">
-            <div class="flex items-center gap-2">
-              <span class="font-mono font-bold px-1.5 py-0.5 bg-white dark:bg-darkcard border rounded text-[10px]">#${s.wbsNo}</span>
+          <div class="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl border border-slate-200 dark:border-darkborder space-y-2">
+            <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-200 dark:border-darkborder">
               <div>
-                <p class="font-semibold text-slate-900 dark:text-white">${s.stepTitle}</p>
-                <p class="text-[9px] text-slate-400 font-mono">Doer: ${s.assignedName || 'Unassigned'} | Timeline: ${new Date(s.plannedStartDate).toLocaleDateString('en-GB')} ➔ ${new Date(s.plannedEndDate).toLocaleDateString('en-GB')}</p>
+                <span class="font-mono font-extrabold text-indigo-600 dark:text-indigo-400 text-xs">${task.uniqueId}</span>
+                <h4 class="font-bold text-slate-900 dark:text-white text-xs mt-0.5">📦 ${task.mainItemName} <span class="text-[10px] text-slate-400 font-normal">(${task.projectName || 'General'})</span></h4>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] font-bold text-slate-500">${completedStepsCount}/${totalStepsCount} Done (${progressPercent}%)</span>
+                <div class="w-20 bg-slate-200 h-1.5 rounded-full overflow-hidden">
+                  <div class="bg-emerald-500 h-full rounded-full" style="width: ${progressPercent}%"></div>
+                </div>
               </div>
             </div>
-            <span class="px-2 py-0.5 text-[9px] font-bold rounded ${badgeClass}">${s.status}</span>
+            
+            <div class="space-y-1.5 pt-1">
+        `;
+
+        sortedSteps.forEach(s => {
+          const isCompleted = s.status === 'Completed';
+          let badgeClass = 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300';
+          if(isCompleted) badgeClass = 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
+
+          html += `
+            <div class="bg-white dark:bg-darkcard p-2 rounded-lg border border-slate-200 dark:border-darkborder flex items-center justify-between gap-2 text-xs">
+              <div class="flex items-center gap-2">
+                <span class="font-mono font-bold px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 border rounded text-[10px]">#${s.wbsNo}</span>
+                <div>
+                  <p class="font-semibold text-slate-900 dark:text-white">${s.stepTitle}</p>
+                  <p class="text-[9px] text-slate-400 font-mono">Doer: ${s.assignedName || 'Unassigned'} | Timeline: ${new Date(s.plannedStartDate).toLocaleDateString('en-GB')} ➔ ${new Date(s.plannedEndDate).toLocaleDateString('en-GB')}</p>
+                </div>
+              </div>
+              <span class="px-2 py-0.5 text-[9px] font-bold rounded ${badgeClass}">${s.status}</span>
+            </div>
+          `;
+        });
+
+        html += `
+            </div>
           </div>
         `;
       });
+
       container.innerHTML = html;
+      lucide.createIcons();
     }
 
     function renderStructuredTableGrid(data) {
@@ -972,7 +979,6 @@
         const json = await res.json();
         allData = json.data || [];
         renderProjectFilterDropdown();
-        populateReviewPmsSelector();
         applyFilters();
       } catch (err) {
         console.error(err);
