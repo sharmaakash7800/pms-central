@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PMS Central Hub | Sequential Validation & Layout</title>
+  <title>PMS Central Hub | Fixed Dropdown & Dates</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -29,6 +29,8 @@
     .dark .custom-scroll::-webkit-scrollbar-thumb { background: #374151; }
     .nav-capsule-btn.active { color: #4f46e5; font-weight: 800; }
     .dark .nav-capsule-btn.active { color: #818cf8; }
+    /* Prevent table clipping for dropdowns */
+    .table-container { overflow: visible !important; }
   </style>
 </head>
 <body class="text-slate-800 dark:bg-darkbg dark:text-slate-100 antialiased min-h-screen flex flex-col pb-24 text-xs">
@@ -136,10 +138,10 @@
         </div>
       </div>
 
-      <!-- Table Grid (Exact 11 Columns Matching) -->
+      <!-- Table Grid -->
       <div class="bg-white dark:bg-darkcard rounded-xl border border-slate-200 dark:border-darkborder shadow-2xs overflow-hidden">
-        <div class="overflow-x-auto max-h-[720px] custom-scroll">
-          <table id="pmsGridTable" class="text-left border-collapse text-xs w-full">
+        <div class="table-container overflow-x-auto max-h-[720px] custom-scroll">
+          <table id="pmsGridTable" class="text-left border-collapse text-xs w-full relative">
             <thead class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 uppercase font-semibold sticky top-0 z-20 border-b border-slate-200 dark:border-darkborder text-[11px] tracking-wider">
               <tr>
                 <th class="py-3 px-3 w-28">Task ID</th>
@@ -355,7 +357,7 @@
     </div>
   </div>
 
-  <!-- Modal: Doer Edit Execution (With Sequential Validation) -->
+  <!-- Modal: Doer Edit Execution -->
   <div id="doerModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
     <div class="bg-white dark:bg-darkcard rounded-2xl max-w-sm w-full p-4 shadow-2xl border relative">
       <button onclick="toggleModal('doerModal', false)" class="absolute right-3 top-3 text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
@@ -1044,8 +1046,10 @@
             }
 
             const planDateStr = s.plannedEndDate ? new Date(s.plannedEndDate).toLocaleDateString('en-GB') : '—';
-            const actualStartStr = s.actualStartDate ? new Date(s.actualStartDate).toLocaleDateString('en-GB') : '—';
-            const actualEndStr = (isCompleted && s.actualEndDate) ? new Date(s.actualEndDate).toLocaleDateString('en-GB') : '—';
+            // Actual Start Date (showing actualStartDate or fallback to plannedStartDate if available)
+            const actualStartStr = s.actualStartDate ? new Date(s.actualStartDate).toLocaleDateString('en-GB') : (s.plannedStartDate ? new Date(s.plannedStartDate).toLocaleDateString('en-GB') : '—');
+            // Actual End Date (showing actualEndDate only when completed)
+            const actualEndStr = (isCompleted && s.actualEndDate) ? new Date(s.actualEndDate).toLocaleDateString('en-GB') : (isCompleted && s.updatedAt ? new Date(s.updatedAt).toLocaleDateString('en-GB') : '—');
 
             // Child Rows (Exact 11 columns matching header)
             html += `
@@ -1699,7 +1703,7 @@
           <input type="text" class="step-title md:col-span-7 border rounded px-1.5 py-0.5 text-xs dark:bg-slate-800 dark:text-white" placeholder="Enter step title...">
           <select class="step-doer md:col-span-3 border rounded px-1.5 py-0.5 text-[11px] dark:bg-slate-800 dark:text-white">${doerOptions}</select>
           <div class="md:col-span-2 flex items-center gap-1">
-            <input type="number" min="1" value="2" class="step-days w-full border rounded px-1 py-0.5 text-xs font-bold text-center dark:bg-slate-800 dark:text-white" title="Duration in Days">
+            <input type="number" min="1" value="2" class="step-days w-full border rounded px-1.5 py-0.5 text-xs font-bold text-center dark:bg-slate-800 dark:text-white" title="Duration in Days">
             <span class="text-[9px] text-slate-400">d</span>
           </div>
         </div>
