@@ -62,7 +62,6 @@ const doerSchema = new mongoose.Schema({
   role: String
 });
 
-// Added Vendor Schema
 const vendorSchema = new mongoose.Schema({
   name: { type: String, required: true },
   phone: { type: String, required: true }
@@ -233,6 +232,29 @@ app.post('/api/vendors', async (req, res) => {
     const newVendor = new Vendor({ name, phone });
     await newVendor.save();
     res.json({ success: true, data: newVendor });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.put('/api/vendors/:id', async (req, res) => {
+  try {
+    const { name, phone } = req.body;
+    const updatedVendor = await Vendor.findByIdAndUpdate(
+      req.params.id,
+      { name, phone },
+      { new: true }
+    );
+    res.json({ success: true, data: updatedVendor });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.delete('/api/vendors/:id', async (req, res) => {
+  try {
+    await Vendor.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: 'Vendor deleted' });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
