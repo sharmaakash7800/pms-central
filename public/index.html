@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PMS Central Hub | Final Fixed Code</title>
+  <title>PMS Central Hub | Complete Unified Hub</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -21,6 +21,7 @@
   </script>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     body { font-family: 'Plus Jakarta Sans', sans-serif; transition: background-color 0.15s ease, color 0.15s ease; background-color: #f8fafc; }
     .custom-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
@@ -164,25 +165,18 @@
       </div>
     </div>
 
-    <!-- VIEW 2: REVIEW CONSOLE -->
+    <!-- VIEW 2: REVIEW CONSOLE (CHART ONLY) -->
     <div id="viewReview" class="view-section hidden space-y-2.5">
-      <div class="bg-white dark:bg-darkcard rounded-xl border border-slate-200 dark:border-darkborder p-3 shadow-2xs space-y-2">
-        <div class="flex flex-wrap items-center justify-between gap-2">
-          <div class="flex items-center gap-2">
-            <span class="text-base">🔍</span>
-            <div>
-              <h2 class="text-xs font-bold text-slate-900 dark:text-white">PMS Review Console</h2>
-              <p class="text-[9px] text-slate-400">Sequential chronological inspection</p>
-            </div>
-          </div>
-          <div class="flex items-center gap-1.5">
-            <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400">Select PMS:</label>
-            <select id="reviewPmsSelector" onchange="renderSpecificPmsReview()" class="bg-indigo-50 dark:bg-slate-800 border border-indigo-200 dark:border-indigo-800 rounded-lg px-2 py-0.5 text-xs font-extrabold text-indigo-950 dark:text-indigo-200 outline-none cursor-pointer max-w-xs truncate"></select>
+      <div class="bg-white dark:bg-darkcard rounded-xl border border-slate-200 dark:border-darkborder p-4 shadow-2xs space-y-3">
+        <div class="flex items-center justify-between">
+          <div>
+            <h2 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">PMS Review & Analytics</h2>
+            <p class="text-[9px] text-slate-400">Visual progress distribution across all master tasks.</p>
           </div>
         </div>
-      </div>
-      <div class="bg-white dark:bg-darkcard rounded-xl border p-3 space-y-2">
-        <div id="unifiedStepsBoxContainer" class="space-y-1.5 max-h-[640px] overflow-y-auto custom-scroll pr-1"></div>
+        <div class="w-full max-w-xl mx-auto py-4">
+          <canvas id="pmsChart" height="220"></canvas>
+        </div>
       </div>
     </div>
 
@@ -529,6 +523,7 @@
     let allVendors = [];
     let allSitesList = [];
     let currentAuditDoer = { email: '', name: '' };
+    let pmsChartInstance = null;
 
     const API_BASE = window.location.origin.startsWith('file:') 
       ? 'https://pms-central-kini.onrender.com' 
@@ -557,7 +552,7 @@
       const btn = document.getElementById(`tabBtn-${viewId}`);
       if (btn) btn.classList.add('active');
 
-      if (viewId === 'viewReview') populateReviewPmsSelector();
+      if (viewId === 'viewReview') renderReviewChart();
       if (viewId === 'viewVendors') renderVendorsView();
       if (viewId === 'viewSites') loadSitesList();
       if (viewId === 'viewTeam') renderTeamView();
@@ -842,91 +837,49 @@
       }
     }
 
-    function populateReviewPmsSelector() {
-      const selector = document.getElementById('reviewPmsSelector');
-      if (!selector) return;
-      let html = '<option value="ALL">-- ALL PMS Master Overview --</option>';
-      allData.forEach(item => {
-        html += `<option value="${item.uniqueId}">${item.uniqueId} - ${item.mainItemName} (${item.projectName || 'General'})</option>`;
-      });
-      selector.innerHTML = html;
-      if (!selector.value) selector.value = 'ALL';
-      renderSpecificPmsReview();
-    }
+    // RENDER REVIEW ANALYTICS CHART ONLY
+    function renderReviewChart() {
+      const canvas = document.getElementById('pmsChart');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
 
-    function renderSpecificPmsReview() {
-      const selector = document.getElementById('reviewPmsSelector');
-      const container = document.getElementById('unifiedStepsBoxContainer');
-      if (!selector || !container) return;
-      const selectedId = selector.value;
+      let totalDone = 0, totalPending = 0, totalOverdue = 0;
+      const now = new Date();
 
-      let tasksToRender = selectedId === 'ALL' ? allData : allData.filter(t => t.uniqueId === selectedId);
-
-      if (!tasksToRender || tasksToRender.length === 0) {
-        container.innerHTML = '<p class="text-xs text-slate-400 py-10 text-center">No tasks available for review.</p>';
-        return;
-      }
-
-      let html = '';
-      tasksToRender.forEach(task => {
-        let sortedSteps = [...task.steps].sort(naturalWbsSort);
-        let completedStepsCount = sortedSteps.filter(s => s.status === 'Completed').length;
-        let totalStepsCount = sortedSteps.length;
-        let progressPercent = totalStepsCount > 0 ? Math.round((completedStepsCount / totalStepsCount) * 100) : 0;
-
-        html += `
-          <div class="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl border border-slate-200 dark:border-darkborder space-y-2 mb-3">
-            <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-200 dark:border-darkborder">
-              <div>
-                <span class="font-mono font-extrabold text-indigo-600 dark:text-indigo-400 text-xs">${task.uniqueId}</span>
-                <h4 class="font-bold text-slate-900 dark:text-white text-xs mt-0.5">📦 ${task.mainItemName} <span class="text-[10px] text-slate-400 font-normal">(${task.projectName || 'General'})</span></h4>
-              </div>
-              <div class="flex items-center gap-2">
-                <span class="text-[10px] font-bold text-slate-500">${completedStepsCount}/${totalStepsCount} Done (${progressPercent}%)</span>
-                <div class="w-20 bg-slate-200 h-1.5 rounded-full overflow-hidden">
-                  <div class="bg-emerald-500 h-full rounded-full" style="width: ${progressPercent}%"></div>
-                </div>
-              </div>
-            </div>
-            
-            <div class="space-y-1.5 pt-1">
-        `;
-
-        sortedSteps.forEach(s => {
-          const isCompleted = s.status === 'Completed';
-          let badgeClass = 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300';
-          if(isCompleted) badgeClass = 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300';
-
-          html += `
-            <div class="bg-white dark:bg-darkcard p-2 rounded-lg border border-slate-200 dark:border-darkborder flex items-center justify-between gap-2 text-xs">
-              <div class="flex items-center gap-2">
-                <span class="font-mono font-bold px-1.5 py-0.5 bg-slate-100 dark:bg-slate-800 border rounded text-[10px]">#${s.wbsNo}</span>
-                <div>
-                  <p class="font-semibold text-slate-900 dark:text-white">${s.stepTitle}</p>
-                  <p class="text-[9px] text-slate-400 font-mono">Doer: ${s.assignedName || 'Unassigned'} | Timeline: ${new Date(s.plannedStartDate).toLocaleDateString('en-GB')} ➔ ${new Date(s.plannedEndDate).toLocaleDateString('en-GB')}</p>
-                </div>
-              </div>
-              <span class="px-2 py-0.5 text-[9px] font-bold rounded ${badgeClass}">${s.status}</span>
-            </div>
-          `;
+      allData.forEach(task => {
+        task.steps.forEach(s => {
+          if (s.status === 'Completed') totalDone++;
+          else if ((new Date(s.plannedEndDate) < now) || s.status === 'Delayed') totalOverdue++;
+          else totalPending++;
         });
-
-        html += `
-            </div>
-          </div>
-        `;
       });
 
-      container.innerHTML = html;
-      lucide.createIcons();
+      if (pmsChartInstance) pmsChartInstance.destroy();
+
+      pmsChartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Completed (Done)', 'Pending', 'Overdue'],
+          datasets: [{
+            data: [totalDone, totalPending, totalOverdue],
+            backgroundColor: ['#10b981', '#f59e0b', '#ef4444'],
+            borderWidth: 2
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'bottom', labels: { font: { size: 11, family: 'Plus Jakarta Sans' } } }
+          }
+        }
+      });
     }
 
-    // STRICT SEQUENTIAL VALIDATION (Prevents completing next if previous is pending, and prevents reverting previous if next is completed)
+    // STRICT SEQUENTIAL VALIDATION
     function validateSequentialCompletion(steps, currentStepWbsNo, newStatus) {
       const currentWbs = parseInt(currentStepWbsNo, 10);
       
       if (newStatus === 'Completed') {
-        // Check if all previous steps are completed
         for (let s of steps) {
           const stepWbs = parseInt(s.wbsNo, 10);
           if (stepWbs < currentWbs && s.status !== 'Completed') {
@@ -935,7 +888,6 @@
           }
         }
       } else {
-        // If trying to uncheck/pending a previous step, check if any subsequent step is already completed
         for (let s of steps) {
           const stepWbs = parseInt(s.wbsNo, 10);
           if (stepWbs > currentWbs && s.status === 'Completed') {
@@ -1057,7 +1009,6 @@
             }
 
             const planDateStr = s.plannedEndDate ? new Date(s.plannedEndDate).toLocaleDateString('en-GB') : '—';
-            // Robust Actual Dates Mapping from DB properties
             const actualStartStr = s.actualStartDate ? new Date(s.actualStartDate).toLocaleDateString('en-GB') : (s.plannedStartDate ? new Date(s.plannedStartDate).toLocaleDateString('en-GB') : '—');
             const actualEndStr = (isCompleted && s.actualEndDate) ? new Date(s.actualEndDate).toLocaleDateString('en-GB') : (isCompleted && s.updatedAt ? new Date(s.updatedAt).toLocaleDateString('en-GB') : (isCompleted ? new Date().toLocaleDateString('en-GB') : '—'));
 
@@ -1160,13 +1111,27 @@
       }
     }
 
+    // 1. Robust Unified Data Fetching
     async function loadDashboardData() {
       try {
-        const res = await fetch(`${API_BASE}/api/pms/all`);
-        const json = await res.json();
-        allData = json.data || [];
+        const [pmsRes, doersRes, sitesRes] = await Promise.all([
+          fetch(`${API_BASE}/api/pms/all`),
+          fetch(`${API_BASE}/api/doers`),
+          fetch(`${API_BASE}/api/sites`)
+        ]);
+
+        const pmsJson = await pmsRes.json();
+        const doersJson = await doersRes.json();
+        const sitesJson = await sitesRes.json();
+
+        allData = pmsJson.data || [];
+        activeDoers = doersJson.data || [];
+        allSitesList = sitesJson.data || [];
+
+        renderDoerHeaderDropdown(activeDoers);
         renderProjectFilterDropdown();
         applyFilters();
+
         if(!document.getElementById('viewSites').classList.contains('hidden')) {
           loadSitesList();
         }
@@ -1174,116 +1139,97 @@
           renderTeamView();
         }
       } catch (err) {
-        console.error(err);
+        console.error("Dashboard Load Error:", err);
       }
     }
 
     function applyFilters() { renderStructuredTableGrid(allData); }
 
     async function renderProjectFilterDropdown() {
-      const res = await fetch(`${API_BASE}/api/sites`);
-      const json = await res.json();
-      if (json.success) {
-        allSitesList = json.data;
-        const select = document.getElementById('filterByProject');
-        const datalist = document.getElementById('projectSuggestions');
-        
-        const currentVal = select.value;
-        let html = '<option value="ALL">All Sites</option>';
-        let dlHtml = '';
-        allSitesList.forEach(s => {
-          if (!s.isHidden) {
-            html += `<option value="${s.siteName}">${s.siteName}</option>`;
-          }
-          dlHtml += `<option value="${s.siteName}">`;
-        });
-        select.innerHTML = html;
-        if (currentVal) select.value = currentVal;
-        if (datalist) datalist.innerHTML = dlHtml;
-      }
+      const select = document.getElementById('filterByProject');
+      const datalist = document.getElementById('projectSuggestions');
+      if (!select) return;
+      
+      const currentVal = select.value;
+      let html = '<option value="ALL">All Sites</option>';
+      let dlHtml = '';
+      allSitesList.forEach(s => {
+        if (!s.isHidden) {
+          html += `<option value="${s.siteName}">${s.siteName}</option>`;
+        }
+        dlHtml += `<option value="${s.siteName}">`;
+      });
+      select.innerHTML = html;
+      if (currentVal) select.value = currentVal;
+      if (datalist) datalist.innerHTML = dlHtml;
     }
 
     async function loadSitesList() {
       const container = document.getElementById('sitesCardsContainer');
+      if (!container) return;
       container.innerHTML = '<p class="text-xs text-slate-400 py-6 text-center">Loading sites...</p>';
 
       try {
-        const res = await fetch(`${API_BASE}/api/sites`);
-        const json = await res.json();
-        if (json.success) {
-          allSitesList = json.data;
-          const showHidden = document.getElementById('showHiddenSitesToggle').checked;
-          
-          let html = '';
-          allSitesList.forEach(s => {
-            if (!showHidden && s.isHidden) return;
+        const showHidden = document.getElementById('showHiddenSitesToggle')?.checked || false;
+        let html = '';
+        allSitesList.forEach(s => {
+          if (!showHidden && s.isHidden) return;
 
-            let siteTasks = allData.filter(t => (t.projectName || '').toLowerCase().trim() === (s.siteName || '').toLowerCase().trim());
-            let totalSteps = 0, completedSteps = 0, pendingSteps = 0, delayedSteps = 0;
-            const now = new Date();
+          let siteTasks = allData.filter(t => (t.projectName || '').toLowerCase().trim() === (s.siteName || '').toLowerCase().trim());
+          let totalSteps = 0, completedSteps = 0, pendingSteps = 0, delayedSteps = 0;
+          const now = new Date();
 
-            siteTasks.forEach(t => {
-              t.steps.forEach(st => {
-                totalSteps++;
-                if (st.status === 'Completed') completedSteps++;
-                else if ((new Date(st.plannedEndDate) < now && st.status !== 'Completed') || st.status === 'Delayed') delayedSteps++;
-                else pendingSteps++;
-              });
+          siteTasks.forEach(t => {
+            t.steps.forEach(st => {
+              totalSteps++;
+              if (st.status === 'Completed') completedSteps++;
+              else if ((new Date(st.plannedEndDate) < now && st.status !== 'Completed') || st.status === 'Delayed') delayedSteps++;
+              else pendingSteps++;
             });
+          });
 
-            const siteProgress = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
-            const cardOpacity = s.isHidden ? 'opacity-50 bg-slate-50 dark:bg-slate-900 border-dashed' : 'bg-white dark:bg-darkcard';
-            const hideIcon = s.isHidden ? 'eye-off' : 'eye';
-            const hideTitle = s.isHidden ? 'Unhide Site' : 'Hide Site';
-            const hideBtnClass = s.isHidden ? 'text-emerald-600 hover:bg-emerald-50' : 'text-slate-400 hover:text-amber-600 hover:bg-amber-50';
+          const siteProgress = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
+          const cardOpacity = s.isHidden ? 'opacity-50 bg-slate-50 dark:bg-slate-900 border-dashed' : 'bg-white dark:bg-darkcard';
+          const hideIcon = s.isHidden ? 'eye-off' : 'eye';
+          const hideTitle = s.isHidden ? 'Unhide Site' : 'Hide Site';
+          const hideBtnClass = s.isHidden ? 'text-emerald-600 hover:bg-emerald-50' : 'text-slate-400 hover:text-amber-600 hover:bg-amber-50';
 
-            html += `
-              <div class="${cardOpacity} p-3 rounded-xl border border-slate-200 dark:border-darkborder shadow-2xs space-y-2 transition">
-                <div class="flex items-center justify-between font-bold">
-                  <span onclick="filterBySiteAndOpenSteps('${s.siteName.replace(/'/g, "\\'")}')" class="text-indigo-600 dark:text-indigo-400 text-xs font-extrabold cursor-pointer hover:underline" title="Click to view tasks">📍 ${s.siteName} ${s.isHidden ? '(Hidden)' : ''}</span>
-                  <div class="flex items-center gap-1">
-                    <button onclick="toggleSiteHideStatus('${s._id}', ${Boolean(s.isHidden)})" class="p-1.5 rounded border ${hideBtnClass}" title="${hideTitle}">
-                      <i data-lucide="${hideIcon}" class="w-3.5 h-3.5"></i>
-                    </button>
-                    <button onclick="openEditSiteModal('${s._id}', '${s.siteName.replace(/'/g, "\\'")}', '${(s.companyName || '').replace(/'/g, "\\'")}', '${(s.processCoordinator || '').replace(/'/g, "\\'")}', '${(s.technicalPerson || '').replace(/'/g, "\\'")}', '${(s.purchaserPerson || '').replace(/'/g, "\\'")}', '${(s.vrePerson || '').replace(/'/g, "\\'")}')" class="text-slate-400 hover:text-indigo-600 p-1" title="Edit Site">
-                      <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
-                    </button>
-                    <button onclick="deleteSite('${s._id}')" class="text-slate-300 hover:text-rose-600 p-1" title="Delete Site">
-                      <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                    </button>
-                  </div>
-                </div>
-
-                <div class="bg-slate-50 dark:bg-slate-800 p-2 rounded-lg border space-y-1">
-                  <div class="flex justify-between text-[10px] font-bold">
-                    <span class="text-slate-600 dark:text-slate-300">Progress: ${completedSteps}/${totalSteps} Steps (${siteProgress}%)</span>
-                    <span class="text-indigo-600 dark:text-indigo-400">${siteTasks.length} Packages</span>
-                  </div>
-                  <div class="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
-                    <div class="bg-emerald-500 h-full rounded-full" style="width: ${siteProgress}%"></div>
-                  </div>
-                  <div class="flex gap-2 text-[9px] font-bold pt-0.5">
-                    <span class="text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded">Done: ${completedSteps}</span>
-                    <span class="text-slate-700 bg-slate-200 px-1.5 py-0.2 rounded">Pending: ${pendingSteps}</span>
-                    <span class="text-rose-700 bg-rose-50 px-1.5 py-0.2 rounded">Delayed: ${delayedSteps}</span>
-                  </div>
-                </div>
-
-                <div class="text-[10px] text-slate-500 dark:text-slate-400 space-y-0.5 font-mono">
-                  <p><b>Company Name:</b> ${s.companyName || 'MAHESHWARI DISTRIBUTORS'}</p>
-                  <div class="pt-1 text-[9px] text-slate-600 dark:text-slate-300 border-t border-slate-100 dark:border-darkborder space-y-0.5">
-                    <p>⚙️ <b>Process Coordinator:</b> ${s.processCoordinator || 'Tulsi Sen'}</p>
-                    <p>🛠️ <b>Technical Person:</b> ${s.technicalPerson || 'Heera lal Ji (8003698656)'}</p>
-                    <p>🛒 <b>Purchaser Person:</b> ${s.purchaserPerson || 'Ronak Ji (8107688615)'}</p>
-                    <p>📋 <b>VRE:</b> ${s.vrePerson || 'Aarti Bala (8824133320)'}</p>
-                  </div>
+          html += `
+            <div class="${cardOpacity} p-3 rounded-xl border border-slate-200 dark:border-darkborder shadow-2xs space-y-2 transition">
+              <div class="flex items-center justify-between font-bold">
+                <span onclick="filterBySiteAndOpenSteps('${s.siteName.replace(/'/g, "\\'")}')" class="text-indigo-600 dark:text-indigo-400 text-xs font-extrabold cursor-pointer hover:underline" title="Click to view tasks">📍 ${s.siteName} ${s.isHidden ? '(Hidden)' : ''}</span>
+                <div class="flex items-center gap-1">
+                  <button onclick="toggleSiteHideStatus('${s._id}', ${Boolean(s.isHidden)})" class="p-1.5 rounded border ${hideBtnClass}" title="${hideTitle}">
+                    <i data-lucide="${hideIcon}" class="w-3.5 h-3.5"></i>
+                  </button>
+                  <button onclick="openEditSiteModal('${s._id}', '${s.siteName.replace(/'/g, "\\'")}', '${(s.companyName || '').replace(/'/g, "\\'")}', '${(s.processCoordinator || '').replace(/'/g, "\\'")}', '${(s.technicalPerson || '').replace(/'/g, "\\'")}', '${(s.purchaserPerson || '').replace(/'/g, "\\'")}', '${(s.vrePerson || '').replace(/'/g, "\\'")}')" class="text-slate-400 hover:text-indigo-600 p-1" title="Edit Site">
+                    <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
+                  </button>
+                  <button onclick="deleteSite('${s._id}')" class="text-slate-300 hover:text-rose-600 p-1" title="Delete Site">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                  </button>
                 </div>
               </div>
-            `;
-          });
-          container.innerHTML = html || '<p class="text-xs text-slate-400 py-6 text-center">No sites found.</p>';
-          lucide.createIcons();
-        }
+
+              <div class="bg-slate-50 dark:bg-slate-800 p-2 rounded-lg border space-y-1">
+                <div class="flex justify-between text-[10px] font-bold">
+                  <span class="text-slate-600 dark:text-slate-300">Progress: ${completedSteps}/${totalSteps} Steps (${siteProgress}%)</span>
+                  <span class="text-indigo-600 dark:text-indigo-400">${siteTasks.length} Packages</span>
+                </div>
+                <div class="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
+                  <div class="bg-emerald-500 h-full rounded-full" style="width: ${siteProgress}%"></div>
+                </div>
+                <div class="flex gap-2 text-[9px] font-bold pt-0.5">
+                  <span class="text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded">Done: ${completedSteps}</span>
+                  <span class="text-slate-700 bg-slate-200 px-1.5 py-0.2 rounded">Pending: ${pendingSteps}</span>
+                  <span class="text-rose-700 bg-rose-50 px-1.5 py-0.2 rounded">Delayed: ${delayedSteps}</span>
+                </div>
+              </div>
+            </div>
+          `;
+        });
+        container.innerHTML = html || '<p class="text-xs text-slate-400 py-6 text-center">No sites found.</p>';
+        lucide.createIcons();
       } catch (err) {
         container.innerHTML = `<p class="text-xs text-rose-500 py-6 text-center">Error: ${err.message}</p>`;
       }
@@ -1335,8 +1281,7 @@
       const json = await res.json();
       if (json.success) {
         toggleModal('siteModal', false);
-        loadSitesList();
-        renderProjectFilterDropdown();
+        loadDashboardData();
       } else {
         alert(json.error);
       }
@@ -1347,23 +1292,13 @@
       const res = await fetch(`${API_BASE}/api/sites/${id}`, { method: 'DELETE' });
       const json = await res.json();
       if (json.success) {
-        loadSitesList();
-        renderProjectFilterDropdown();
-      }
-    }
-
-    async function loadDoersList() {
-      const res = await fetch(`${API_BASE}/api/doers`);
-      const json = await res.json();
-      if (json.success) {
-        activeDoers = json.data;
-        renderDoerHeaderDropdown(activeDoers);
-        renderTeamView();
+        loadDashboardData();
       }
     }
 
     function renderDoerHeaderDropdown(doers) {
       const select = document.getElementById('doerDropdownSelect');
+      if (!select) return;
       let html = '';
       doers.forEach(d => html += `<option value="${d.email}">${d.name} (${d.email})</option>`);
       select.innerHTML = html;
@@ -1539,6 +1474,7 @@
 
     function updateTemplateDropdown() {
       const selector = document.getElementById('templateSelector');
+      if (!selector) return;
       const templates = JSON.parse(localStorage.getItem('pms_saved_templates') || '[]');
       selector.innerHTML = '<option value="">-- Load Saved Template --</option>';
       templates.forEach((t, i) => {
@@ -1566,7 +1502,7 @@
 
     function loadSelectedTemplate() {
       const selector = document.getElementById('templateSelector');
-      if(!selector.value) return;
+      if(!selector || !selector.value) return;
       const templates = JSON.parse(localStorage.getItem('pms_saved_templates') || '[]');
       const template = templates[selector.value];
       document.getElementById('bulkStepsInput').value = template.steps;
@@ -1584,11 +1520,6 @@
       
       updateTemplateDropdown();
       toggleModal('createTaskModal', true);
-    }
-
-    function openCreateModalWithSite(siteName) {
-      openCreateModal();
-      document.getElementById('mProject').value = siteName;
     }
 
     function openEditTaskModal(uniqueId) {
@@ -1808,7 +1739,7 @@
       const json = await res.json();
       if(json.success) {
         toggleModal('addMemberModal', false);
-        loadDoersList();
+        loadDashboardData();
       } else {
         alert(json.error);
       }
