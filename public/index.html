@@ -226,7 +226,7 @@
           <span class="text-base">📍</span>
           <div>
             <h2 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Sites & Projects Directory</h2>
-            <p class="text-[9px] text-slate-400">Click on any site name to view tasks. Use eye icons to hide/unhide completed sites.</p>
+            <p class="text-[9px] text-slate-400">Click on any site name to view tasks. Live task completion metrics shown below.</p>
           </div>
         </div>
         <div class="flex items-center gap-2">
@@ -244,16 +244,16 @@
       </div>
     </div>
 
-    <!-- VIEW 5: TEAM DIRECTORY -->
-    <div id="viewTeam" class="view-section hidden space-y-2">
+    <!-- VIEW 5: TEAM DIRECTORY (WITH DOER PERFORMANCE METRICS) -->
+    <div id="viewTeam" class="view-section hidden space-y-2.5">
       <div class="bg-white dark:bg-darkcard p-2.5 rounded-xl border flex items-center justify-between">
-        <span class="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">Team Directory</span>
+        <span class="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">Team & Doer Performance Directory</span>
         <button onclick="openAddMemberModal()" class="bg-indigo-600 text-white text-[10px] font-bold px-2.5 py-1 rounded shadow-xs transition flex items-center gap-1">
           <i data-lucide="plus" class="w-3 h-3"></i>
           <span>+ Add Member</span>
         </button>
       </div>
-      <div id="teamCardsContainer" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2"></div>
+      <div id="teamCardsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
     </div>
 
   </main>
@@ -507,7 +507,7 @@
       const btn = document.getElementById(`tabBtn-${viewId}`);
       if (btn) btn.classList.add('active');
 
-      if (viewId === 'viewReview') renderMasterReviewConsole();
+      if (viewId === 'viewReview') populateReviewPmsSelector();
       if (viewId === 'viewVendors') renderVendorsView();
       if (viewId === 'viewSites') loadSitesList();
       if (viewId === 'viewTeam') renderTeamView();
@@ -1084,8 +1084,13 @@
         const json = await res.json();
         allData = json.data || [];
         renderProjectFilterDropdown();
-        populateReviewPmsSelector();
         applyFilters();
+        if(!document.getElementById('viewSites').classList.contains('hidden')) {
+          loadSitesList();
+        }
+        if(!document.getElementById('viewTeam').classList.contains('hidden')) {
+          renderTeamView();
+        }
       } catch (err) {
         console.error(err);
       }
@@ -1116,6 +1121,7 @@
       }
     }
 
+    // --- SITES WITH LIVE METRICS ---
     async function loadSitesList() {
       const container = document.getElementById('sitesCardsContainer');
       container.innerHTML = '<p class="text-xs text-slate-400 py-6 text-center">Loading sites...</p>';
@@ -1131,13 +1137,28 @@
           allSitesList.forEach(s => {
             if (!showHidden && s.isHidden) return;
 
+            // Calculate metrics for this site
+            let siteTasks = allData.filter(t => (t.projectName || '').toLowerCase().trim() === (s.siteName || '').toLowerCase().trim());
+            let totalSteps = 0, completedSteps = 0, pendingSteps = 0, delayedSteps = 0;
+            const now = new Date();
+
+            siteTasks.forEach(t => {
+              t.steps.forEach(st => {
+                totalSteps++;
+                if (st.status === 'Completed') completedSteps++;
+                else if ((new Date(st.plannedEndDate) < now && st.status !== 'Completed') || st.status === 'Delayed') delayedSteps++;
+                else pendingSteps++;
+              });
+            });
+
+            const siteProgress = totalSteps > 0 ? Math.round((completedSteps / totalSteps) * 100) : 0;
             const cardOpacity = s.isHidden ? 'opacity-50 bg-slate-50 dark:bg-slate-900 border-dashed' : 'bg-white dark:bg-darkcard';
             const hideIcon = s.isHidden ? 'eye-off' : 'eye';
             const hideTitle = s.isHidden ? 'Unhide Site' : 'Hide Site';
             const hideBtnClass = s.isHidden ? 'text-emerald-600 hover:bg-emerald-50' : 'text-slate-400 hover:text-amber-600 hover:bg-amber-50';
 
             html += `
-              <div class="${cardOpacity} p-3 rounded-xl border border-slate-200 dark:border-darkborder shadow-2xs space-y-1.5 text-xs transition">
+              <div class="${cardOpacity} p-3 rounded-xl border border-slate-200 dark:border-darkborder shadow-2xs space-y-2 transition">
                 <div class="flex items-center justify-between font-bold">
                   <span onclick="filterBySiteAndOpenSteps('${s.siteName.replace(/'/g, "\\'")}')" class="text-indigo-600 dark:text-indigo-400 text-xs font-extrabold cursor-pointer hover:underline" title="Click to view tasks">📍 ${s.siteName} ${s.isHidden ? '(Hidden)' : ''}</span>
                   <div class="flex items-center gap-1">
@@ -1150,6 +1171,22 @@
                     <button onclick="deleteSite('${s._id}')" class="text-slate-300 hover:text-rose-600 p-1" title="Delete Site">
                       <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                     </button>
+                  </div>
+                </div>
+
+                <!-- Live Metrics Summary -->
+                <div class="bg-slate-50 dark:bg-slate-800 p-2 rounded-lg border space-y-1">
+                  <div class="flex justify-between text-[10px] font-bold">
+                    <span class="text-slate-600 dark:text-slate-300">Progress: ${completedSteps}/${totalSteps} Steps (${siteProgress}%)</span>
+                    <span class="text-indigo-600 dark:text-indigo-400">${siteTasks.length} Packages</span>
+                  </div>
+                  <div class="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
+                    <div class="bg-emerald-500 h-full rounded-full" style="width: ${siteProgress}%"></div>
+                  </div>
+                  <div class="flex gap-2 text-[9px] font-bold pt-0.5">
+                    <span class="text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded">🟢 Done: ${completedSteps}</span>
+                    <span class="text-slate-700 bg-slate-200 px-1.5 py-0.2 rounded">⚪ Pending: ${pendingSteps}</span>
+                    <span class="text-rose-700 bg-rose-50 px-1.5 py-0.2 rounded">🚨 Delayed: ${delayedSteps}</span>
                   </div>
                 </div>
 
@@ -1236,6 +1273,61 @@
       let html = '';
       doers.forEach(d => html += `<option value="${d.email}">${d.name} (${d.email})</option>`);
       select.innerHTML = html;
+    }
+
+    // --- TEAM & DOER PERFORMANCE METRICS PANEL ---
+    function renderTeamView() {
+      const container = document.getElementById('teamCardsContainer');
+      if (!container) return;
+      let html = '';
+
+      activeDoers.forEach(d => {
+        let assignedTotal = 0, completedCount = 0, pendingCount = 0, delayedCount = 0;
+        const now = new Date();
+
+        allData.forEach(task => {
+          task.steps.forEach(st => {
+            if ((st.assignedEmail || '').toLowerCase().trim() === (d.email || '').toLowerCase().trim() || 
+                (st.assignedName || '').toLowerCase().trim() === (d.name || '').toLowerCase().trim()) {
+              assignedTotal++;
+              if (st.status === 'Completed') completedCount++;
+              else if ((new Date(st.plannedEndDate) < now && st.status !== 'Completed') || st.status === 'Delayed') delayedCount++;
+              else pendingCount++;
+            }
+          });
+        });
+
+        const doerProgress = assignedTotal > 0 ? Math.round((completedCount / assignedTotal) * 100) : 0;
+
+        html += `
+          <div class="bg-white dark:bg-darkcard p-3 rounded-xl border border-slate-200 dark:border-darkborder shadow-2xs space-y-2">
+            <div class="flex items-center justify-between">
+              <div>
+                <h4 class="font-bold text-xs text-slate-900 dark:text-white">👤 ${d.name}</h4>
+                <p class="text-[10px] text-slate-400 font-mono">${d.email}</p>
+              </div>
+              <span class="px-2 py-0.5 text-[9px] text-indigo-600 bg-indigo-50 font-bold rounded">${d.role || 'Executive'}</span>
+            </div>
+
+            <div class="bg-slate-50 dark:bg-slate-800 p-2 rounded-lg border space-y-1">
+              <div class="flex justify-between text-[10px] font-bold">
+                <span class="text-slate-600 dark:text-slate-300">Performance: ${completedCount}/${assignedTotal} Done (${doerProgress}%)</span>
+              </div>
+              <div class="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
+                <div class="bg-emerald-500 h-full rounded-full" style="width: ${doerProgress}%"></div>
+              </div>
+              <div class="flex gap-2 text-[9px] font-bold pt-0.5">
+                <span class="text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded">🟢 Done: ${completedCount}</span>
+                <span class="text-slate-700 bg-slate-200 px-1.5 py-0.2 rounded">⚪ Pending: ${pendingCount}</span>
+                <span class="text-rose-700 bg-rose-50 px-1.5 py-0.2 rounded">🚨 Delayed: ${delayedCount}</span>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+
+      container.innerHTML = html || '<p class="text-xs text-slate-400 py-4">No members found.</p>';
+      lucide.createIcons();
     }
 
     function updateTemplateDropdown() {
@@ -1512,22 +1604,6 @@
       } else {
         alert(json.error);
       }
-    }
-
-    function renderTeamView() {
-      const container = document.getElementById('teamCardsContainer');
-      if (!container) return;
-      let html = '';
-      activeDoers.forEach(d => {
-        html += `
-          <div class="bg-white dark:bg-darkcard p-3 rounded-xl border shadow-2xs">
-            <h4 class="font-bold text-xs">${d.name}</h4>
-            <p class="text-[10px] text-slate-400 font-mono">${d.email}</p>
-            <span class="inline-block text-[8px] text-indigo-600 bg-indigo-50 px-1 py-0.2 rounded mt-1">${d.role || 'Executive'}</span>
-          </div>
-        `;
-      });
-      container.innerHTML = html || '<p class="text-xs text-slate-400 py-4">No members found.</p>';
     }
 
     function exportToCSV() { loadDashboardData(); }
