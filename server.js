@@ -7,10 +7,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Serve static frontend files from 'public' folder
 app.use(express.static(path.join(__dirname, 'public')));
 
-// MongoDB Connection
 const MONGO_URI = process.env.MONGO_URI || "mongodb+srv://sharmaaakash7800:your_password@cluster0.mongodb.net/pms?retryWrites=true&w=majority";
 
 mongoose.connect(MONGO_URI, {
@@ -18,7 +16,6 @@ mongoose.connect(MONGO_URI, {
   useUnifiedTopology: true
 }).then(() => console.log('MongoDB Connected')).catch(err => console.log('DB Error:', err));
 
-// Schemas & Models
 const stepSchema = new mongoose.Schema({
   wbsNo: String,
   stepTitle: String,
@@ -43,6 +40,7 @@ const pmsTaskSchema = new mongoose.Schema({
   steps: [stepSchema]
 });
 
+// Added isHidden field to siteSchema
 const siteSchema = new mongoose.Schema({
   siteName: String,
   companyName: String,
@@ -53,7 +51,8 @@ const siteSchema = new mongoose.Schema({
   technicalPerson: String,
   purchaserPerson: String,
   vrePerson: String,
-  projectOwner: String
+  projectOwner: String,
+  isHidden: { type: Boolean, default: false }
 });
 
 const doerSchema = new mongoose.Schema({
@@ -72,7 +71,6 @@ const Site = mongoose.models.Site || mongoose.model('Site', siteSchema);
 const Doer = mongoose.models.Doer || mongoose.model('Doer', doerSchema);
 const Vendor = mongoose.models.Vendor || mongoose.model('Vendor', vendorSchema);
 
-// --- PMS ROUTES ---
 app.get('/api/pms/all', async (req, res) => {
   try {
     const tasks = await PmsTask.find({});
@@ -89,16 +87,7 @@ app.post('/api/pms/create-custom-package', async (req, res) => {
     const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     const uniqueId = `PMS-${dateStr}-${String(count + 1).padStart(3, '0')}`;
 
-    const newTask = new PmsTask({
-      uniqueId,
-      projectName,
-      mainItemName,
-      pmsType,
-      startDate,
-      totalQty,
-      steps
-    });
-
+    const newTask = new PmsTask({ uniqueId, projectName, mainItemName, pmsType, startDate, totalQty, steps });
     await newTask.save();
     res.json({ success: true, data: newTask });
   } catch (err) {
@@ -155,7 +144,6 @@ app.patch('/api/pms/update-step', async (req, res) => {
   }
 });
 
-// --- SITES ROUTES ---
 app.get('/api/sites', async (req, res) => {
   try {
     const sites = await Site.find({});
@@ -193,7 +181,6 @@ app.delete('/api/sites/:id', async (req, res) => {
   }
 });
 
-// --- DOERS ROUTES ---
 app.get('/api/doers', async (req, res) => {
   try {
     const doers = await Doer.find({});
@@ -213,7 +200,6 @@ app.post('/api/doers', async (req, res) => {
   }
 });
 
-// --- VENDORS ROUTES ---
 app.get('/api/vendors', async (req, res) => {
   try {
     const vendors = await Vendor.find({});
@@ -226,9 +212,6 @@ app.get('/api/vendors', async (req, res) => {
 app.post('/api/vendors', async (req, res) => {
   try {
     const { name, phone } = req.body;
-    if (!name || !phone) {
-      return res.status(400).json({ success: false, error: 'Name and phone are required.' });
-    }
     const newVendor = new Vendor({ name, phone });
     await newVendor.save();
     res.json({ success: true, data: newVendor });
@@ -240,11 +223,7 @@ app.post('/api/vendors', async (req, res) => {
 app.put('/api/vendors/:id', async (req, res) => {
   try {
     const { name, phone } = req.body;
-    const updatedVendor = await Vendor.findByIdAndUpdate(
-      req.params.id,
-      { name, phone },
-      { new: true }
-    );
+    const updatedVendor = await Vendor.findByIdAndUpdate(req.params.id, { name, phone }, { new: true });
     res.json({ success: true, data: updatedVendor });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
