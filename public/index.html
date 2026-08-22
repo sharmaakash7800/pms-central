@@ -77,7 +77,7 @@
         </div>
 
         <div class="flex items-center gap-1.5">
-          <button onclick="openTabSettingsModal()" class="p-1 rounded-lg border border-slate-200 dark:border-darkborder bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-indigo-50 transition" title="Manage Tab Visibility">
+          <button onclick="openTabSettingsModal()" class="p-1 rounded-lg border border-slate-200 dark:border-darkborder bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-indigo-50 transition" title="Manage Tab Settings">
             <i data-lucide="settings" class="w-4 h-4"></i>
           </button>
 
@@ -187,14 +187,18 @@
           <div class="flex items-center gap-2">
             <span class="text-base">🔍</span>
             <div>
-              <h2 class="text-xs font-bold text-slate-900 dark:text-white">Master Review Console (All PMS Overview)</h2>
-              <p class="text-[9px] text-slate-400">Sequential chronological inspection across all company sites</p>
+              <h2 class="text-xs font-bold text-slate-900 dark:text-white">PMS Review Console</h2>
+              <p class="text-[9px] text-slate-400">Sequential chronological inspection</p>
             </div>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <label class="text-[10px] font-bold text-slate-500 dark:text-slate-400">Select PMS:</label>
+            <select id="reviewPmsSelector" onchange="renderSpecificPmsReview()" class="bg-indigo-50 dark:bg-slate-800 border border-indigo-200 dark:border-indigo-800 rounded-lg px-2 py-0.5 text-xs font-extrabold text-indigo-950 dark:text-indigo-200 outline-none cursor-pointer max-w-xs truncate"></select>
           </div>
         </div>
       </div>
-      <div class="bg-white dark:bg-darkcard rounded-xl border p-3 space-y-3">
-        <div id="unifiedStepsBoxContainer" class="space-y-3 max-h-[660px] overflow-y-auto custom-scroll pr-1"></div>
+      <div class="bg-white dark:bg-darkcard rounded-xl border p-3 space-y-2">
+        <div id="unifiedStepsBoxContainer" class="space-y-1.5 max-h-[640px] overflow-y-auto custom-scroll pr-1"></div>
       </div>
     </div>
 
@@ -255,7 +259,7 @@
   </main>
 
   <!-- Bottom Capsule Bar -->
-  <div class="fixed bottom-3 left-1/2 -translate-x-1/2 z-40">
+  <div id="bottomBarWrapper" class="fixed bottom-3 z-40 transition-all duration-300 left-1/2 -translate-x-1/2">
     <div id="bottomCapsuleBar" class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded-full shadow-xl px-4 py-1.5 flex items-center gap-4 sm:gap-6">
       <button onclick="switchTab('viewPmsBoard')" id="tabBtn-viewPmsBoard" class="nav-capsule-btn active flex flex-col items-center text-slate-500 hover:text-indigo-600 transition"><span class="text-xs">📦</span><span class="text-[10px]">Tasks</span></button>
       <button onclick="switchTab('viewReview')" id="tabBtn-viewReview" class="nav-capsule-btn flex flex-col items-center text-slate-500 hover:text-indigo-600 transition"><span class="text-xs">🔍</span><span class="text-[10px]">Review</span></button>
@@ -265,13 +269,27 @@
     </div>
   </div>
 
-  <!-- Modal: Tab Visibility Settings -->
+  <!-- Modal: Tab Settings & Position -->
   <div id="tabSettingsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
-    <div class="bg-white dark:bg-darkcard rounded-2xl max-w-xs w-full p-4 shadow-2xl border relative">
+    <div class="bg-white dark:bg-darkcard rounded-2xl max-w-sm w-full p-4 shadow-2xl border relative space-y-3">
       <button onclick="toggleModal('tabSettingsModal', false)" class="absolute right-3 top-3 text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
-      <h3 class="text-xs font-bold text-slate-900 dark:text-white mb-3">Manage Tab Visibility</h3>
-      <div id="tabCheckboxesContainer" class="space-y-2 text-xs"></div>
-      <button onclick="toggleModal('tabSettingsModal', false)" class="w-full bg-indigo-600 text-white font-bold py-1.5 rounded transition mt-4">Save & Close</button>
+      <h3 class="text-xs font-bold text-slate-900 dark:text-white">Manage Tab Settings</h3>
+      
+      <div>
+        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Bar Alignment Position</label>
+        <select id="barPositionSelect" onchange="changeBarPosition(this.value)" class="w-full border rounded px-2.5 py-1.5 text-xs font-bold bg-slate-50 dark:bg-slate-800 dark:text-white outline-none cursor-pointer">
+          <option value="center">Center</option>
+          <option value="left">Left</option>
+          <option value="right">Right</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tab Visibility</label>
+        <div id="tabCheckboxesContainer" class="space-y-1.5 text-xs"></div>
+      </div>
+
+      <button onclick="toggleModal('tabSettingsModal', false)" class="w-full bg-indigo-600 text-white font-bold py-1.5 rounded transition mt-2">Save & Close</button>
     </div>
   </div>
 
@@ -471,6 +489,7 @@
     }
 
     let hiddenTabs = JSON.parse(localStorage.getItem('pms_hidden_tabs') || '{}');
+    let barPosition = localStorage.getItem('pms_bar_position') || 'center';
 
     function switchTab(viewId) {
       document.querySelectorAll('.view-section').forEach(v => v.classList.add('hidden'));
@@ -479,7 +498,7 @@
       const btn = document.getElementById(`tabBtn-${viewId}`);
       if (btn) btn.classList.add('active');
 
-      if (viewId === 'viewReview') renderMasterReviewConsole();
+      if (viewId === 'viewReview') populateReviewPmsSelector();
       if (viewId === 'viewVendors') renderVendorsView();
       if (viewId === 'viewSites') loadSitesList();
       if (viewId === 'viewTeam') renderTeamView();
@@ -488,11 +507,11 @@
     function openTabSettingsModal() {
       const container = document.getElementById('tabCheckboxesContainer');
       const tabs = [
-        { id: 'viewPmsBoard', label: 'Tasks' },
-        { id: 'viewReview', label: 'Review' },
-        { id: 'viewVendors', label: 'Vendors' },
-        { id: 'viewSites', label: 'Sites' },
-        { id: 'viewTeam', label: 'Team' }
+        { id: 'viewPmsBoard', label: 'Tasks Tab' },
+        { id: 'viewReview', label: 'Review Tab' },
+        { id: 'viewVendors', label: 'Vendors Tab' },
+        { id: 'viewSites', label: 'Sites Tab' },
+        { id: 'viewTeam', label: 'Team Tab' }
       ];
 
       let html = '';
@@ -500,12 +519,13 @@
         const isChecked = !hiddenTabs[t.id];
         html += `
           <label class="flex items-center justify-between p-2 rounded border cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800">
-            <span class="font-bold">${t.label} Tab</span>
+            <span class="font-bold">${t.label}</span>
             <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleTabVisibility('${t.id}', this.checked)" class="rounded">
           </label>
         `;
       });
       container.innerHTML = html;
+      document.getElementById('barPositionSelect').value = barPosition;
       toggleModal('tabSettingsModal', true);
     }
 
@@ -523,6 +543,30 @@
           btn.style.display = hiddenTabs[tabId] ? 'none' : 'flex';
         }
       });
+    }
+
+    function changeBarPosition(pos) {
+      barPosition = pos;
+      localStorage.setItem('pms_bar_position', pos);
+      applyBarPosition();
+    }
+
+    function applyBarPosition() {
+      const wrapper = document.getElementById('bottomBarWrapper');
+      if (!wrapper) return;
+      wrapper.className = 'fixed bottom-3 z-40 transition-all duration-300';
+      if (barPosition === 'left') {
+        wrapper.style.left = '16px';
+        wrapper.style.transform = 'none';
+      } else if (barPosition === 'right') {
+        wrapper.style.left = 'auto';
+        wrapper.style.right = '16px';
+        wrapper.style.transform = 'none';
+      } else {
+        wrapper.style.left = '50%';
+        wrapper.style.right = 'auto';
+        wrapper.style.transform = 'translateX(-50%)';
+      }
     }
 
     function toggleSideMenu(show) { document.getElementById('sideMenuDrawer').classList.toggle('hidden', !show); }
@@ -633,6 +677,7 @@
 
     document.addEventListener('DOMContentLoaded', function () {
       applyTabVisibility();
+      applyBarPosition();
       const table = document.getElementById('pmsGridTable');
       if (!table) return;
       const cols = table.querySelectorAll('th');
@@ -719,25 +764,46 @@
       }
     }
 
-    // --- ALL PMS MASTER REVIEW CONSOLE ---
-    function renderMasterReviewConsole() {
-      const container = document.getElementById('unifiedStepsBoxContainer');
-      if (!container) return;
+    // --- PMS WISE REVIEW CONSOLE ---
+    function populateReviewPmsSelector() {
+      const selector = document.getElementById('reviewPmsSelector');
+      if (!selector) return;
+      let html = '<option value="ALL">-- ALL PMS Master Overview --</option>';
+      allData.forEach(item => {
+        html += `<option value="${item.uniqueId}">${item.uniqueId} - ${item.mainItemName} (${item.projectName || 'General'})</option>`;
+      });
+      selector.innerHTML = html;
+      if (!selector.value) selector.value = 'ALL';
+      renderSpecificPmsReview();
+    }
 
-      if (!allData || allData.length === 0) {
+    function renderSpecificPmsReview() {
+      const selector = document.getElementById('reviewPmsSelector');
+      const container = document.getElementById('unifiedStepsBoxContainer');
+      if (!selector || !container) return;
+      const selectedId = selector.value;
+
+      let tasksToRender = [];
+      if (selectedId === 'ALL') {
+        tasksToRender = allData;
+      } else {
+        tasksToRender = allData.filter(t => t.uniqueId === selectedId);
+      }
+
+      if (!tasksToRender || tasksToRender.length === 0) {
         container.innerHTML = '<p class="text-xs text-slate-400 py-10 text-center">No tasks available for review.</p>';
         return;
       }
 
       let html = '';
-      allData.forEach(task => {
+      tasksToRender.forEach(task => {
         let sortedSteps = [...task.steps].sort(naturalWbsSort);
         let completedStepsCount = sortedSteps.filter(s => s.status === 'Completed').length;
         let totalStepsCount = sortedSteps.length;
         let progressPercent = totalStepsCount > 0 ? Math.round((completedStepsCount / totalStepsCount) * 100) : 0;
 
         html += `
-          <div class="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl border border-slate-200 dark:border-darkborder space-y-2">
+          <div class="bg-slate-50 dark:bg-slate-800/60 p-3 rounded-xl border border-slate-200 dark:border-darkborder space-y-2 mb-3">
             <div class="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-slate-200 dark:border-darkborder">
               <div>
                 <span class="font-mono font-extrabold text-indigo-600 dark:text-indigo-400 text-xs">${task.uniqueId}</span>
@@ -979,6 +1045,7 @@
         const json = await res.json();
         allData = json.data || [];
         renderProjectFilterDropdown();
+        populateReviewPmsSelector();
         applyFilters();
       } catch (err) {
         console.error(err);
