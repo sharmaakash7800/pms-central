@@ -62,9 +62,16 @@ const doerSchema = new mongoose.Schema({
   role: String
 });
 
+// Added Vendor Schema
+const vendorSchema = new mongoose.Schema({
+  name: { type: String, required: true },
+  phone: { type: String, required: true }
+});
+
 const PmsTask = mongoose.models.PmsTask || mongoose.model('PmsTask', pmsTaskSchema);
 const Site = mongoose.models.Site || mongoose.model('Site', siteSchema);
 const Doer = mongoose.models.Doer || mongoose.model('Doer', doerSchema);
+const Vendor = mongoose.models.Vendor || mongoose.model('Vendor', vendorSchema);
 
 // --- PMS ROUTES ---
 app.get('/api/pms/all', async (req, res) => {
@@ -202,6 +209,30 @@ app.post('/api/doers', async (req, res) => {
     const newDoer = new Doer(req.body);
     await newDoer.save();
     res.json({ success: true, data: newDoer });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// --- VENDORS ROUTES ---
+app.get('/api/vendors', async (req, res) => {
+  try {
+    const vendors = await Vendor.find({});
+    res.json({ success: true, data: vendors });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/vendors', async (req, res) => {
+  try {
+    const { name, phone } = req.body;
+    if (!name || !phone) {
+      return res.status(400).json({ success: false, error: 'Name and phone are required.' });
+    }
+    const newVendor = new Vendor({ name, phone });
+    await newVendor.save();
+    res.json({ success: true, data: newVendor });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
