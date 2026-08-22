@@ -222,7 +222,7 @@
           <span class="text-base">📍</span>
           <div>
             <h2 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Sites & Projects Directory</h2>
-            <p class="text-[9px] text-slate-400">Click on any site name to view its tasks and open all steps</p>
+            <p class="text-[9px] text-slate-400">Click on any site name to view its tasks (steps remain hidden by default)</p>
           </div>
         </div>
         <button onclick="openSiteModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1">
@@ -609,7 +609,7 @@
       renderStructuredTableGrid(allData);
     }
 
-    // Direct filter and auto-expand function when clicking on a site
+    // Direct filter when clicking on a site (keeping steps collapsed/hidden by default)
     function filterBySiteAndOpenSteps(siteName) {
       switchTab('viewPmsBoard');
       
@@ -618,10 +618,10 @@
         filterSelect.value = siteName;
       }
       
-      // Auto expand all tasks for this site
+      // Ensure tasks remain collapsed/hidden by default unless user clicks "Show Steps"
       allData.forEach(t => {
         if ((t.projectName || '').toLowerCase().trim() === siteName.toLowerCase().trim()) {
-          collapsedTasks[t.uniqueId] = false;
+          collapsedTasks[t.uniqueId] = true;
         }
       });
       localStorage.setItem('pms_collapsed_tasks', JSON.stringify(collapsedTasks));
@@ -685,7 +685,7 @@
           if (sortedSteps.length === 0) return;
         }
 
-        const isCollapsed = !!collapsedTasks[item.uniqueId];
+        const isCollapsed = collapsedTasks[item.uniqueId] !== undefined ? collapsedTasks[item.uniqueId] : true;
 
         const total = sortedSteps.length;
         const doneCount = sortedSteps.filter(s => s.status === 'Completed').length;
@@ -882,7 +882,7 @@
             html += `
               <div class="bg-white dark:bg-darkcard p-3 rounded-xl border border-slate-200 dark:border-darkborder shadow-2xs space-y-1.5 text-xs">
                 <div class="flex items-center justify-between font-bold">
-                  <span onclick="filterBySiteAndOpenSteps('${s.siteName.replace(/'/g, "\\'")}')" class="text-indigo-600 dark:text-indigo-400 text-xs font-extrabold cursor-pointer hover:underline" title="Click to view all tasks & open steps">📍 ${s.siteName}</span>
+                  <span onclick="filterBySiteAndOpenSteps('${s.siteName.replace(/'/g, "\\'")}')" class="text-indigo-600 dark:text-indigo-400 text-xs font-extrabold cursor-pointer hover:underline" title="Click to view tasks">📍 ${s.siteName}</span>
                   <div class="flex items-center gap-1">
                     <button onclick="openEditSiteModal('${s._id}', '${s.siteName.replace(/'/g, "\\'")}')" class="text-slate-400 hover:text-indigo-600 p-1" title="Edit Site">
                       <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
