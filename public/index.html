@@ -222,7 +222,7 @@
           <span class="text-base">📍</span>
           <div>
             <h2 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Sites & Projects Directory</h2>
-            <p class="text-[9px] text-slate-400">Click on any site name to view its tasks. Use Hide/Unhide to manage active sites.</p>
+            <p class="text-[9px] text-slate-400">Click on any site name to view tasks. Use eye icons to hide/unhide completed sites.</p>
           </div>
         </div>
         <div class="flex items-center gap-2">
@@ -689,7 +689,6 @@
       if (selectedSite && selectedSite !== 'ALL') {
         filteredData = data.filter(item => (item.projectName || '').toLowerCase().trim() === selectedSite.toLowerCase().trim());
       } else {
-        // Exclude tasks belonging to hidden sites from the main board when viewing ALL
         const hiddenSiteNames = allSitesList.filter(s => s.isHidden).map(s => s.siteName.toLowerCase().trim());
         filteredData = data.filter(item => !hiddenSiteNames.includes((item.projectName || '').toLowerCase().trim()));
       }
@@ -909,17 +908,19 @@
           allSitesList.forEach(s => {
             if (!showHidden && s.isHidden) return;
 
-            const cardOpacity = s.isHidden ? 'opacity-60 bg-slate-50 dark:bg-slate-900 border-dashed' : 'bg-white dark:bg-darkcard';
-            const hideBtnText = s.isHidden ? '👁️ Unhide' : '🙈 Hide';
-            const hideBtnClass = s.isHidden ? 'text-emerald-600 hover:bg-emerald-50' : 'text-amber-600 hover:bg-amber-50';
+            const cardOpacity = s.isHidden ? 'opacity-50 bg-slate-50 dark:bg-slate-900 border-dashed' : 'bg-white dark:bg-darkcard';
+            // Using eye-off when hidden, eye when visible (matching user's request)
+            const hideIcon = s.isHidden ? 'eye-off' : 'eye';
+            const hideTitle = s.isHidden ? 'Unhide Site' : 'Hide Site';
+            const hideBtnClass = s.isHidden ? 'text-emerald-600 hover:bg-emerald-50' : 'text-slate-400 hover:text-amber-600 hover:bg-amber-50';
 
             html += `
               <div class="${cardOpacity} p-3 rounded-xl border border-slate-200 dark:border-darkborder shadow-2xs space-y-1.5 text-xs transition">
                 <div class="flex items-center justify-between font-bold">
                   <span onclick="filterBySiteAndOpenSteps('${s.siteName.replace(/'/g, "\\'")}')" class="text-indigo-600 dark:text-indigo-400 text-xs font-extrabold cursor-pointer hover:underline" title="Click to view tasks">📍 ${s.siteName} ${s.isHidden ? '(Hidden)' : ''}</span>
                   <div class="flex items-center gap-1">
-                    <button onclick="toggleSiteHideStatus('${s._id}', ${s.isHidden})" class="px-2 py-0.5 rounded border text-[10px] font-bold ${hideBtnClass}" title="Toggle Hide/Unhide Site">
-                      ${hideBtnText}
+                    <button onclick="toggleSiteHideStatus('${s._id}', ${s.isHidden})" class="p-1.5 rounded border ${hideBtnClass}" title="${hideTitle}">
+                      <i data-lucide="${hideIcon}" class="w-3.5 h-3.5"></i>
                     </button>
                     <button onclick="openEditSiteModal('${s._id}', '${s.siteName.replace(/'/g, "\\'")}')" class="text-slate-400 hover:text-indigo-600 p-1" title="Edit Site">
                       <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
