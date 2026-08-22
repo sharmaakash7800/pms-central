@@ -46,7 +46,7 @@
     #pmsGridTable { table-layout: fixed; width: 100%; }
   </style>
 </head>
-<body class="bg-slate-100 text-slate-800 dark:bg-darkbg dark:text-slate-100 antialiased min-h-screen flex flex-col pb-20 text-xs">
+<body class="bg-slate-100 text-slate-800 dark:bg-darkbg dark:text-slate-100 antialiased min-h-screen flex flex-col pb-24 text-xs">
 
   <!-- Header -->
   <header class="bg-white dark:bg-darkcard border-b border-slate-200 dark:border-darkborder sticky top-0 z-30 shadow-xs">
@@ -77,6 +77,10 @@
         </div>
 
         <div class="flex items-center gap-1.5">
+          <button onclick="openTabSettingsModal()" class="p-1 rounded-lg border border-slate-200 dark:border-darkborder bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-indigo-50 transition" title="Manage Tab Visibility">
+            <i data-lucide="settings" class="w-4 h-4"></i>
+          </button>
+
           <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-lg border border-slate-200 dark:border-darkborder">
             <select id="userRole" class="bg-transparent text-[11px] font-bold text-slate-700 dark:text-slate-200 outline-none cursor-pointer" onchange="handleRoleSwitch()">
               <option value="ADMIN">Super Admin</option>
@@ -256,12 +260,24 @@
 
   <!-- Bottom Capsule Bar -->
   <div class="fixed bottom-3 left-1/2 -translate-x-1/2 z-40">
-    <div class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded-full shadow-xl px-4 py-1.5 flex items-center gap-4 sm:gap-6">
+    <div id="bottomCapsuleBar" class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded-full shadow-xl px-4 py-1.5 flex items-center gap-4 sm:gap-6">
       <button onclick="switchTab('viewPmsBoard')" id="tabBtn-viewPmsBoard" class="nav-capsule-btn active flex flex-col items-center text-slate-500 hover:text-indigo-600 transition"><span class="text-xs">📦</span><span class="text-[10px]">Tasks</span></button>
       <button onclick="switchTab('viewReview')" id="tabBtn-viewReview" class="nav-capsule-btn flex flex-col items-center text-slate-500 hover:text-indigo-600 transition"><span class="text-xs">🔍</span><span class="text-[10px]">Review</span></button>
       <button onclick="switchTab('viewVendors')" id="tabBtn-viewVendors" class="nav-capsule-btn flex flex-col items-center text-slate-500 hover:text-indigo-600 transition"><span class="text-xs">🏢</span><span class="text-[10px]">Vendors</span></button>
       <button onclick="switchTab('viewSites')" id="tabBtn-viewSites" class="nav-capsule-btn flex flex-col items-center text-slate-500 hover:text-indigo-600 transition"><span class="text-xs">📍</span><span class="text-[10px]">Sites</span></button>
       <button onclick="switchTab('viewTeam')" id="tabBtn-viewTeam" class="nav-capsule-btn flex flex-col items-center text-slate-500 hover:text-indigo-600 transition"><span class="text-xs">👥</span><span class="text-[10px]">Team</span></button>
+    </div>
+  </div>
+
+  <!-- Modal: Tab Visibility Settings -->
+  <div id="tabSettingsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
+    <div class="bg-white dark:bg-darkcard rounded-2xl max-w-xs w-full p-4 shadow-2xl border relative">
+      <button onclick="toggleModal('tabSettingsModal', false)" class="absolute right-3 top-3 text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
+      <h3 class="text-xs font-bold text-slate-900 dark:text-white mb-3">Manage Tab Visibility</h3>
+      <div id="tabCheckboxesContainer" class="space-y-2 text-xs">
+        <!-- Rendered dynamically -->
+      </div>
+      <button onclick="toggleModal('tabSettingsModal', false)" class="w-full bg-indigo-600 text-white font-bold py-1.5 rounded transition mt-4">Save & Close</button>
     </div>
   </div>
 
@@ -460,6 +476,8 @@
       return (parseInt(a.wbsNo, 10) || 0) - (parseInt(b.wbsNo, 10) || 0);
     }
 
+    let hiddenTabs = JSON.parse(localStorage.getItem('pms_hidden_tabs') || '{}');
+
     function switchTab(viewId) {
       document.querySelectorAll('.view-section').forEach(v => v.classList.add('hidden'));
       document.querySelectorAll('.nav-capsule-btn').forEach(b => b.classList.remove('active'));
@@ -471,6 +489,46 @@
       if (viewId === 'viewVendors') renderVendorsView();
       if (viewId === 'viewSites') loadSitesList();
       if (viewId === 'viewTeam') renderTeamView();
+    }
+
+    function openTabSettingsModal() {
+      const container = document.getElementById('tabCheckboxesContainer');
+      const tabs = [
+        { id: 'viewPmsBoard', label: 'Tasks' },
+        { id: 'viewReview', label: 'Review' },
+        { id: 'viewVendors', label: 'Vendors' },
+        { id: 'viewSites', label: 'Sites' },
+        { id: 'viewTeam', label: 'Team' }
+      ];
+
+      let html = '';
+      tabs.forEach(t => {
+        const isChecked = !hiddenTabs[t.id];
+        html += `
+          <label class="flex items-center justify-between p-2 rounded border cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800">
+            <span class="font-bold">${t.label} Tab</span>
+            <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleTabVisibility('${t.id}', this.checked)" class="rounded">
+          </label>
+        `;
+      });
+      container.innerHTML = html;
+      toggleModal('tabSettingsModal', true);
+    }
+
+    function toggleTabVisibility(tabId, isVisible) {
+      hiddenTabs[tabId] = !isVisible;
+      localStorage.setItem('pms_hidden_tabs', JSON.stringify(hiddenTabs));
+      applyTabVisibility();
+    }
+
+    function applyTabVisibility() {
+      const tabs = ['viewPmsBoard', 'viewReview', 'viewVendors', 'viewSites', 'viewTeam'];
+      tabs.forEach(tabId => {
+        const btn = document.getElementById(`tabBtn-${tabId}`);
+        if (btn) {
+          btn.style.display = hiddenTabs[tabId] ? 'none' : 'flex';
+        }
+      });
     }
 
     function toggleSideMenu(show) { document.getElementById('sideMenuDrawer').classList.toggle('hidden', !show); }
@@ -580,6 +638,7 @@
     function onDoerUserChange() { applyFilters(); }
 
     document.addEventListener('DOMContentLoaded', function () {
+      applyTabVisibility();
       const table = document.getElementById('pmsGridTable');
       if (!table) return;
       const cols = table.querySelectorAll('th');
@@ -664,6 +723,57 @@
       } catch (err) {
         alert('Network error: ' + err.message);
       }
+    }
+
+    // --- REVIEW CONSOLE FIX ---
+    function populateReviewPmsSelector() {
+      const selector = document.getElementById('reviewPmsSelector');
+      if (!selector) return;
+      let html = '<option value="">-- Select Task Package --</option>';
+      allData.forEach(item => {
+        html += `<option value="${item.uniqueId}">${item.uniqueId} - ${item.mainItemName} (${item.projectName || 'General'})</option>`;
+      });
+      selector.innerHTML = html;
+      if(allData.length > 0 && !selector.value) {
+        selector.value = allData[0].uniqueId;
+        renderSpecificPmsReview();
+      }
+    }
+
+    function renderSpecificPmsReview() {
+      const selector = document.getElementById('reviewPmsSelector');
+      const container = document.getElementById('unifiedStepsBoxContainer');
+      if (!selector || !container) return;
+      const uniqueId = selector.value;
+      const task = allData.find(t => t.uniqueId === uniqueId);
+
+      if (!task) {
+        container.innerHTML = '<p class="text-xs text-slate-400 py-6 text-center">Please select a task package to review.</p>';
+        return;
+      }
+
+      let html = `<div class="font-bold text-xs mb-2 text-indigo-700 dark:text-indigo-300">📦 ${task.uniqueId} : ${task.mainItemName}</div>`;
+      let sortedSteps = [...task.steps].sort(naturalWbsSort);
+
+      sortedSteps.forEach(s => {
+        const isCompleted = s.status === 'Completed';
+        let badgeClass = 'bg-amber-100 text-amber-800';
+        if(isCompleted) badgeClass = 'bg-emerald-100 text-emerald-800';
+
+        html += `
+          <div class="bg-slate-50 dark:bg-slate-800 p-2 rounded-lg border flex items-center justify-between gap-2 text-xs">
+            <div class="flex items-center gap-2">
+              <span class="font-mono font-bold px-1.5 py-0.5 bg-white dark:bg-darkcard border rounded text-[10px]">#${s.wbsNo}</span>
+              <div>
+                <p class="font-semibold text-slate-900 dark:text-white">${s.stepTitle}</p>
+                <p class="text-[9px] text-slate-400 font-mono">Doer: ${s.assignedName || 'Unassigned'} | Timeline: ${new Date(s.plannedStartDate).toLocaleDateString('en-GB')} ➔ ${new Date(s.plannedEndDate).toLocaleDateString('en-GB')}</p>
+              </div>
+            </div>
+            <span class="px-2 py-0.5 text-[9px] font-bold rounded ${badgeClass}">${s.status}</span>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
     }
 
     function renderStructuredTableGrid(data) {
@@ -862,6 +972,7 @@
         const json = await res.json();
         allData = json.data || [];
         renderProjectFilterDropdown();
+        populateReviewPmsSelector();
         applyFilters();
       } catch (err) {
         console.error(err);
