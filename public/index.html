@@ -978,7 +978,6 @@
         const pendingCount = total - doneCount - overdueCount;
         const percentage = total > 0 ? Math.round((doneCount / total) * 100) : 0;
 
-        // MAIN TASK ROW: Full line name on top, score & progress directly below it
         html += `
           <tr class="bg-indigo-50/90 dark:bg-indigo-950/70 border-t-2 border-indigo-200 dark:border-indigo-900">
             <td class="py-2.5 px-3 font-mono text-indigo-700 dark:text-indigo-300 align-top font-bold">${item.uniqueId}</td>
@@ -1494,6 +1493,8 @@
       toggleModal('doerAuditModal', true);
     }
 
+    function exportToCSV() { loadDashboardData(); }
+
     function updateTemplateDropdown() {
       const selector = document.getElementById('templateSelector');
       const templates = JSON.parse(localStorage.getItem('pms_saved_templates') || '[]');
@@ -1769,8 +1770,6 @@
         alert(json.error);
       }
     }
-
-    exportToCSV() { loadDashboardData(); }
 
     initTheme();
     loadDoersList();
