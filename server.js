@@ -106,7 +106,41 @@ app.put('/api/pms/update-package', async (req, res) => {
     task.pmsType = pmsType || task.pmsType;
     task.startDate = startDate || task.startDate;
     task.totalQty = totalQty || task.totalQty;
-    task.steps = steps;
+
+    if (Array.isArray(steps)) {
+      const existingById = new Map();
+      const existingByWbs = new Map();
+      if (task.steps) {
+        task.steps.forEach(s => {
+          if (s._id) existingById.set(String(s._id), s);
+          if (s.wbsNo) existingByWbs.set(String(s.wbsNo), s);
+        });
+      }
+
+      task.steps = steps.map(newStep => {
+        let existing = null;
+        if (newStep._id && existingById.has(String(newStep._id))) {
+          existing = existingById.get(String(newStep._id));
+        } else if (newStep.wbsNo && existingByWbs.has(String(newStep.wbsNo))) {
+          existing = existingByWbs.get(String(newStep.wbsNo));
+        }
+
+        return {
+          _id: newStep._id || (existing ? existing._id : undefined),
+          wbsNo: newStep.wbsNo,
+          stepTitle: newStep.stepTitle,
+          assignedName: newStep.assignedName,
+          assignedEmail: newStep.assignedEmail,
+          durationDays: newStep.durationDays,
+          plannedStartDate: newStep.plannedStartDate,
+          plannedEndDate: newStep.plannedEndDate,
+          actualStartDate: newStep.actualStartDate || (existing ? existing.actualStartDate : undefined),
+          actualEndDate: newStep.actualEndDate || (existing ? existing.actualEndDate : undefined),
+          status: newStep.status || (existing ? existing.status : 'Pending'),
+          remarks: (newStep.remarks !== undefined && newStep.remarks !== '') ? newStep.remarks : (existing ? existing.remarks : '')
+        };
+      });
+    }
 
     await task.save();
     res.json({ success: true, data: task });
@@ -127,7 +161,7 @@ app.delete('/api/pms/delete/:uniqueId', async (req, res) => {
 
 app.patch('/api/pms/update-step', async (req, res) => {
   try {
-    const { uniqueId, stepId, status, remarks } = req.body;
+    const { uniqueId, stepId, status, remarks, actualEndDate, actualStartDate } = req.body;
     const task = await PmsTask.findOne({ uniqueId });
     if (!task) return res.status(404).json({ success: false, error: 'Task not found' });
 
@@ -135,7 +169,9 @@ app.patch('/api/pms/update-step', async (req, res) => {
     if (!step) return res.status(404).json({ success: false, error: 'Step not found' });
 
     if (status) step.status = status;
-    if (remarks !== undefined) step.remarks = remarks;
+    if (remarks !== undefined && remarks !== '') step.remarks = remarks;
+    if (actualEndDate !== undefined) step.actualEndDate = actualEndDate;
+    if (actualStartDate !== undefined) step.actualStartDate = actualStartDate;
 
     await task.save();
     res.json({ success: true, data: task });
