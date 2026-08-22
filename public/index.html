@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PMS Central Hub | Fixed Column Alignment</title>
+  <title>PMS Central Hub | Sequential Validation & Layout</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -136,7 +136,7 @@
         </div>
       </div>
 
-      <!-- Table Grid (Exact 10 Columns Matching) -->
+      <!-- Table Grid (Exact 11 Columns Matching) -->
       <div class="bg-white dark:bg-darkcard rounded-xl border border-slate-200 dark:border-darkborder shadow-2xs overflow-hidden">
         <div class="overflow-x-auto max-h-[720px] custom-scroll">
           <table id="pmsGridTable" class="text-left border-collapse text-xs w-full">
@@ -355,7 +355,7 @@
     </div>
   </div>
 
-  <!-- Modal: Doer Edit Execution -->
+  <!-- Modal: Doer Edit Execution (With Sequential Validation) -->
   <div id="doerModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
     <div class="bg-white dark:bg-darkcard rounded-2xl max-w-sm w-full p-4 shadow-2xl border relative">
       <button onclick="toggleModal('doerModal', false)" class="absolute right-3 top-3 text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
@@ -920,6 +920,20 @@
       lucide.createIcons();
     }
 
+    // SEQUENTIAL VALIDATION LOGIC
+    function validateSequentialCompletion(steps, currentStepWbsNo, newStatus) {
+      if (newStatus !== 'Completed') return true;
+      const currentWbs = parseInt(currentStepWbsNo, 10);
+      for (let s of steps) {
+        const stepWbs = parseInt(s.wbsNo, 10);
+        if (stepWbs < currentWbs && s.status !== 'Completed') {
+          alert(`Error: Cannot complete Step #${currentWbs} because previous Step #${stepWbs} ("${s.stepTitle}") is still pending!`);
+          return false;
+        }
+      }
+      return true;
+    }
+
     // RENDER TABLE WITH EXACT 11 COLUMNS MATCHING HEADERS
     function renderStructuredTableGrid(data) {
       const tbody = document.getElementById('tableRows');
@@ -970,6 +984,7 @@
         const overdueCount = sortedSteps.filter(s => (new Date(s.plannedEndDate) < now && s.status !== 'Completed') || s.status === 'Delayed').length;
         const pendingCount = total - doneCount - overdueCount;
         const percentage = total > 0 ? Math.round((doneCount / total) * 100) : 0;
+        const qtyDisplay = item.totalQty ? `| Qty: ${item.totalQty}` : '';
 
         // Parent Row (Exact 11 col span matching header)
         html += `
@@ -979,7 +994,7 @@
               <span>${item.uniqueId}</span>
             </td>
             <td class="py-3 px-3 text-slate-900 dark:text-white align-top" colspan="9">
-              <div class="font-bold text-xs mb-1.5 whitespace-normal break-words">${item.mainItemName} <span class="text-[10px] text-slate-400 font-normal">(${item.projectName || 'General'})</span></div>
+              <div class="font-bold text-xs mb-1.5 whitespace-normal break-words">${item.mainItemName} <span class="text-[10px] text-slate-400 font-normal">(${item.projectName || 'General'} ${qtyDisplay})</span></div>
               <div class="flex items-center gap-3 text-[10px] flex-wrap">
                 <span class="px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold">${doneCount} Done</span>
                 <span class="px-1.5 py-0.5 bg-rose-100 text-rose-800 rounded font-bold">${overdueCount} Overdue</span>
@@ -1097,12 +1112,26 @@
     }
 
     async function saveDoerExecution() {
+      const taskId = document.getElementById('editTaskId').value;
+      const stepId = document.getElementById('editStepId').value;
+      const newStatus = document.getElementById('editStatus').value;
+
+      const task = allData.find(t => t.uniqueId === taskId);
+      if (task) {
+        const targetStep = task.steps.find(s => s._id === stepId);
+        if (targetStep) {
+          const isValid = validateSequentialCompletion(task.steps, targetStep.wbsNo, newStatus);
+          if (!isValid) return;
+        }
+      }
+
       const payload = {
-        uniqueId: document.getElementById('editTaskId').value,
-        stepId: document.getElementById('editStepId').value,
-        status: document.getElementById('editStatus').value,
+        uniqueId: taskId,
+        stepId: stepId,
+        status: newStatus,
         remarks: document.getElementById('editRemarks').value
       };
+
       const res = await fetch(`${API_BASE}/api/pms/update-step`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
