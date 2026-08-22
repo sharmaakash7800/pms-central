@@ -482,7 +482,7 @@
     }
 
     async function saveVendor() {
-      const id = document.getElementById('editVendorId').value;
+      const id = document.getElementById('editVendorId').value.trim();
       const payload = {
         name: document.getElementById('vName').value.trim(),
         phone: document.getElementById('vPhone').value.trim()
@@ -491,17 +491,21 @@
       const url = id ? `${API_BASE}/api/vendors/${id}` : `${API_BASE}/api/vendors`;
       const method = id ? 'PUT' : 'POST';
 
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-      });
-      const json = await res.json();
-      if (json.success) {
-        toggleModal('addVendorModal', false);
-        renderVendorsView();
-      } else {
-        alert(json.error);
+      try {
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (json.success) {
+          toggleModal('addVendorModal', false);
+          renderVendorsView();
+        } else {
+          alert(json.error || 'Failed to save vendor.');
+        }
+      } catch (err) {
+        alert('Network error: ' + err.message);
       }
     }
 
