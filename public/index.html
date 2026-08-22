@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PMS Central Hub | Pro Table & Resizable Columns</title>
+  <title>PMS Central Hub | Pro Table & Fixed Columns</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -29,20 +29,6 @@
     .dark .custom-scroll::-webkit-scrollbar-thumb { background: #374151; }
     .nav-capsule-btn.active { color: #4f46e5; font-weight: 800; }
     .dark .nav-capsule-btn.active { color: #818cf8; }
-
-    /* Column Resizing Styling */
-    .resizable-th { position: relative; }
-    .resizer {
-      position: absolute;
-      top: 0;
-      right: 0;
-      width: 5px;
-      cursor: col-resize;
-      height: 100%;
-      background: #cbd5e1;
-      z-index: 20;
-    }
-    .resizer:hover, .resizing { background: #6366f1 !important; }
     #pmsGridTable { table-layout: fixed; width: 100%; }
   </style>
 </head>
@@ -72,7 +58,7 @@
 
           <div>
             <h1 class="text-xs font-extrabold text-slate-900 dark:text-white leading-none">PMS Central Hub</h1>
-            <p class="text-[9px] text-slate-400 font-medium">Resizable Grid & Sites Console</p>
+            <p class="text-[9px] text-slate-400 font-medium">Grid & Sites Console</p>
           </div>
         </div>
 
@@ -154,20 +140,20 @@
         </div>
       </div>
 
-      <!-- Resizable Table Grid -->
+      <!-- Table Grid (Fixed Layout) -->
       <div class="bg-white dark:bg-darkcard rounded-xl border border-slate-200 dark:border-darkborder shadow-2xs overflow-hidden">
         <div class="overflow-x-auto max-h-[680px] custom-scroll">
           <table id="pmsGridTable" class="text-left border-collapse text-xs whitespace-normal">
             <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 uppercase font-bold sticky top-0 z-10 border-b border-slate-200 dark:border-darkborder text-[10px] tracking-wider">
               <tr>
-                <th class="py-3 px-3 w-24 resizable-th">Task ID<div class="resizer"></div></th>
-                <th class="py-3 px-2 text-center w-14 resizable-th">WBS<div class="resizer"></div></th>
-                <th class="py-3 px-3 w-64 resizable-th">Step Title / Action<div class="resizer"></div></th>
-                <th class="py-3 px-3 w-36 resizable-th">Assigned Doer<div class="resizer"></div></th>
-                <th class="py-3 px-3 w-36 resizable-th">Timeline<div class="resizer"></div></th>
-                <th class="py-3 px-3 w-28 text-center resizable-th">Stopwatch<div class="resizer"></div></th>
-                <th class="py-3 px-3 w-40 resizable-th">Remarks / Notes<div class="resizer"></div></th>
-                <th class="py-3 px-3 w-28 resizable-th">Status<div class="resizer"></div></th>
+                <th class="py-3 px-3 w-24">Task ID</th>
+                <th class="py-3 px-2 text-center w-14">WBS</th>
+                <th class="py-3 px-3 w-64">Step Title / Action</th>
+                <th class="py-3 px-3 w-36">Assigned Doer</th>
+                <th class="py-3 px-3 w-36">Timeline</th>
+                <th class="py-3 px-3 w-28 text-center">Stopwatch</th>
+                <th class="py-3 px-3 w-40">Remarks / Notes</th>
+                <th class="py-3 px-3 w-28">Status</th>
                 <th class="py-3 px-3 text-center w-28">Action</th>
               </tr>
             </thead>
@@ -450,7 +436,7 @@
     </div>
   </div>
 
-  <!-- Modal: Create / Update Task Package (With Delete button inside) -->
+  <!-- Modal: Create Task Package -->
   <div id="createTaskModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
     <div class="bg-white dark:bg-darkcard rounded-2xl max-w-3xl w-full p-4 shadow-2xl border relative max-h-[92vh] flex flex-col">
       <div class="flex items-center justify-between pb-2 border-b">
@@ -953,7 +939,7 @@
       }
 
       if (!data || data.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="10" class="text-center py-10 text-slate-400">No records found. Click "+ Task" to begin.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" class="text-center py-10 text-slate-400">No records found. Click "+ Task" to begin.</td></tr>';
         return;
       }
 
@@ -966,7 +952,7 @@
       }
 
       if (!filteredData || filteredData.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="10" class="text-center py-10 text-slate-400">No active tasks found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" class="text-center py-10 text-slate-400">No active tasks found.</td></tr>`;
         return;
       }
 
@@ -988,11 +974,11 @@
         const pendingCount = total - doneCount - overdueCount;
         const percentage = total > 0 ? Math.round((doneCount / total) * 100) : 0;
 
-        // MAIN TASK ROW (Unique ID in col 1, Main Task Name + Score below it across other columns)
+        // MAIN TASK ROW (Unique ID, Task Name + Score below it, and Actions button directly underneath in Action column)
         html += `
           <tr class="bg-indigo-50/90 dark:bg-indigo-950/70 border-t-2 border-indigo-200 dark:border-indigo-900">
-            <td class="py-2.5 px-3 font-mono text-indigo-700 dark:text-indigo-300 align-top font-bold">${item.uniqueId}</td>
-            <td class="py-2.5 px-3 text-slate-900 dark:text-white align-top" colspan="7">
+            <td class="py-3 px-3 font-mono text-indigo-700 dark:text-indigo-300 align-top font-bold">${item.uniqueId}</td>
+            <td class="py-3 px-3 text-slate-900 dark:text-white align-top" colspan="7">
               <div class="font-bold text-xs mb-1.5 whitespace-normal break-words">📦 ${item.mainItemName} <span class="text-[10px] text-slate-400 font-normal">(${item.projectName || 'General'})</span></div>
               <div class="flex items-center gap-3 text-[10px] flex-wrap">
                 <span class="px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold">🟢 ${doneCount} Done</span>
@@ -1004,7 +990,7 @@
                 </div>
               </div>
             </td>
-            <td class="py-2.5 px-3 text-center align-top relative">
+            <td class="py-3 px-3 text-center align-top relative">
               <div class="relative inline-block text-left">
                 <button onclick="toggleActionDropdown('${item.uniqueId}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded-lg font-bold text-[10px] shadow-xs flex items-center gap-1">
                   Actions ▾
@@ -1046,7 +1032,7 @@
               <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition align-top">
                 <td class="py-3 px-3 text-slate-400 font-mono text-[10px]">${item.uniqueId}</td>
                 <td class="py-3 px-2 text-center font-mono font-bold text-slate-800 dark:text-slate-200 bg-slate-50/50">${s.wbsNo}</td>
-                <td class="py-3 px-3 text-slate-800 dark:text-slate-200 font-medium whitespace-normal break-words" colspan="2">
+                <td class="py-3 px-3 text-slate-800 dark:text-slate-200 font-medium whitespace-normal break-words">
                   <div class="flex items-center flex-wrap gap-1">
                     <span>${s.stepTitle}</span>
                     ${formActionLink}
