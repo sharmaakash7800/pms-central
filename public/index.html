@@ -244,42 +244,49 @@
       </div>
     </div>
 
-    <!-- VIEW 5: TEAM DIRECTORY -->
+    <!-- VIEW 5: TEAM DIRECTORY (WITH MAIN PANEL SCORE PERIOD FILTER) -->
     <div id="viewTeam" class="view-section hidden space-y-2.5">
-      <div class="bg-white dark:bg-darkcard p-2.5 rounded-xl border flex items-center justify-between">
-        <span class="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">Team & Doer Performance Directory</span>
-        <button onclick="openAddMemberModal()" class="bg-indigo-600 text-white text-[10px] font-bold px-2.5 py-1 rounded shadow-xs transition flex items-center gap-1">
-          <i data-lucide="plus" class="w-3 h-3"></i>
-          <span>+ Add Member</span>
-        </button>
+      <div class="bg-white dark:bg-darkcard p-3 rounded-xl border flex flex-wrap items-center justify-between gap-2">
+        <div class="flex items-center gap-2">
+          <span class="text-base">👥</span>
+          <div>
+            <h2 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Team & Doer Performance Directory</h2>
+            <p class="text-[9px] text-slate-400">Track weekly, monthly, and quarterly scores including old pending backlog.</p>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          <div class="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800 border px-2.5 py-1 rounded-lg">
+            <span class="text-[9px] font-bold uppercase text-slate-500">Score Audit Period:</span>
+            <select id="mainAuditPeriodSelect" onchange="renderTeamView()" class="bg-transparent text-xs font-bold outline-none cursor-pointer dark:text-white">
+              <option value="ALL">All Time (Including Old Pending)</option>
+              <option value="WEEK">This Week (Last 7 Days)</option>
+              <option value="MONTH">This Month (Last 30 Days)</option>
+              <option value="QUARTER">This Quarter (Last 90 Days)</option>
+            </select>
+          </div>
+          <button onclick="openAddMemberModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+            <span>+ Add Member</span>
+          </button>
+        </div>
       </div>
       <div id="teamCardsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
     </div>
 
   </main>
 
-  <!-- Modal: Doer Performance Audit Breakdown (With Period Filter & Old Pending) -->
+  <!-- Modal: Doer Performance Audit Breakdown -->
   <div id="doerAuditModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
     <div class="bg-white dark:bg-darkcard rounded-2xl max-w-2xl w-full p-4 shadow-2xl border relative max-h-[92vh] flex flex-col">
       <div class="flex items-center justify-between pb-2 border-b">
         <div>
           <h3 class="text-xs font-bold text-slate-900 dark:text-white" id="auditModalTitle">Doer Audit Breakdown</h3>
-          <p class="text-[9px] text-slate-400">View tasks by period and inspect overdue or old pending backlog.</p>
+          <p class="text-[9px] text-slate-400">Detailed list of assigned tasks and statuses.</p>
         </div>
         <button onclick="toggleModal('doerAuditModal', false)" class="text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
       </div>
 
-      <div class="py-2 flex items-center justify-between bg-slate-50 dark:bg-slate-800 px-3 rounded-lg border my-2">
-        <span class="text-[10px] font-bold uppercase text-slate-500">Score Audit Period:</span>
-        <select id="auditPeriodSelect" onchange="refreshAuditModal()" class="border rounded px-2 py-1 text-xs font-bold bg-white dark:bg-slate-900 dark:text-white outline-none cursor-pointer">
-          <option value="ALL">All Time (Including Old Pending)</option>
-          <option value="WEEK">This Week (Last 7 Days)</option>
-          <option value="MONTH">This Month (Last 30 Days)</option>
-          <option value="QUARTER">This Quarter (Last 90 Days)</option>
-        </select>
-      </div>
-
-      <div id="auditModalContent" class="overflow-y-auto custom-scroll py-2 space-y-2 flex-1 pr-1 text-xs">
+      <div id="auditModalContent" class="overflow-y-auto custom-scroll py-3 space-y-2 flex-1 pr-1 text-xs">
         <!-- Rendered dynamically -->
       </div>
 
@@ -1320,24 +1327,43 @@
       select.innerHTML = html;
     }
 
-    // --- TEAM & DOER PERFORMANCE AUDIT VIEW ---
+    // --- TEAM & DOER PERFORMANCE AUDIT VIEW (MAIN PANEL WITH PERIOD FILTER) ---
     function renderTeamView() {
       const container = document.getElementById('teamCardsContainer');
       if (!container) return;
       let html = '';
+      const period = document.getElementById('mainAuditPeriodSelect')?.value || 'ALL';
+      const now = new Date();
+
+      let startDateLimit = new Date(0);
+      if (period === 'WEEK') {
+        startDateLimit = new Date();
+        startDateLimit.setDate(now.getDate() - 7);
+      } else if (period === 'MONTH') {
+        startDateLimit = new Date();
+        startDateLimit.setDate(now.getDate() - 30);
+      } else if (period === 'QUARTER') {
+        startDateLimit = new Date();
+        startDateLimit.setDate(now.getDate() - 90);
+      }
 
       activeDoers.forEach(d => {
         let assignedTotal = 0, completedCount = 0, pendingCount = 0, delayedCount = 0;
-        const now = new Date();
 
         allData.forEach(task => {
           task.steps.forEach(st => {
             if ((st.assignedEmail || '').toLowerCase().trim() === (d.email || '').toLowerCase().trim() || 
                 (st.assignedName || '').toLowerCase().trim() === (d.name || '').toLowerCase().trim()) {
-              assignedTotal++;
-              if (st.status === 'Completed') completedCount++;
-              else if ((new Date(st.plannedEndDate) < now && st.status !== 'Completed') || st.status === 'Delayed') delayedCount++;
-              else pendingCount++;
+              
+              const pEnd = new Date(st.plannedEndDate);
+              const isOldPending = (st.status !== 'Completed' && pEnd < now);
+
+              if (period === 'ALL' || pEnd >= startDateLimit || isOldPending) {
+                assignedTotal++;
+                if (st.status === 'Completed') completedCount++;
+                else if (isOldPending || st.status === 'Delayed') delayedCount++;
+                else pendingCount++;
+              }
             }
           });
         });
@@ -1383,16 +1409,9 @@
     function openDoerAuditModal(email, name) {
       currentAuditDoer = { email, name };
       document.getElementById('auditModalTitle').innerText = `Performance Audit: ${name} (${email})`;
-      document.getElementById('auditPeriodSelect').value = 'ALL';
-      refreshAuditModal();
-    }
-
-    function refreshAuditModal() {
-      const email = currentAuditDoer.email;
-      const name = currentAuditDoer.name;
-      const period = document.getElementById('auditPeriodSelect').value;
       const container = document.getElementById('auditModalContent');
       const now = new Date();
+      const period = document.getElementById('mainAuditPeriodSelect')?.value || 'ALL';
 
       let startDateLimit = new Date(0);
       if (period === 'WEEK') {
@@ -1412,7 +1431,6 @@
           if ((st.assignedEmail || '').toLowerCase().trim() === (email || '').toLowerCase().trim() || 
               (st.assignedName || '').toLowerCase().trim() === (name || '').toLowerCase().trim()) {
             
-            const pStart = new Date(st.plannedStartDate);
             const pEnd = new Date(st.plannedEndDate);
             const isOldPending = (st.status !== 'Completed' && pEnd < now);
 
