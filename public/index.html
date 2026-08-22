@@ -161,19 +161,18 @@
             <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 uppercase font-bold sticky top-0 z-10 border-b border-slate-200 dark:border-darkborder text-[10px] tracking-wider">
               <tr>
                 <th class="py-3 px-3 w-24 resizable-th">Task ID<div class="resizer"></div></th>
-                <th class="py-3 px-3 w-40 resizable-th">Main Task Name<div class="resizer"></div></th>
                 <th class="py-3 px-2 text-center w-14 resizable-th">WBS<div class="resizer"></div></th>
-                <th class="py-3 px-3 w-56 resizable-th">Step Title / Action<div class="resizer"></div></th>
+                <th class="py-3 px-3 w-64 resizable-th">Step Title / Action<div class="resizer"></div></th>
                 <th class="py-3 px-3 w-36 resizable-th">Assigned Doer<div class="resizer"></div></th>
                 <th class="py-3 px-3 w-36 resizable-th">Timeline<div class="resizer"></div></th>
-                <th class="py-3 px-3 w-32 text-center resizable-th">Stopwatch<div class="resizer"></div></th>
+                <th class="py-3 px-3 w-28 text-center resizable-th">Stopwatch<div class="resizer"></div></th>
                 <th class="py-3 px-3 w-40 resizable-th">Remarks / Notes<div class="resizer"></div></th>
                 <th class="py-3 px-3 w-28 resizable-th">Status<div class="resizer"></div></th>
                 <th class="py-3 px-3 text-center w-28">Action</th>
               </tr>
             </thead>
             <tbody id="tableRows" class="divide-y divide-slate-100 dark:divide-darkborder">
-              <tr><td colspan="10" class="text-center py-10 text-slate-400">Loading database records...</td></tr>
+              <tr><td colspan="9" class="text-center py-10 text-slate-400">Loading database records...</td></tr>
             </tbody>
           </table>
         </div>
@@ -451,7 +450,7 @@
     </div>
   </div>
 
-  <!-- Modal: Create Task Package -->
+  <!-- Modal: Create / Update Task Package (With Delete button inside) -->
   <div id="createTaskModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
     <div class="bg-white dark:bg-darkcard rounded-2xl max-w-3xl w-full p-4 shadow-2xl border relative max-h-[92vh] flex flex-col">
       <div class="flex items-center justify-between pb-2 border-b">
@@ -514,9 +513,14 @@
           <p class="text-xs text-slate-400 text-center py-4 italic">No steps generated yet. Click "Generate From List".</p>
         </div>
 
-        <div class="pt-2 border-t flex justify-end gap-1.5">
-          <button type="button" onclick="toggleModal('createTaskModal', false)" class="px-2.5 py-1 font-bold text-slate-600">Cancel</button>
-          <button type="button" onclick="submitFullTaskPackage()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-1.5 rounded transition">Save in DB</button>
+        <div class="pt-2 border-t flex justify-between items-center mt-2">
+          <button type="button" onclick="deleteTaskPackage(document.getElementById('editTaskIdField').value)" class="bg-rose-50 text-rose-600 hover:bg-rose-100 font-bold px-3 py-1.5 rounded text-[11px] flex items-center gap-1 transition">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Delete Task
+          </button>
+          <div class="flex gap-1.5">
+            <button type="button" onclick="toggleModal('createTaskModal', false)" class="px-2.5 py-1 font-bold text-slate-600">Cancel</button>
+            <button type="button" onclick="submitFullTaskPackage()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-1.5 rounded transition">Save in DB</button>
+          </div>
         </div>
       </div>
     </div>
@@ -792,13 +796,24 @@
       renderStructuredTableGrid(allData);
     }
 
+    function toggleActionDropdown(uniqueId) {
+      const dropdown = document.getElementById(`dropdown-${uniqueId}`);
+      document.querySelectorAll('[id^="dropdown-"]').forEach(d => {
+        if (d !== dropdown) d.classList.add('hidden');
+      });
+      dropdown.classList.toggle('hidden');
+    }
+
+    window.onclick = function(event) {
+      if (!event.target.closest('.relative')) {
+        document.querySelectorAll('[id^="dropdown-"]').forEach(d => d.classList.add('hidden'));
+      }
+    };
+
     function filterBySiteAndOpenSteps(siteName) {
       switchTab('viewPmsBoard');
-      
       const filterSelect = document.getElementById('filterByProject');
-      if (filterSelect) {
-        filterSelect.value = siteName;
-      }
+      if (filterSelect) filterSelect.value = siteName;
       
       allData.forEach(t => {
         if ((t.projectName || '').toLowerCase().trim() === siteName.toLowerCase().trim()) {
@@ -862,12 +877,7 @@
       if (!selector || !container) return;
       const selectedId = selector.value;
 
-      let tasksToRender = [];
-      if (selectedId === 'ALL') {
-        tasksToRender = allData;
-      } else {
-        tasksToRender = allData.filter(t => t.uniqueId === selectedId);
-      }
+      let tasksToRender = selectedId === 'ALL' ? allData : allData.filter(t => t.uniqueId === selectedId);
 
       if (!tasksToRender || tasksToRender.length === 0) {
         container.innerHTML = '<p class="text-xs text-slate-400 py-10 text-center">No tasks available for review.</p>';
@@ -978,6 +988,7 @@
         const pendingCount = total - doneCount - overdueCount;
         const percentage = total > 0 ? Math.round((doneCount / total) * 100) : 0;
 
+        // MAIN TASK ROW (Unique ID in col 1, Main Task Name + Score below it across other columns)
         html += `
           <tr class="bg-indigo-50/90 dark:bg-indigo-950/70 border-t-2 border-indigo-200 dark:border-indigo-900">
             <td class="py-2.5 px-3 font-mono text-indigo-700 dark:text-indigo-300 align-top font-bold">${item.uniqueId}</td>
@@ -993,16 +1004,16 @@
                 </div>
               </div>
             </td>
-            <td class="py-2.5 px-3 text-center align-top">
-              <div class="flex items-center justify-center gap-1">
-                <button onclick="openEditTaskModal('${item.uniqueId}')" class="px-2 py-0.5 bg-indigo-100 text-indigo-700 hover:bg-indigo-600 hover:text-white rounded text-[10px] font-bold transition" title="Edit Main Task">Update</button>
-                <button onclick="deleteTaskPackage('${item.uniqueId}')" class="px-2 py-0.5 bg-rose-100 text-rose-700 hover:bg-rose-600 hover:text-white rounded text-[10px] font-bold transition" title="Delete Task">Delete</button>
+            <td class="py-2.5 px-3 text-center align-top relative">
+              <div class="relative inline-block text-left">
+                <button onclick="toggleActionDropdown('${item.uniqueId}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-2.5 py-1 rounded-lg font-bold text-[10px] shadow-xs flex items-center gap-1">
+                  Actions ▾
+                </button>
+                <div id="dropdown-${item.uniqueId}" class="hidden absolute right-0 mt-1 w-32 bg-white dark:bg-darkcard border dark:border-darkborder rounded-lg shadow-xl z-50 py-1 text-left">
+                  <button onclick="openEditTaskModal('${item.uniqueId}')" class="block w-full text-left px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800 font-bold text-slate-700 dark:text-slate-200">Update</button>
+                  <button onclick="toggleTaskCollapse('${item.uniqueId}')" class="block w-full text-left px-3 py-1.5 hover:bg-slate-50 dark:hover:bg-slate-800 font-bold text-indigo-600 dark:text-indigo-400 border-t dark:border-darkborder">${isCollapsed ? 'Show Steps' : 'Hide Steps'}</button>
+                </div>
               </div>
-            </td>
-            <td class="py-2.5 px-3 text-center align-top">
-              <button onclick="toggleTaskCollapse('${item.uniqueId}')" class="px-2 py-0.5 bg-indigo-600 text-white rounded text-[10px] font-bold shadow-xs">
-                ${isCollapsed ? 'Show Steps ▾' : 'Hide Steps ▴'}
-              </button>
             </td>
           </tr>
         `;
@@ -1034,9 +1045,8 @@
             html += `
               <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition align-top">
                 <td class="py-3 px-3 text-slate-400 font-mono text-[10px]">${item.uniqueId}</td>
-                <td class="py-3 px-3 text-slate-500 dark:text-slate-400 text-[11px] whitespace-normal break-words">${item.mainItemName}</td>
                 <td class="py-3 px-2 text-center font-mono font-bold text-slate-800 dark:text-slate-200 bg-slate-50/50">${s.wbsNo}</td>
-                <td class="py-3 px-3 text-slate-800 dark:text-slate-200 font-medium whitespace-normal break-words">
+                <td class="py-3 px-3 text-slate-800 dark:text-slate-200 font-medium whitespace-normal break-words" colspan="2">
                   <div class="flex items-center flex-wrap gap-1">
                     <span>${s.stepTitle}</span>
                     ${formActionLink}
@@ -1606,6 +1616,7 @@
       const res = await fetch(`${API_BASE}/api/pms/delete/${uniqueId}`, { method: 'DELETE' });
       const json = await res.json();
       if(json.success) {
+        toggleModal('createTaskModal', false);
         loadDashboardData();
       } else {
         alert(json.error || 'Failed to delete task.');
