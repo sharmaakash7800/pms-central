@@ -244,14 +244,14 @@
       </div>
     </div>
 
-    <!-- VIEW 5: TEAM DIRECTORY (WITH MAIN PANEL SCORE PERIOD FILTER) -->
+    <!-- VIEW 5: TEAM DIRECTORY -->
     <div id="viewTeam" class="view-section hidden space-y-2.5">
       <div class="bg-white dark:bg-darkcard p-3 rounded-xl border flex flex-wrap items-center justify-between gap-2">
         <div class="flex items-center gap-2">
           <span class="text-base">👥</span>
           <div>
             <h2 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Team & Doer Performance Directory</h2>
-            <p class="text-[9px] text-slate-400">Track weekly, monthly, and quarterly scores including old pending backlog.</p>
+            <p class="text-[9px] text-slate-400">Track strict weekly, monthly, and quarterly scores with carried forward pending backlog.</p>
           </div>
         </div>
         <div class="flex items-center gap-2">
@@ -281,7 +281,7 @@
       <div class="flex items-center justify-between pb-2 border-b">
         <div>
           <h3 class="text-xs font-bold text-slate-900 dark:text-white" id="auditModalTitle">Doer Audit Breakdown</h3>
-          <p class="text-[9px] text-slate-400">Detailed list of assigned tasks and statuses.</p>
+          <p class="text-[9px] text-slate-400">Detailed list of assigned tasks and statuses for the selected period.</p>
         </div>
         <button onclick="toggleModal('doerAuditModal', false)" class="text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
       </div>
@@ -978,30 +978,29 @@
         const pendingCount = total - doneCount - overdueCount;
         const percentage = total > 0 ? Math.round((doneCount / total) * 100) : 0;
 
+        // MAIN TASK ROW: Full line name on top, score & progress directly below it
         html += `
-          <tr class="bg-indigo-50/90 dark:bg-indigo-950/70 font-bold border-t-2 border-indigo-200 dark:border-indigo-900">
-            <td class="py-2.5 px-3 font-mono text-indigo-700 dark:text-indigo-300">${item.uniqueId}</td>
-            <td class="py-2.5 px-3 text-slate-900 dark:text-white" colspan="2">
-              📦 ${item.mainItemName} <span class="text-[10px] text-slate-400 font-normal">(${item.projectName || 'General'})</span>
-            </td>
-            <td class="py-2.5 px-3" colspan="5">
-              <div class="flex items-center gap-3 text-[10px]">
+          <tr class="bg-indigo-50/90 dark:bg-indigo-950/70 border-t-2 border-indigo-200 dark:border-indigo-900">
+            <td class="py-2.5 px-3 font-mono text-indigo-700 dark:text-indigo-300 align-top font-bold">${item.uniqueId}</td>
+            <td class="py-2.5 px-3 text-slate-900 dark:text-white align-top" colspan="7">
+              <div class="font-bold text-xs mb-1.5 whitespace-normal break-words">📦 ${item.mainItemName} <span class="text-[10px] text-slate-400 font-normal">(${item.projectName || 'General'})</span></div>
+              <div class="flex items-center gap-3 text-[10px] flex-wrap">
                 <span class="px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold">🟢 ${doneCount} Done</span>
                 <span class="px-1.5 py-0.5 bg-rose-100 text-rose-800 rounded font-bold">🚨 ${overdueCount} Overdue</span>
                 <span class="px-1.5 py-0.5 bg-slate-200 text-slate-700 rounded font-bold">⚪ ${pendingCount} Pending</span>
                 <span class="text-indigo-600 dark:text-indigo-300 font-extrabold">${percentage}%</span>
-                <div class="w-24 bg-slate-200 h-1.5 rounded-full overflow-hidden flex-1">
+                <div class="w-32 bg-slate-200 h-1.5 rounded-full overflow-hidden inline-block">
                   <div class="bg-emerald-500 h-full rounded-full" style="width: ${percentage}%"></div>
                 </div>
               </div>
             </td>
-            <td class="py-2.5 px-3 text-center">
+            <td class="py-2.5 px-3 text-center align-top">
               <div class="flex items-center justify-center gap-1">
                 <button onclick="openEditTaskModal('${item.uniqueId}')" class="px-2 py-0.5 bg-indigo-100 text-indigo-700 hover:bg-indigo-600 hover:text-white rounded text-[10px] font-bold transition" title="Edit Main Task">Update</button>
                 <button onclick="deleteTaskPackage('${item.uniqueId}')" class="px-2 py-0.5 bg-rose-100 text-rose-700 hover:bg-rose-600 hover:text-white rounded text-[10px] font-bold transition" title="Delete Task">Delete</button>
               </div>
             </td>
-            <td class="py-2.5 px-3 text-center">
+            <td class="py-2.5 px-3 text-center align-top">
               <button onclick="toggleTaskCollapse('${item.uniqueId}')" class="px-2 py-0.5 bg-indigo-600 text-white rounded text-[10px] font-bold shadow-xs">
                 ${isCollapsed ? 'Show Steps ▾' : 'Hide Steps ▴'}
               </button>
@@ -1327,7 +1326,6 @@
       select.innerHTML = html;
     }
 
-    // --- TEAM & DOER PERFORMANCE AUDIT VIEW (MAIN PANEL WITH PERIOD FILTER) ---
     function renderTeamView() {
       const container = document.getElementById('teamCardsContainer');
       if (!container) return;
@@ -1348,20 +1346,26 @@
       }
 
       activeDoers.forEach(d => {
-        let assignedTotal = 0, completedCount = 0, pendingCount = 0, delayedCount = 0;
+        let assignedTotal = 0, completedCount = 0, pendingCount = 0, backlogCount = 0;
 
         allData.forEach(task => {
           task.steps.forEach(st => {
             if ((st.assignedEmail || '').toLowerCase().trim() === (d.email || '').toLowerCase().trim() || 
                 (st.assignedName || '').toLowerCase().trim() === (d.name || '').toLowerCase().trim()) {
               
+              const pStart = new Date(st.plannedStartDate);
               const pEnd = new Date(st.plannedEndDate);
-              const isOldPending = (st.status !== 'Completed' && pEnd < now);
+              const isBacklog = (st.status !== 'Completed' && pEnd < now);
 
-              if (period === 'ALL' || pEnd >= startDateLimit || isOldPending) {
+              let isInPeriod = true;
+              if (period !== 'ALL') {
+                isInPeriod = (pStart >= startDateLimit) || (pEnd >= startDateLimit) || isBacklog;
+              }
+
+              if (isInPeriod) {
                 assignedTotal++;
                 if (st.status === 'Completed') completedCount++;
-                else if (isOldPending || st.status === 'Delayed') delayedCount++;
+                else if (isBacklog) backlogCount++;
                 else pendingCount++;
               }
             }
@@ -1387,7 +1391,7 @@
 
             <div class="bg-slate-50 dark:bg-slate-800 p-2 rounded-lg border space-y-1">
               <div class="flex justify-between text-[10px] font-bold">
-                <span class="text-slate-600 dark:text-slate-300">Performance: ${completedCount}/${assignedTotal} Done (${doerProgress}%)</span>
+                <span class="text-slate-600 dark:text-slate-300">Score (${period}): ${completedCount}/${assignedTotal} Done (${doerProgress}%)</span>
               </div>
               <div class="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
                 <div class="bg-emerald-500 h-full rounded-full" style="width: ${doerProgress}%"></div>
@@ -1395,7 +1399,7 @@
               <div class="flex gap-2 text-[9px] font-bold pt-0.5">
                 <span class="text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded">🟢 Done: ${completedCount}</span>
                 <span class="text-slate-700 bg-slate-200 px-1.5 py-0.2 rounded">⚪ Pending: ${pendingCount}</span>
-                <span class="text-rose-700 bg-rose-50 px-1.5 py-0.2 rounded">🚨 Delayed: ${delayedCount}</span>
+                <span class="text-purple-700 bg-purple-50 px-1.5 py-0.2 rounded">⏳ Backlog: ${backlogCount}</span>
               </div>
             </div>
           </div>
@@ -1431,18 +1435,24 @@
           if ((st.assignedEmail || '').toLowerCase().trim() === (email || '').toLowerCase().trim() || 
               (st.assignedName || '').toLowerCase().trim() === (name || '').toLowerCase().trim()) {
             
+            const pStart = new Date(st.plannedStartDate);
             const pEnd = new Date(st.plannedEndDate);
-            const isOldPending = (st.status !== 'Completed' && pEnd < now);
+            const isBacklog = (st.status !== 'Completed' && pEnd < now);
 
-            if (period === 'ALL' || pEnd >= startDateLimit || isOldPending) {
+            let isInPeriod = true;
+            if (period !== 'ALL') {
+              isInPeriod = (pStart >= startDateLimit) || (pEnd >= startDateLimit) || isBacklog;
+            }
+
+            if (isInPeriod) {
               assignedSteps.push({
                 uniqueId: task.uniqueId,
                 projectName: task.projectName || 'General',
                 mainItemName: task.mainItemName,
                 step: st,
-                isDelayed: isOldPending || st.status === 'Delayed',
                 isCompleted: st.status === 'Completed',
-                isOldPending: isOldPending
+                isBacklog: isBacklog,
+                isDelayed: st.status === 'Delayed'
               });
             }
           }
@@ -1459,9 +1469,9 @@
       assignedSteps.forEach((item) => {
         let statusBadge = '';
         if (item.isCompleted) statusBadge = '<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold">✓ Completed</span>';
-        else if (item.isOldPending) statusBadge = '<span class="px-2 py-0.5 bg-purple-100 text-purple-800 rounded font-bold">⏳ Old Pending Backlog</span>';
-        else if (item.isDelayed) statusBadge = '<span class="px-2 py-0.5 bg-rose-100 text-rose-800 rounded font-bold animate-pulse">🚨 Delayed / Overdue</span>';
-        else statusBadge = '<span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded font-bold">⏳ Pending</span>';
+        else if (item.isBacklog) statusBadge = '<span class="px-2 py-0.5 bg-purple-100 text-purple-800 rounded font-bold">⏳ Old Pending Backlog (Date Passed)</span>';
+        else if (item.isDelayed) statusBadge = '<span class="px-2 py-0.5 bg-rose-100 text-rose-800 rounded font-bold animate-pulse">🚨 Delayed</span>';
+        else statusBadge = '<span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded font-bold">⏳ Current Pending</span>';
 
         const startDateStr = new Date(item.step.plannedStartDate).toLocaleDateString('en-GB');
         const endDateStr = new Date(item.step.plannedEndDate).toLocaleDateString('en-GB');
@@ -1474,7 +1484,7 @@
             </div>
             <p class="font-semibold text-slate-900 dark:text-white">Task: ${item.mainItemName}</p>
             <p class="text-slate-700 dark:text-slate-200"><b>Step #${item.step.wbsNo}:</b> ${item.step.stepTitle}</p>
-            <p class="text-[10px] text-slate-400 font-mono">📅 Score Period: <b>${startDateStr}</b> ➔ <b>${endDateStr}</b> (${item.step.durationDays || 2} Days duration)</p>
+            <p class="text-[10px] text-slate-400 font-mono">📅 Timeline Score Period: <b>${startDateStr}</b> ➔ <b>${endDateStr}</b></p>
             ${item.step.remarks ? `<p class="text-[10px] text-slate-500 italic">Remarks: ${item.step.remarks}</p>` : ''}
           </div>
         `;
@@ -1760,7 +1770,7 @@
       }
     }
 
-    function exportToCSV() { loadDashboardData(); }
+    exportToCSV() { loadDashboardData(); }
 
     initTheme();
     loadDoersList();
