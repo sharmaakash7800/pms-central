@@ -398,7 +398,7 @@
     </div>
   </div>
 
-  <!-- Modal: Add / Edit Site (With Complete Team Fields) -->
+  <!-- Modal: Add / Edit Site -->
   <div id="siteModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
     <div class="bg-white dark:bg-darkcard rounded-2xl max-w-lg w-full p-4 shadow-2xl border relative max-h-[92vh] flex flex-col">
       <div class="flex items-center justify-between pb-2 border-b">
@@ -410,7 +410,7 @@
         <input type="hidden" id="editSiteId">
         <div>
           <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Site Name / Location *</label>
-          <input type="text" id="formSiteName" required class="w-full border rounded px-2.5 py-1 font-bold dark:bg-slate-800 dark:text-white" placeholder="e.g. EV Charging_CLZS">
+          <input type="text" id="formSiteName" required class="w-full border rounded px-2.5 py-1 font-bold dark:bg-slate-800 dark:text-white" placeholder="e.g. Bhilwara Plant">
         </div>
         <div>
           <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Company Name</label>
@@ -774,30 +774,7 @@
     document.addEventListener('DOMContentLoaded', function () {
       applyTabOrderAndVisibility();
       applyBarPosition();
-      const table = document.getElementById('pmsGridTable');
-      if (!table) return;
-      const cols = table.querySelectorAll('th');
-      cols.forEach((col) => {
-        const resizer = col.querySelector('.resizer');
-        if (!resizer) return;
-        let x = 0, w = 0;
-        resizer.addEventListener('mousedown', function (e) {
-          x = e.clientX;
-          w = col.offsetWidth;
-          resizer.classList.add('resizing');
-          document.addEventListener('mousemove', mouseMove);
-          document.addEventListener('mouseup', mouseUp);
-        });
-        function mouseMove(e) {
-          const dx = e.clientX - x;
-          col.style.width = `${w + dx}px`;
-        }
-        function mouseUp() {
-          resizer.classList.remove('resizing');
-          document.removeEventListener('mousemove', mouseMove);
-          document.removeEventListener('mouseup', mouseUp);
-        }
-      });
+      loadDashboardData();
     });
 
     let collapsedTasks = JSON.parse(localStorage.getItem('pms_collapsed_tasks') || '{}');
@@ -1343,7 +1320,7 @@
       select.innerHTML = html;
     }
 
-    // --- TEAM & DOER PERFORMANCE AUDIT VIEW (WITH PERIOD FILTER) ---
+    // --- TEAM & DOER PERFORMANCE AUDIT VIEW ---
     function renderTeamView() {
       const container = document.getElementById('teamCardsContainer');
       if (!container) return;
@@ -1417,7 +1394,7 @@
       const container = document.getElementById('auditModalContent');
       const now = new Date();
 
-      let startDateLimit = new Date(0); // Beginning of time for ALL
+      let startDateLimit = new Date(0);
       if (period === 'WEEK') {
         startDateLimit = new Date();
         startDateLimit.setDate(now.getDate() - 7);
@@ -1439,7 +1416,6 @@
             const pEnd = new Date(st.plannedEndDate);
             const isOldPending = (st.status !== 'Completed' && pEnd < now);
 
-            // Filter logic: Include if within period, or if it's an old pending backlog item carried forward
             if (period === 'ALL' || pEnd >= startDateLimit || isOldPending) {
               assignedSteps.push({
                 uniqueId: task.uniqueId,
@@ -1766,7 +1742,7 @@
       }
     }
 
-    exportToCSV() { loadDashboardData(); }
+    function exportToCSV() { loadDashboardData(); }
 
     initTheme();
     loadDoersList();
