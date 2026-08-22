@@ -226,7 +226,7 @@
           <span class="text-base">📍</span>
           <div>
             <h2 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Sites & Projects Directory</h2>
-            <p class="text-[9px] text-slate-400">Click on any site name to view tasks. Live task completion metrics shown below.</p>
+            <p class="text-[9px] text-slate-400">Click on any site name to view tasks. Use eye icons to hide/unhide completed sites.</p>
           </div>
         </div>
         <div class="flex items-center gap-2">
@@ -244,7 +244,7 @@
       </div>
     </div>
 
-    <!-- VIEW 5: TEAM DIRECTORY (WITH DOER PERFORMANCE METRICS) -->
+    <!-- VIEW 5: TEAM DIRECTORY (WITH DOER PERFORMANCE AUDIT) -->
     <div id="viewTeam" class="view-section hidden space-y-2.5">
       <div class="bg-white dark:bg-darkcard p-2.5 rounded-xl border flex items-center justify-between">
         <span class="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">Team & Doer Performance Directory</span>
@@ -257,6 +257,27 @@
     </div>
 
   </main>
+
+  <!-- Modal: Doer Performance Audit Breakdown -->
+  <div id="doerAuditModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
+    <div class="bg-white dark:bg-darkcard rounded-2xl max-w-2xl w-full p-4 shadow-2xl border relative max-h-[90vh] flex flex-col">
+      <div class="flex items-center justify-between pb-2 border-b">
+        <div>
+          <h3 class="text-xs font-bold text-slate-900 dark:text-white" id="auditModalTitle">Doer Audit Breakdown</h3>
+          <p class="text-[9px] text-slate-400">Complete breakdown of assigned tasks, timelines, and status.</p>
+        </div>
+        <button onclick="toggleModal('doerAuditModal', false)" class="text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+
+      <div id="auditModalContent" class="overflow-y-auto custom-scroll py-3 space-y-2 flex-1 pr-1 text-xs">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <div class="pt-2 border-t flex justify-end">
+        <button onclick="toggleModal('doerAuditModal', false)" class="bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-white font-bold px-4 py-1.5 rounded transition">Close</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Bottom Capsule Bar -->
   <div id="bottomBarWrapper" class="fixed bottom-3 z-40 transition-all duration-300 left-1/2 -translate-x-1/2">
@@ -1121,7 +1142,6 @@
       }
     }
 
-    // --- SITES WITH LIVE METRICS ---
     async function loadSitesList() {
       const container = document.getElementById('sitesCardsContainer');
       container.innerHTML = '<p class="text-xs text-slate-400 py-6 text-center">Loading sites...</p>';
@@ -1137,7 +1157,6 @@
           allSitesList.forEach(s => {
             if (!showHidden && s.isHidden) return;
 
-            // Calculate metrics for this site
             let siteTasks = allData.filter(t => (t.projectName || '').toLowerCase().trim() === (s.siteName || '').toLowerCase().trim());
             let totalSteps = 0, completedSteps = 0, pendingSteps = 0, delayedSteps = 0;
             const now = new Date();
@@ -1174,7 +1193,6 @@
                   </div>
                 </div>
 
-                <!-- Live Metrics Summary -->
                 <div class="bg-slate-50 dark:bg-slate-800 p-2 rounded-lg border space-y-1">
                   <div class="flex justify-between text-[10px] font-bold">
                     <span class="text-slate-600 dark:text-slate-300">Progress: ${completedSteps}/${totalSteps} Steps (${siteProgress}%)</span>
@@ -1275,7 +1293,7 @@
       select.innerHTML = html;
     }
 
-    // --- TEAM & DOER PERFORMANCE METRICS PANEL ---
+    // --- TEAM & DOER PERFORMANCE AUDIT VIEW ---
     function renderTeamView() {
       const container = document.getElementById('teamCardsContainer');
       if (!container) return;
@@ -1306,7 +1324,12 @@
                 <h4 class="font-bold text-xs text-slate-900 dark:text-white">👤 ${d.name}</h4>
                 <p class="text-[10px] text-slate-400 font-mono">${d.email}</p>
               </div>
-              <span class="px-2 py-0.5 text-[9px] text-indigo-600 bg-indigo-50 font-bold rounded">${d.role || 'Executive'}</span>
+              <div class="flex items-center gap-1.5">
+                <span class="px-2 py-0.5 text-[9px] text-indigo-600 bg-indigo-50 font-bold rounded">${d.role || 'Executive'}</span>
+                <button onclick="openDoerAuditModal('${d.email}', '${d.name.replace(/'/g, "\\'")}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 rounded text-[10px] font-bold shadow-xs transition">
+                  🔍 View Details
+                </button>
+              </div>
             </div>
 
             <div class="bg-slate-50 dark:bg-slate-800 p-2 rounded-lg border space-y-1">
@@ -1328,6 +1351,62 @@
 
       container.innerHTML = html || '<p class="text-xs text-slate-400 py-4">No members found.</p>';
       lucide.createIcons();
+    }
+
+    function openDoerAuditModal(email, name) {
+      document.getElementById('auditModalTitle').innerText = `Performance Audit: ${name} (${email})`;
+      const container = document.getElementById('auditModalContent');
+      const now = new Date();
+
+      let assignedSteps = [];
+      allData.forEach(task => {
+        task.steps.forEach(st => {
+          if ((st.assignedEmail || '').toLowerCase().trim() === (email || '').toLowerCase().trim() || 
+              (st.assignedName || '').toLowerCase().trim() === (name || '').toLowerCase().trim()) {
+            assignedSteps.push({
+              uniqueId: task.uniqueId,
+              projectName: task.projectName || 'General',
+              mainItemName: task.mainItemName,
+              step: st,
+              isDelayed: (new Date(st.plannedEndDate) < now && st.status !== 'Completed') || st.status === 'Delayed',
+              isCompleted: st.status === 'Completed'
+            });
+          }
+        });
+      });
+
+      if (assignedSteps.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-400 py-8 text-center">No tasks assigned to this member currently.</p>';
+        toggleModal('doerAuditModal', true);
+        return;
+      }
+
+      let html = '';
+      assignedSteps.forEach((item, idx) => {
+        let statusBadge = '';
+        if (item.isCompleted) statusBadge = '<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold">✓ Completed</span>';
+        else if (item.isDelayed) statusBadge = '<span class="px-2 py-0.5 bg-rose-100 text-rose-800 rounded font-bold animate-pulse">🚨 Delayed / Overdue</span>';
+        else statusBadge = '<span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded font-bold">⏳ Pending</span>';
+
+        const startDateStr = new Date(item.step.plannedStartDate).toLocaleDateString('en-GB');
+        const endDateStr = new Date(item.step.plannedEndDate).toLocaleDateString('en-GB');
+
+        html += `
+          <div class="bg-slate-50 dark:bg-slate-800 p-2.5 rounded-lg border space-y-1">
+            <div class="flex items-center justify-between font-bold">
+              <span class="text-indigo-600 dark:text-indigo-400 font-mono text-[10px]">${item.uniqueId} | Site: ${item.projectName}</span>
+              ${statusBadge}
+            </div>
+            <p class="font-semibold text-slate-900 dark:text-white">Task: ${item.mainItemName}</p>
+            <p class="text-slate-700 dark:text-slate-200"><b>Step #${item.step.wbsNo}:</b> ${item.step.stepTitle}</p>
+            <p class="text-[10px] text-slate-400 font-mono">📅 Timeline Score Period: <b>${startDateStr}</b> ➔ <b>${endDateStr}</b> (${item.step.durationDays || 2} Days duration)</p>
+            ${item.step.remarks ? `<p class="text-[10px] text-slate-500 italic">Remarks: ${item.step.remarks}</p>` : ''}
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+      toggleModal('doerAuditModal', true);
     }
 
     function updateTemplateDropdown() {
