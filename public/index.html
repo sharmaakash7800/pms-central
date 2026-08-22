@@ -261,15 +261,15 @@
   <!-- Bottom Capsule Bar -->
   <div id="bottomBarWrapper" class="fixed bottom-3 z-40 transition-all duration-300 left-1/2 -translate-x-1/2">
     <div id="bottomCapsuleBar" class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded-full shadow-xl px-4 py-1.5 flex items-center gap-4 sm:gap-6">
-      <button onclick="switchTab('viewPmsBoard')" id="tabBtn-viewPmsBoard" class="nav-capsule-btn active flex flex-col items-center text-slate-500 hover:text-indigo-600 transition"><span class="text-xs">📦</span><span class="text-[10px]">Tasks</span></button>
-      <button onclick="switchTab('viewReview')" id="tabBtn-viewReview" class="nav-capsule-btn flex flex-col items-center text-slate-500 hover:text-indigo-600 transition"><span class="text-xs">🔍</span><span class="text-[10px]">Review</span></button>
-      <button onclick="switchTab('viewVendors')" id="tabBtn-viewVendors" class="nav-capsule-btn flex flex-col items-center text-slate-500 hover:text-indigo-600 transition"><span class="text-xs">🏢</span><span class="text-[10px]">Vendors</span></button>
-      <button onclick="switchTab('viewSites')" id="tabBtn-viewSites" class="nav-capsule-btn flex flex-col items-center text-slate-500 hover:text-indigo-600 transition"><span class="text-xs">📍</span><span class="text-[10px]">Sites</span></button>
-      <button onclick="switchTab('viewTeam')" id="tabBtn-viewTeam" class="nav-capsule-btn flex flex-col items-center text-slate-500 hover:text-indigo-600 transition"><span class="text-xs">👥</span><span class="text-[10px]">Team</span></button>
+      <button onclick="switchTab('viewPmsBoard')" id="tabBtn-viewPmsBoard" data-id="viewPmsBoard" class="nav-capsule-btn active flex flex-col items-center text-slate-500 hover:text-indigo-600 transition"><span class="text-xs">📦</span><span class="text-[10px]">Tasks</span></button>
+      <button onclick="switchTab('viewReview')" id="tabBtn-viewReview" data-id="viewReview" class="nav-capsule-btn flex flex-col items-center text-slate-500 hover:text-indigo-600 transition"><span class="text-xs">🔍</span><span class="text-[10px]">Review</span></button>
+      <button onclick="switchTab('viewVendors')" id="tabBtn-viewVendors" data-id="viewVendors" class="nav-capsule-btn flex flex-col items-center text-slate-500 hover:text-indigo-600 transition"><span class="text-xs">🏢</span><span class="text-[10px]">Vendors</span></button>
+      <button onclick="switchTab('viewSites')" id="tabBtn-viewSites" data-id="viewSites" class="nav-capsule-btn flex flex-col items-center text-slate-500 hover:text-indigo-600 transition"><span class="text-xs">📍</span><span class="text-[10px]">Sites</span></button>
+      <button onclick="switchTab('viewTeam')" id="tabBtn-viewTeam" data-id="viewTeam" class="nav-capsule-btn flex flex-col items-center text-slate-500 hover:text-indigo-600 transition"><span class="text-xs">👥</span><span class="text-[10px]">Team</span></button>
     </div>
   </div>
 
-  <!-- Modal: Tab Settings & Position -->
+  <!-- Modal: Tab Settings, Position & Shuffle -->
   <div id="tabSettingsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
     <div class="bg-white dark:bg-darkcard rounded-2xl max-w-sm w-full p-4 shadow-2xl border relative space-y-3">
       <button onclick="toggleModal('tabSettingsModal', false)" class="absolute right-3 top-3 text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
@@ -285,8 +285,8 @@
       </div>
 
       <div>
-        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tab Visibility</label>
-        <div id="tabCheckboxesContainer" class="space-y-1.5 text-xs"></div>
+        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tab Shuffle & Visibility</label>
+        <div id="tabShuffleContainer" class="space-y-1.5 text-xs max-h-56 overflow-y-auto custom-scroll pr-1"></div>
       </div>
 
       <button onclick="toggleModal('tabSettingsModal', false)" class="w-full bg-indigo-600 text-white font-bold py-1.5 rounded transition mt-2">Save & Close</button>
@@ -490,6 +490,15 @@
 
     let hiddenTabs = JSON.parse(localStorage.getItem('pms_hidden_tabs') || '{}');
     let barPosition = localStorage.getItem('pms_bar_position') || 'center';
+    let tabOrder = JSON.parse(localStorage.getItem('pms_tab_order') || '["viewPmsBoard", "viewReview", "viewVendors", "viewSites", "viewTeam"]');
+
+    const tabMeta = {
+      viewPmsBoard: { label: 'Tasks Tab', icon: '📦' },
+      viewReview: { label: 'Review Tab', icon: '🔍' },
+      viewVendors: { label: 'Vendors Tab', icon: '🏢' },
+      viewSites: { label: 'Sites Tab', icon: '📍' },
+      viewTeam: { label: 'Team Tab', icon: '👥' }
+    };
 
     function switchTab(viewId) {
       document.querySelectorAll('.view-section').forEach(v => v.classList.add('hidden'));
@@ -498,51 +507,82 @@
       const btn = document.getElementById(`tabBtn-${viewId}`);
       if (btn) btn.classList.add('active');
 
-      if (viewId === 'viewReview') populateReviewPmsSelector();
+      if (viewId === 'viewReview') renderMasterReviewConsole();
       if (viewId === 'viewVendors') renderVendorsView();
       if (viewId === 'viewSites') loadSitesList();
       if (viewId === 'viewTeam') renderTeamView();
     }
 
     function openTabSettingsModal() {
-      const container = document.getElementById('tabCheckboxesContainer');
-      const tabs = [
-        { id: 'viewPmsBoard', label: 'Tasks Tab' },
-        { id: 'viewReview', label: 'Review Tab' },
-        { id: 'viewVendors', label: 'Vendors Tab' },
-        { id: 'viewSites', label: 'Sites Tab' },
-        { id: 'viewTeam', label: 'Team Tab' }
-      ];
+      renderTabShuffleList();
+      document.getElementById('barPositionSelect').value = barPosition;
+      toggleModal('tabSettingsModal', true);
+    }
 
+    function renderTabShuffleList() {
+      const container = document.getElementById('tabShuffleContainer');
       let html = '';
-      tabs.forEach(t => {
-        const isChecked = !hiddenTabs[t.id];
+      tabOrder.forEach((tabId, idx) => {
+        const meta = tabMeta[tabId];
+        const isVisible = !hiddenTabs[tabId];
         html += `
-          <label class="flex items-center justify-between p-2 rounded border cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-800">
-            <span class="font-bold">${t.label}</span>
-            <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleTabVisibility('${t.id}', this.checked)" class="rounded">
-          </label>
+          <div class="flex items-center justify-between p-2 rounded border bg-slate-50 dark:bg-slate-800">
+            <div class="flex items-center gap-2">
+              <span>${meta.icon}</span>
+              <span class="font-bold">${meta.label}</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button type="button" onclick="moveTabOrder(${idx}, -1)" class="p-1 rounded bg-white dark:bg-darkcard border hover:bg-indigo-50" title="Move Up">⬆️</button>
+              <button type="button" onclick="moveTabOrder(${idx}, 1)" class="p-1 rounded bg-white dark:bg-darkcard border hover:bg-indigo-50" title="Move Down">⬇️</button>
+              <input type="checkbox" ${isVisible ? 'checked' : ''} onchange="toggleTabVisibility('${tabId}', this.checked)" class="rounded ml-1" title="Show/Hide">
+            </div>
+          </div>
         `;
       });
       container.innerHTML = html;
-      document.getElementById('barPositionSelect').value = barPosition;
-      toggleModal('tabSettingsModal', true);
+    }
+
+    function moveTabOrder(index, direction) {
+      const newIndex = index + direction;
+      if (newIndex < 0 || newIndex >= tabOrder.length) return;
+      const temp = tabOrder[index];
+      tabOrder[index] = tabOrder[newIndex];
+      tabOrder[newIndex] = temp;
+      localStorage.setItem('pms_tab_order', JSON.stringify(tabOrder));
+      renderTabShuffleList();
+      applyTabOrderAndVisibility();
     }
 
     function toggleTabVisibility(tabId, isVisible) {
       hiddenTabs[tabId] = !isVisible;
       localStorage.setItem('pms_hidden_tabs', JSON.stringify(hiddenTabs));
-      applyTabVisibility();
+      applyTabOrderAndVisibility();
     }
 
-    function applyTabVisibility() {
-      const tabs = ['viewPmsBoard', 'viewReview', 'viewVendors', 'viewSites', 'viewTeam'];
-      tabs.forEach(tabId => {
-        const btn = document.getElementById(`tabBtn-${tabId}`);
-        if (btn) {
-          btn.style.display = hiddenTabs[tabId] ? 'none' : 'flex';
-        }
+    function applyTabOrderAndVisibility() {
+      const capsuleBar = document.getElementById('bottomCapsuleBar');
+      if (!capsuleBar) return;
+
+      let html = '';
+      tabOrder.forEach(tabId => {
+        const meta = tabMeta[tabId];
+        const displayStyle = hiddenTabs[tabId] ? 'display: none;' : 'display: flex;';
+        const activeClass = document.getElementById(`tabBtn-${tabId}`)?.classList.contains('active') ? 'active' : '';
+        
+        let iconChar = '📦';
+        if(tabId === 'viewReview') iconChar = '🔍';
+        if(tabId === 'viewVendors') iconChar = '🏢';
+        if(tabId === 'viewSites') iconChar = '📍';
+        if(tabId === 'viewTeam') iconChar = '👥';
+
+        html += `
+          <button onclick="switchTab('${tabId}')" id="tabBtn-${tabId}" data-id="${tabId}" style="${displayStyle}" class="nav-capsule-btn ${activeClass} flex flex-col items-center text-slate-500 hover:text-indigo-600 transition">
+            <span class="text-xs">${iconChar}</span>
+            <span class="text-[10px]">${meta.label.replace(' Tab', '')}</span>
+          </button>
+        `;
       });
+      capsuleBar.innerHTML = html;
     }
 
     function changeBarPosition(pos) {
@@ -676,7 +716,7 @@
     function onDoerUserChange() { applyFilters(); }
 
     document.addEventListener('DOMContentLoaded', function () {
-      applyTabVisibility();
+      applyTabOrderAndVisibility();
       applyBarPosition();
       const table = document.getElementById('pmsGridTable');
       if (!table) return;
@@ -764,7 +804,6 @@
       }
     }
 
-    // --- PMS WISE REVIEW CONSOLE ---
     function populateReviewPmsSelector() {
       const selector = document.getElementById('reviewPmsSelector');
       if (!selector) return;
