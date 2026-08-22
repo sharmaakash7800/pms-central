@@ -909,7 +909,6 @@
             if (!showHidden && s.isHidden) return;
 
             const cardOpacity = s.isHidden ? 'opacity-50 bg-slate-50 dark:bg-slate-900 border-dashed' : 'bg-white dark:bg-darkcard';
-            // Using eye-off when hidden, eye when visible (matching user's request)
             const hideIcon = s.isHidden ? 'eye-off' : 'eye';
             const hideTitle = s.isHidden ? 'Unhide Site' : 'Hide Site';
             const hideBtnClass = s.isHidden ? 'text-emerald-600 hover:bg-emerald-50' : 'text-slate-400 hover:text-amber-600 hover:bg-amber-50';
@@ -919,7 +918,7 @@
                 <div class="flex items-center justify-between font-bold">
                   <span onclick="filterBySiteAndOpenSteps('${s.siteName.replace(/'/g, "\\'")}')" class="text-indigo-600 dark:text-indigo-400 text-xs font-extrabold cursor-pointer hover:underline" title="Click to view tasks">📍 ${s.siteName} ${s.isHidden ? '(Hidden)' : ''}</span>
                   <div class="flex items-center gap-1">
-                    <button onclick="toggleSiteHideStatus('${s._id}', ${s.isHidden})" class="p-1.5 rounded border ${hideBtnClass}" title="${hideTitle}">
+                    <button onclick="toggleSiteHideStatus('${s._id}', ${Boolean(s.isHidden)})" class="p-1.5 rounded border ${hideBtnClass}" title="${hideTitle}">
                       <i data-lucide="${hideIcon}" class="w-3.5 h-3.5"></i>
                     </button>
                     <button onclick="openEditSiteModal('${s._id}', '${s.siteName.replace(/'/g, "\\'")}')" class="text-slate-400 hover:text-indigo-600 p-1" title="Edit Site">
