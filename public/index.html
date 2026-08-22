@@ -110,7 +110,7 @@
 
     <!-- VIEW 1: STRUCTURED TABLE VIEW -->
     <div id="viewPmsBoard" class="view-section space-y-2">
-      <!-- Back to Sites Bar (Shown when filtered by site) -->
+      <!-- Back to Sites Bar -->
       <div id="backToSitesBar" class="hidden bg-indigo-600 text-white px-3 py-1.5 rounded-xl flex items-center justify-between shadow-xs">
         <div class="flex items-center gap-2 text-xs font-bold">
           <span>📍 Active Site View:</span>
@@ -222,13 +222,18 @@
           <span class="text-base">📍</span>
           <div>
             <h2 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Sites & Projects Directory</h2>
-            <p class="text-[9px] text-slate-400">Click on any site name to view its tasks (steps remain hidden by default)</p>
+            <p class="text-[9px] text-slate-400">Click on any site name to view its tasks. Use Hide/Unhide to manage active sites.</p>
           </div>
         </div>
-        <button onclick="openSiteModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1">
-          <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-          <span>+ Add New Site</span>
-        </button>
+        <div class="flex items-center gap-2">
+          <label class="flex items-center gap-1 text-[10px] font-bold text-slate-600 dark:text-slate-300 cursor-pointer">
+            <input type="checkbox" id="showHiddenSitesToggle" onchange="loadSitesList()" class="rounded"> Show Hidden Sites
+          </label>
+          <button onclick="openSiteModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+            <span>+ Add New Site</span>
+          </button>
+        </div>
       </div>
       <div id="sitesCardsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3">
         <p class="text-xs text-slate-400 py-6 text-center">Loading sites...</p>
@@ -609,7 +614,6 @@
       renderStructuredTableGrid(allData);
     }
 
-    // Direct filter when clicking on a site (keeping steps collapsed/hidden by default)
     function filterBySiteAndOpenSteps(siteName) {
       switchTab('viewPmsBoard');
       
@@ -618,7 +622,6 @@
         filterSelect.value = siteName;
       }
       
-      // Ensure tasks remain collapsed/hidden by default unless user clicks "Show Steps"
       allData.forEach(t => {
         if ((t.projectName || '').toLowerCase().trim() === siteName.toLowerCase().trim()) {
           collapsedTasks[t.uniqueId] = true;
@@ -626,7 +629,6 @@
       });
       localStorage.setItem('pms_collapsed_tasks', JSON.stringify(collapsedTasks));
       
-      // Show back to sites bar
       const backBar = document.getElementById('backToSitesBar');
       if (backBar) backBar.classList.remove('hidden');
       document.getElementById('activeSiteBadgeTitle').innerText = siteName;
@@ -645,13 +647,31 @@
       applyFilters();
     }
 
+    async function toggleSiteHideStatus(siteId, currentHiddenState) {
+      try {
+        const res = await fetch(`${API_BASE}/api/sites/${siteId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ isHidden: !currentHiddenState })
+        });
+        const json = await res.json();
+        if (json.success) {
+          loadSitesList();
+          renderProjectFilterDropdown();
+        } else {
+          alert(json.error || 'Failed to update site status.');
+        }
+      } catch (err) {
+        alert('Network error: ' + err.message);
+      }
+    }
+
     function renderStructuredTableGrid(data) {
       const tbody = document.getElementById('tableRows');
       const role = document.getElementById('userRole').value;
       const selectedSite = document.getElementById('filterByProject').value;
       const doerEmail = document.getElementById('doerDropdownSelect').value.toLowerCase().trim();
 
-      // Show/hide back button based on filter
       const backBar = document.getElementById('backToSitesBar');
       if (selectedSite && selectedSite !== 'ALL') {
         if (backBar) backBar.classList.remove('hidden');
@@ -668,10 +688,14 @@
       let filteredData = data;
       if (selectedSite && selectedSite !== 'ALL') {
         filteredData = data.filter(item => (item.projectName || '').toLowerCase().trim() === selectedSite.toLowerCase().trim());
+      } else {
+        // Exclude tasks belonging to hidden sites from the main board when viewing ALL
+        const hiddenSiteNames = allSitesList.filter(s => s.isHidden).map(s => s.siteName.toLowerCase().trim());
+        filteredData = data.filter(item => !hiddenSiteNames.includes((item.projectName || '').toLowerCase().trim()));
       }
 
       if (!filteredData || filteredData.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="10" class="text-center py-10 text-slate-400">No tasks found for site: <b>${selectedSite}</b></td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="10" class="text-center py-10 text-slate-400">No active tasks found.</td></tr>`;
         return;
       }
 
@@ -859,7 +883,9 @@
         let html = '<option value="ALL">All Sites</option>';
         let dlHtml = '';
         allSitesList.forEach(s => {
-          html += `<option value="${s.siteName}">${s.siteName}</option>`;
+          if (!s.isHidden) {
+            html += `<option value="${s.siteName}">${s.siteName}</option>`;
+          }
           dlHtml += `<option value="${s.siteName}">`;
         });
         select.innerHTML = html;
@@ -877,13 +903,24 @@
         const json = await res.json();
         if (json.success) {
           allSitesList = json.data;
+          const showHidden = document.getElementById('showHiddenSitesToggle').checked;
+          
           let html = '';
           allSitesList.forEach(s => {
+            if (!showHidden && s.isHidden) return;
+
+            const cardOpacity = s.isHidden ? 'opacity-60 bg-slate-50 dark:bg-slate-900 border-dashed' : 'bg-white dark:bg-darkcard';
+            const hideBtnText = s.isHidden ? '👁️ Unhide' : '🙈 Hide';
+            const hideBtnClass = s.isHidden ? 'text-emerald-600 hover:bg-emerald-50' : 'text-amber-600 hover:bg-amber-50';
+
             html += `
-              <div class="bg-white dark:bg-darkcard p-3 rounded-xl border border-slate-200 dark:border-darkborder shadow-2xs space-y-1.5 text-xs">
+              <div class="${cardOpacity} p-3 rounded-xl border border-slate-200 dark:border-darkborder shadow-2xs space-y-1.5 text-xs transition">
                 <div class="flex items-center justify-between font-bold">
-                  <span onclick="filterBySiteAndOpenSteps('${s.siteName.replace(/'/g, "\\'")}')" class="text-indigo-600 dark:text-indigo-400 text-xs font-extrabold cursor-pointer hover:underline" title="Click to view tasks">📍 ${s.siteName}</span>
+                  <span onclick="filterBySiteAndOpenSteps('${s.siteName.replace(/'/g, "\\'")}')" class="text-indigo-600 dark:text-indigo-400 text-xs font-extrabold cursor-pointer hover:underline" title="Click to view tasks">📍 ${s.siteName} ${s.isHidden ? '(Hidden)' : ''}</span>
                   <div class="flex items-center gap-1">
+                    <button onclick="toggleSiteHideStatus('${s._id}', ${s.isHidden})" class="px-2 py-0.5 rounded border text-[10px] font-bold ${hideBtnClass}" title="Toggle Hide/Unhide Site">
+                      ${hideBtnText}
+                    </button>
                     <button onclick="openEditSiteModal('${s._id}', '${s.siteName.replace(/'/g, "\\'")}')" class="text-slate-400 hover:text-indigo-600 p-1" title="Edit Site">
                       <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
                     </button>
