@@ -244,7 +244,7 @@
       </div>
     </div>
 
-    <!-- VIEW 5: TEAM DIRECTORY (WITH DOER PERFORMANCE AUDIT) -->
+    <!-- VIEW 5: TEAM DIRECTORY -->
     <div id="viewTeam" class="view-section hidden space-y-2.5">
       <div class="bg-white dark:bg-darkcard p-2.5 rounded-xl border flex items-center justify-between">
         <span class="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">Team & Doer Performance Directory</span>
@@ -258,18 +258,28 @@
 
   </main>
 
-  <!-- Modal: Doer Performance Audit Breakdown -->
+  <!-- Modal: Doer Performance Audit Breakdown (With Period Filter & Old Pending) -->
   <div id="doerAuditModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
-    <div class="bg-white dark:bg-darkcard rounded-2xl max-w-2xl w-full p-4 shadow-2xl border relative max-h-[90vh] flex flex-col">
+    <div class="bg-white dark:bg-darkcard rounded-2xl max-w-2xl w-full p-4 shadow-2xl border relative max-h-[92vh] flex flex-col">
       <div class="flex items-center justify-between pb-2 border-b">
         <div>
           <h3 class="text-xs font-bold text-slate-900 dark:text-white" id="auditModalTitle">Doer Audit Breakdown</h3>
-          <p class="text-[9px] text-slate-400">Complete breakdown of assigned tasks, timelines, and status.</p>
+          <p class="text-[9px] text-slate-400">View tasks by period and inspect overdue or old pending backlog.</p>
         </div>
         <button onclick="toggleModal('doerAuditModal', false)" class="text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
       </div>
 
-      <div id="auditModalContent" class="overflow-y-auto custom-scroll py-3 space-y-2 flex-1 pr-1 text-xs">
+      <div class="py-2 flex items-center justify-between bg-slate-50 dark:bg-slate-800 px-3 rounded-lg border my-2">
+        <span class="text-[10px] font-bold uppercase text-slate-500">Score Audit Period:</span>
+        <select id="auditPeriodSelect" onchange="refreshAuditModal()" class="border rounded px-2 py-1 text-xs font-bold bg-white dark:bg-slate-900 dark:text-white outline-none cursor-pointer">
+          <option value="ALL">All Time (Including Old Pending)</option>
+          <option value="WEEK">This Week (Last 7 Days)</option>
+          <option value="MONTH">This Month (Last 30 Days)</option>
+          <option value="QUARTER">This Quarter (Last 90 Days)</option>
+        </select>
+      </div>
+
+      <div id="auditModalContent" class="overflow-y-auto custom-scroll py-2 space-y-2 flex-1 pr-1 text-xs">
         <!-- Rendered dynamically -->
       </div>
 
@@ -388,7 +398,7 @@
     </div>
   </div>
 
-  <!-- Modal: Add / Edit Site -->
+  <!-- Modal: Add / Edit Site (With Complete Team Fields) -->
   <div id="siteModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
     <div class="bg-white dark:bg-darkcard rounded-2xl max-w-lg w-full p-4 shadow-2xl border relative max-h-[92vh] flex flex-col">
       <div class="flex items-center justify-between pb-2 border-b">
@@ -400,7 +410,31 @@
         <input type="hidden" id="editSiteId">
         <div>
           <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Site Name / Location *</label>
-          <input type="text" id="formSiteName" required class="w-full border rounded px-2.5 py-1 font-bold dark:bg-slate-800 dark:text-white" placeholder="e.g. Bhilwara Plant">
+          <input type="text" id="formSiteName" required class="w-full border rounded px-2.5 py-1 font-bold dark:bg-slate-800 dark:text-white" placeholder="e.g. EV Charging_CLZS">
+        </div>
+        <div>
+          <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Company Name</label>
+          <input type="text" id="formCompanyName" value="MAHESHWARI DISTRIBUTORS" class="w-full border rounded px-2.5 py-1 dark:bg-slate-800 dark:text-white">
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Process Coordinator</label>
+            <input type="text" id="formProcCoord" value="Tulsi Sen" class="w-full border rounded px-2 py-1 dark:bg-slate-800 dark:text-white">
+          </div>
+          <div>
+            <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Technical Person</label>
+            <input type="text" id="formTechPerson" value="Heera lal Ji (8003698656)" class="w-full border rounded px-2 py-1 dark:bg-slate-800 dark:text-white">
+          </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Purchaser Person</label>
+            <input type="text" id="formPurchaser" value="Ronak Ji (8107688615)" class="w-full border rounded px-2 py-1 dark:bg-slate-800 dark:text-white">
+          </div>
+          <div>
+            <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">VRE Person</label>
+            <input type="text" id="formVre" value="Aarti Bala (8824133320)" class="w-full border rounded px-2 py-1 dark:bg-slate-800 dark:text-white">
+          </div>
         </div>
         <div class="pt-2 border-t flex justify-end gap-1.5">
           <button type="button" onclick="toggleModal('siteModal', false)" class="px-2.5 py-1 font-bold text-slate-600">Cancel</button>
@@ -500,6 +534,7 @@
     let allData = [];
     let allVendors = [];
     let allSitesList = [];
+    let currentAuditDoer = { email: '', name: '' };
 
     const API_BASE = window.location.origin.startsWith('file:') 
       ? 'https://pms-central-kini.onrender.com' 
@@ -1184,7 +1219,7 @@
                     <button onclick="toggleSiteHideStatus('${s._id}', ${Boolean(s.isHidden)})" class="p-1.5 rounded border ${hideBtnClass}" title="${hideTitle}">
                       <i data-lucide="${hideIcon}" class="w-3.5 h-3.5"></i>
                     </button>
-                    <button onclick="openEditSiteModal('${s._id}', '${s.siteName.replace(/'/g, "\\'")}')" class="text-slate-400 hover:text-indigo-600 p-1" title="Edit Site">
+                    <button onclick="openEditSiteModal('${s._id}', '${s.siteName.replace(/'/g, "\\'")}', '${(s.companyName || '').replace(/'/g, "\\'")}', '${(s.processCoordinator || '').replace(/'/g, "\\'")}', '${(s.technicalPerson || '').replace(/'/g, "\\'")}', '${(s.purchaserPerson || '').replace(/'/g, "\\'")}', '${(s.vrePerson || '').replace(/'/g, "\\'")}')" class="text-slate-400 hover:text-indigo-600 p-1" title="Edit Site">
                       <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
                     </button>
                     <button onclick="deleteSite('${s._id}')" class="text-slate-300 hover:text-rose-600 p-1" title="Delete Site">
@@ -1209,12 +1244,12 @@
                 </div>
 
                 <div class="text-[10px] text-slate-500 dark:text-slate-400 space-y-0.5 font-mono">
-                  <p><b>Company Name:</b> MAHESHWARI DISTRIBUTORS</p>
+                  <p><b>Company Name:</b> ${s.companyName || 'MAHESHWARI DISTRIBUTORS'}</p>
                   <div class="pt-1 text-[9px] text-slate-600 dark:text-slate-300 border-t border-slate-100 dark:border-darkborder space-y-0.5">
-                    <p>⚙️ <b>Process Coordinator:</b> Tulsi Sen</p>
-                    <p>🛠️ <b>Technical Person:</b> Heera lal Ji (8003698656)</p>
-                    <p>🛒 <b>Purchaser Person:</b> Ronak Ji (8107688615)</p>
-                    <p>📋 <b>VRE:</b> Aarti Bala (8824133320)</p>
+                    <p>⚙️ <b>Process Coordinator:</b> ${s.processCoordinator || 'Tulsi Sen'}</p>
+                    <p>🛠️ <b>Technical Person:</b> ${s.technicalPerson || 'Heera lal Ji (8003698656)'}</p>
+                    <p>🛒 <b>Purchaser Person:</b> ${s.purchaserPerson || 'Ronak Ji (8107688615)'}</p>
+                    <p>📋 <b>VRE:</b> ${s.vrePerson || 'Aarti Bala (8824133320)'}</p>
                   </div>
                 </div>
               </div>
@@ -1231,13 +1266,23 @@
     function openSiteModal() {
       document.getElementById('editSiteId').value = '';
       document.getElementById('formSiteName').value = '';
+      document.getElementById('formCompanyName').value = 'MAHESHWARI DISTRIBUTORS';
+      document.getElementById('formProcCoord').value = 'Tulsi Sen';
+      document.getElementById('formTechPerson').value = 'Heera lal Ji (8003698656)';
+      document.getElementById('formPurchaser').value = 'Ronak Ji (8107688615)';
+      document.getElementById('formVre').value = 'Aarti Bala (8824133320)';
       document.getElementById('modalSiteTitle').innerText = 'Add New Site / Project';
       toggleModal('siteModal', true);
     }
 
-    function openEditSiteModal(id, name) {
+    function openEditSiteModal(id, name, comp, coord, tech, pur, vre) {
       document.getElementById('editSiteId').value = id;
       document.getElementById('formSiteName').value = name;
+      document.getElementById('formCompanyName').value = comp || 'MAHESHWARI DISTRIBUTORS';
+      document.getElementById('formProcCoord').value = coord || 'Tulsi Sen';
+      document.getElementById('formTechPerson').value = tech || 'Heera lal Ji (8003698656)';
+      document.getElementById('formPurchaser').value = pur || 'Ronak Ji (8107688615)';
+      document.getElementById('formVre').value = vre || 'Aarti Bala (8824133320)';
       document.getElementById('modalSiteTitle').innerText = 'Edit Site Details';
       toggleModal('siteModal', true);
     }
@@ -1245,7 +1290,12 @@
     async function saveSiteData() {
       const id = document.getElementById('editSiteId').value;
       const payload = {
-        siteName: document.getElementById('formSiteName').value.trim()
+        siteName: document.getElementById('formSiteName').value.trim(),
+        companyName: document.getElementById('formCompanyName').value.trim(),
+        processCoordinator: document.getElementById('formProcCoord').value.trim(),
+        technicalPerson: document.getElementById('formTechPerson').value.trim(),
+        purchaserPerson: document.getElementById('formPurchaser').value.trim(),
+        vrePerson: document.getElementById('formVre').value.trim()
       };
 
       const url = id ? `${API_BASE}/api/sites/${id}` : `${API_BASE}/api/sites`;
@@ -1293,7 +1343,7 @@
       select.innerHTML = html;
     }
 
-    // --- TEAM & DOER PERFORMANCE AUDIT VIEW ---
+    // --- TEAM & DOER PERFORMANCE AUDIT VIEW (WITH PERIOD FILTER) ---
     function renderTeamView() {
       const container = document.getElementById('teamCardsContainer');
       if (!container) return;
@@ -1354,37 +1404,68 @@
     }
 
     function openDoerAuditModal(email, name) {
+      currentAuditDoer = { email, name };
       document.getElementById('auditModalTitle').innerText = `Performance Audit: ${name} (${email})`;
+      document.getElementById('auditPeriodSelect').value = 'ALL';
+      refreshAuditModal();
+    }
+
+    function refreshAuditModal() {
+      const email = currentAuditDoer.email;
+      const name = currentAuditDoer.name;
+      const period = document.getElementById('auditPeriodSelect').value;
       const container = document.getElementById('auditModalContent');
       const now = new Date();
+
+      let startDateLimit = new Date(0); // Beginning of time for ALL
+      if (period === 'WEEK') {
+        startDateLimit = new Date();
+        startDateLimit.setDate(now.getDate() - 7);
+      } else if (period === 'MONTH') {
+        startDateLimit = new Date();
+        startDateLimit.setDate(now.getDate() - 30);
+      } else if (period === 'QUARTER') {
+        startDateLimit = new Date();
+        startDateLimit.setDate(now.getDate() - 90);
+      }
 
       let assignedSteps = [];
       allData.forEach(task => {
         task.steps.forEach(st => {
           if ((st.assignedEmail || '').toLowerCase().trim() === (email || '').toLowerCase().trim() || 
               (st.assignedName || '').toLowerCase().trim() === (name || '').toLowerCase().trim()) {
-            assignedSteps.push({
-              uniqueId: task.uniqueId,
-              projectName: task.projectName || 'General',
-              mainItemName: task.mainItemName,
-              step: st,
-              isDelayed: (new Date(st.plannedEndDate) < now && st.status !== 'Completed') || st.status === 'Delayed',
-              isCompleted: st.status === 'Completed'
-            });
+            
+            const pStart = new Date(st.plannedStartDate);
+            const pEnd = new Date(st.plannedEndDate);
+            const isOldPending = (st.status !== 'Completed' && pEnd < now);
+
+            // Filter logic: Include if within period, or if it's an old pending backlog item carried forward
+            if (period === 'ALL' || pEnd >= startDateLimit || isOldPending) {
+              assignedSteps.push({
+                uniqueId: task.uniqueId,
+                projectName: task.projectName || 'General',
+                mainItemName: task.mainItemName,
+                step: st,
+                isDelayed: isOldPending || st.status === 'Delayed',
+                isCompleted: st.status === 'Completed',
+                isOldPending: isOldPending
+              });
+            }
           }
         });
       });
 
       if (assignedSteps.length === 0) {
-        container.innerHTML = '<p class="text-xs text-slate-400 py-8 text-center">No tasks assigned to this member currently.</p>';
+        container.innerHTML = '<p class="text-xs text-slate-400 py-8 text-center">No tasks found for the selected period.</p>';
         toggleModal('doerAuditModal', true);
         return;
       }
 
       let html = '';
-      assignedSteps.forEach((item, idx) => {
+      assignedSteps.forEach((item) => {
         let statusBadge = '';
         if (item.isCompleted) statusBadge = '<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold">✓ Completed</span>';
+        else if (item.isOldPending) statusBadge = '<span class="px-2 py-0.5 bg-purple-100 text-purple-800 rounded font-bold">⏳ Old Pending Backlog</span>';
         else if (item.isDelayed) statusBadge = '<span class="px-2 py-0.5 bg-rose-100 text-rose-800 rounded font-bold animate-pulse">🚨 Delayed / Overdue</span>';
         else statusBadge = '<span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded font-bold">⏳ Pending</span>';
 
@@ -1399,7 +1480,7 @@
             </div>
             <p class="font-semibold text-slate-900 dark:text-white">Task: ${item.mainItemName}</p>
             <p class="text-slate-700 dark:text-slate-200"><b>Step #${item.step.wbsNo}:</b> ${item.step.stepTitle}</p>
-            <p class="text-[10px] text-slate-400 font-mono">📅 Timeline Score Period: <b>${startDateStr}</b> ➔ <b>${endDateStr}</b> (${item.step.durationDays || 2} Days duration)</p>
+            <p class="text-[10px] text-slate-400 font-mono">📅 Score Period: <b>${startDateStr}</b> ➔ <b>${endDateStr}</b> (${item.step.durationDays || 2} Days duration)</p>
             ${item.step.remarks ? `<p class="text-[10px] text-slate-500 italic">Remarks: ${item.step.remarks}</p>` : ''}
           </div>
         `;
@@ -1685,7 +1766,7 @@
       }
     }
 
-    function exportToCSV() { loadDashboardData(); }
+    exportToCSV() { loadDashboardData(); }
 
     initTheme();
     loadDoersList();
