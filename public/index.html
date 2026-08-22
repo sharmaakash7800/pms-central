@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PMS Central Hub | Direct Toggle & Fixed Update</title>
+  <title>PMS Central Hub | Properly Sticky Header</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -30,13 +30,12 @@
     .dark .custom-scroll::-webkit-scrollbar-thumb { background: #374151; }
     .nav-capsule-btn.active { color: #4f46e5; font-weight: 800; }
     .dark .nav-capsule-btn.active { color: #818cf8; }
-    .table-container { overflow: visible !important; }
   </style>
 </head>
 <body class="text-slate-800 dark:bg-darkbg dark:text-slate-100 antialiased min-h-screen flex flex-col pb-24 text-xs">
 
   <!-- Fixed Main Header -->
-  <header class="bg-white dark:bg-darkcard border-b border-slate-200 dark:border-darkborder sticky top-0 z-40 shadow-xs">
+  <header class="bg-white dark:bg-darkcard border-b border-slate-200 dark:border-darkborder fixed top-0 left-0 right-0 z-50 shadow-xs">
     <div class="max-w-7xl mx-auto px-3 sm:px-5">
       <div class="flex justify-between h-12 items-center">
         
@@ -88,8 +87,8 @@
     </div>
   </header>
 
-  <!-- Main Content -->
-  <main class="max-w-7xl mx-auto px-3 sm:px-5 py-3 w-full flex-1">
+  <!-- Main Content (Added top padding to prevent content from hiding under fixed header) -->
+  <main class="max-w-7xl mx-auto px-3 sm:px-5 pt-16 pb-3 w-full flex-1">
     
     <div id="activeDoerBanner" class="hidden bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 p-2 rounded-xl mb-2 flex items-center justify-between">
       <div class="flex items-center gap-2 text-xs">
@@ -868,11 +867,10 @@
       return true;
     }
 
-    // DIRECT TOGGLE STATUS UPDATE (No popup modal needed)
+    // DIRECT TOGGLE STATUS UPDATE
     async function directToggleStepStatus(taskId, stepId, currentStatus, wbsNo, taskSteps) {
       const newStatus = (currentStatus === 'Completed') ? 'Pending' : 'Completed';
       
-      // Run sequential check
       const isValid = validateSequentialCompletion(taskSteps, wbsNo, newStatus);
       if (!isValid) return;
 
@@ -901,7 +899,7 @@
       }
     }
 
-    // RENDER TABLE WITH DIRECT TOGGLE ACTION BUTTON
+    // RENDER TABLE WITH EXACT 11 COLUMNS MATCHING HEADERS
     function renderStructuredTableGrid(data) {
       const tbody = document.getElementById('tableRows');
       const role = document.getElementById('userRole').value;
@@ -1014,7 +1012,6 @@
             const actualStartStr = s.actualStartDate ? new Date(s.actualStartDate).toLocaleDateString('en-GB') : (s.plannedStartDate ? new Date(s.plannedStartDate).toLocaleDateString('en-GB') : '—');
             const actualEndStr = (isCompleted && s.actualEndDate) ? new Date(s.actualEndDate).toLocaleDateString('en-GB') : (isCompleted && s.updatedAt ? new Date(s.updatedAt).toLocaleDateString('en-GB') : (isCompleted ? new Date().toLocaleDateString('en-GB') : '—'));
 
-            // Direct Toggle Action Button (Clicking toggles between Done and Pending instantly)
             const toggleButtonText = isCompleted ? '↺ Make Pending' : '✓ Mark Done';
             const toggleButtonClass = isCompleted ? 'bg-amber-50 text-amber-700 hover:bg-amber-100 border-amber-200' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200';
 
