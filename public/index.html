@@ -272,12 +272,13 @@
     </div>
   </div>
 
-  <!-- Modal: Add Vendor -->
+  <!-- Modal: Add / Edit Vendor -->
   <div id="addVendorModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
     <div class="bg-white dark:bg-darkcard rounded-2xl max-w-sm w-full p-4 shadow-2xl border relative">
       <button onclick="toggleModal('addVendorModal', false)" class="absolute right-3 top-3 text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
-      <h3 class="text-xs font-bold text-slate-900 dark:text-white mb-2">Add New Vendor</h3>
+      <h3 class="text-xs font-bold text-slate-900 dark:text-white mb-2" id="modalVendorTitle">Add New Vendor</h3>
       <form onsubmit="event.preventDefault(); saveVendor();" class="space-y-2 text-xs">
+        <input type="hidden" id="editVendorId">
         <div>
           <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Vendor Name *</label>
           <input type="text" id="vName" required placeholder="Enter vendor name..." class="w-full border rounded px-2.5 py-1 font-bold dark:bg-slate-800 dark:text-white">
@@ -465,24 +466,50 @@
     }
 
     function openAddVendorModal() {
+      document.getElementById('editVendorId').value = '';
       document.getElementById('vName').value = '';
       document.getElementById('vPhone').value = '';
+      document.getElementById('modalVendorTitle').innerText = 'Add New Vendor';
+      toggleModal('addVendorModal', true);
+    }
+
+    function openEditVendorModal(id, name, phone) {
+      document.getElementById('editVendorId').value = id;
+      document.getElementById('vName').value = name;
+      document.getElementById('vPhone').value = phone;
+      document.getElementById('modalVendorTitle').innerText = 'Edit Vendor Details';
       toggleModal('addVendorModal', true);
     }
 
     async function saveVendor() {
+      const id = document.getElementById('editVendorId').value;
       const payload = {
         name: document.getElementById('vName').value.trim(),
         phone: document.getElementById('vPhone').value.trim()
       };
-      const res = await fetch(`${API_BASE}/api/vendors`, {
-        method: 'POST',
+
+      const url = id ? `${API_BASE}/api/vendors/${id}` : `${API_BASE}/api/vendors`;
+      const method = id ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
       const json = await res.json();
       if (json.success) {
         toggleModal('addVendorModal', false);
+        renderVendorsView();
+      } else {
+        alert(json.error);
+      }
+    }
+
+    async function deleteVendor(id) {
+      if (!confirm('Are you sure you want to delete this vendor?')) return;
+      const res = await fetch(`${API_BASE}/api/vendors/${id}`, { method: 'DELETE' });
+      const json = await res.json();
+      if (json.success) {
         renderVendorsView();
       } else {
         alert(json.error);
@@ -500,13 +527,24 @@
         let html = '';
         vendors.forEach(v => {
           html += `
-            <div class="bg-white dark:bg-darkcard p-3 rounded-xl border border-slate-200 dark:border-darkborder shadow-2xs space-y-1 text-xs">
-              <h4 class="font-bold text-slate-900 dark:text-white text-sm">🏢 ${v.name}</h4>
+            <div class="bg-white dark:bg-darkcard p-3 rounded-xl border border-slate-200 dark:border-darkborder shadow-2xs space-y-1 text-xs relative">
+              <div class="flex items-center justify-between">
+                <h4 class="font-bold text-slate-900 dark:text-white text-sm">🏢 ${v.name}</h4>
+                <div class="flex items-center gap-1">
+                  <button onclick="openEditVendorModal('${v._id}', '${v.name.replace(/'/g, "\\'")}', '${v.phone}')" class="text-slate-400 hover:text-indigo-600 p-1" title="Edit Vendor">
+                    <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
+                  </button>
+                  <button onclick="deleteVendor('${v._id}')" class="text-slate-300 hover:text-rose-600 p-1" title="Delete Vendor">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                  </button>
+                </div>
+              </div>
               <p class="text-[11px] text-slate-500 dark:text-slate-400 font-mono">📞 ${v.phone}</p>
             </div>
           `;
         });
         container.innerHTML = html || '<p class="text-xs text-slate-400 py-6 text-center">No vendors found.</p>';
+        lucide.createIcons();
       } catch (err) {
         console.error(err);
       }
