@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PMS Central Hub | Direct Toggle & Fixed Update</title>
+  <title>PMS Central Hub | Direct Toggle & Persistence Fixed</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -73,9 +73,6 @@
               <option value="ADMIN">Super Admin</option>
               <option value="DOER">Doer Portal</option>
             </select>
-            <select id="doerDropdownSelect" class="hidden bg-white dark:bg-darkcard text-[11px] border border-slate-300 dark:border-darkborder rounded px-1.5 py-0.5 outline-none font-semibold text-indigo-900 dark:text-indigo-300" onchange="onDoerUserChange()">
-              <option value="">Select Doer...</option>
-            </select>
           </div>
 
           <button onclick="openCreateModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg shadow-xs flex items-center gap-1 transition">
@@ -91,14 +88,6 @@
   <!-- Main Content -->
   <main class="max-w-7xl mx-auto px-3 sm:px-5 py-3 w-full flex-1 min-h-0 flex flex-col overflow-hidden pb-16">
     
-    <div id="activeDoerBanner" class="hidden shrink-0 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 p-2 rounded-xl mb-2 flex items-center justify-between">
-      <div class="flex items-center gap-2 text-xs">
-        <span class="w-2 h-2 rounded-full bg-indigo-600 animate-ping"></span>
-        <span class="text-indigo-900 dark:text-indigo-200 font-bold">Filtered Workspace For: <span id="doerBannerName" class="underline"></span></span>
-      </div>
-      <span class="text-[10px] bg-indigo-200 dark:bg-indigo-900 text-indigo-900 dark:text-indigo-200 px-2 py-0.5 rounded-full font-bold">Personalized View</span>
-    </div>
-
     <!-- VIEW 1: STRUCTURED TABLE VIEW -->
     <div id="viewPmsBoard" class="view-section flex-1 min-h-0 flex flex-col space-y-2 h-full overflow-hidden">
       <!-- Back to Sites Bar -->
@@ -115,17 +104,10 @@
       <!-- Top Filter Bar -->
       <div class="shrink-0 bg-white dark:bg-darkcard rounded-xl border border-slate-200 dark:border-darkborder p-2.5 sm:p-3 flex flex-wrap items-center justify-between gap-3 shadow-2xs">
         <div class="flex flex-wrap items-center gap-2.5 flex-1 min-w-[280px]">
-          <div class="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkborder rounded-lg px-3 py-1.5 min-w-[180px]">
+          <div class="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkborder rounded-lg px-3 py-1.5 min-w-[220px]">
             <span class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wide">SITE:</span>
             <select id="filterByProject" onchange="applyFilters()" class="w-full bg-transparent text-[11px] font-bold text-slate-800 dark:text-slate-200 outline-none cursor-pointer">
               <option value="ALL">All Sites</option>
-            </select>
-          </div>
-
-          <div class="flex items-center gap-1.5 bg-indigo-50/70 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 rounded-lg px-3 py-1.5 min-w-[170px]">
-            <span class="text-[10px] font-extrabold text-indigo-600 dark:text-indigo-400 uppercase tracking-wide">DOER:</span>
-            <select id="filterByDoer" onchange="applyFilters()" class="w-full bg-transparent text-[11px] font-bold text-indigo-950 dark:text-indigo-200 outline-none cursor-pointer">
-              <option value="ALL">All Members</option>
             </select>
           </div>
         </div>
@@ -232,45 +214,11 @@
             <p class="text-[9px] text-slate-400">Track strict weekly, monthly, and quarterly scores with carried forward pending backlog.</p>
           </div>
         </div>
-        <div class="flex items-center gap-2">
-          <div class="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800 border px-2.5 py-1 rounded-lg">
-            <span class="text-[9px] font-bold uppercase text-slate-500">Score Audit Period:</span>
-            <select id="mainAuditPeriodSelect" onchange="renderTeamView()" class="bg-transparent text-xs font-bold outline-none cursor-pointer dark:text-white">
-              <option value="ALL">All Time (Including Old Pending)</option>
-              <option value="WEEK">This Week (Last 7 Days)</option>
-              <option value="MONTH">This Month (Last 30 Days)</option>
-              <option value="QUARTER">This Quarter (Last 90 Days)</option>
-            </select>
-          </div>
-          <button onclick="openAddMemberModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1">
-            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-            <span>+ Add Member</span>
-          </button>
-        </div>
       </div>
       <div id="teamCardsContainer" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
     </div>
 
   </main>
-
-  <!-- Modal: Doer Performance Audit Breakdown -->
-  <div id="doerAuditModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
-    <div class="bg-white dark:bg-darkcard rounded-2xl max-w-2xl w-full p-4 shadow-2xl border relative max-h-[92vh] flex flex-col">
-      <div class="flex items-center justify-between pb-2 border-b">
-        <div>
-          <h3 class="text-xs font-bold text-slate-900 dark:text-white" id="auditModalTitle">Doer Audit Breakdown</h3>
-          <p class="text-[9px] text-slate-400">Detailed list of assigned tasks and statuses for the selected period.</p>
-        </div>
-        <button onclick="toggleModal('doerAuditModal', false)" class="text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
-      </div>
-
-      <div id="auditModalContent" class="overflow-y-auto custom-scroll py-3 space-y-2 flex-1 pr-1 text-xs"></div>
-
-      <div class="pt-2 border-t flex justify-end">
-        <button onclick="toggleModal('doerAuditModal', false)" class="bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-white font-bold px-4 py-1.5 rounded transition">Close</button>
-      </div>
-    </div>
-  </div>
 
   <!-- Bottom Capsule Bar -->
   <div id="bottomBarWrapper" class="fixed bottom-3 z-40 transition-all duration-300 left-1/2 -translate-x-1/2">
@@ -280,30 +228,6 @@
       <button onclick="switchTab('viewVendors')" id="tabBtn-viewVendors" data-id="viewVendors" class="nav-capsule-btn flex flex-col items-center text-slate-500 hover:text-indigo-600 transition"><span class="text-xs">🏢</span><span class="text-[10px]">Vendors</span></button>
       <button onclick="switchTab('viewSites')" id="tabBtn-viewSites" data-id="viewSites" class="nav-capsule-btn flex flex-col items-center text-slate-500 hover:text-indigo-600 transition"><span class="text-xs">📍</span><span class="text-[10px]">Sites</span></button>
       <button onclick="switchTab('viewTeam')" id="tabBtn-viewTeam" data-id="viewTeam" class="nav-capsule-btn flex flex-col items-center text-slate-500 hover:text-indigo-600 transition"><span class="text-xs">👥</span><span class="text-[10px]">Team</span></button>
-    </div>
-  </div>
-
-  <!-- Modal: Tab Settings, Position & Shuffle -->
-  <div id="tabSettingsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
-    <div class="bg-white dark:bg-darkcard rounded-2xl max-w-sm w-full p-4 shadow-2xl border relative space-y-3">
-      <button onclick="toggleModal('tabSettingsModal', false)" class="absolute right-3 top-3 text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
-      <h3 class="text-xs font-bold text-slate-900 dark:text-white">Manage Tab Settings</h3>
-      
-      <div>
-        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Bar Alignment Position</label>
-        <select id="barPositionSelect" onchange="changeBarPosition(this.value)" class="w-full border rounded px-2.5 py-1.5 text-xs font-bold bg-slate-50 dark:bg-slate-800 dark:text-white outline-none cursor-pointer">
-          <option value="center">Center</option>
-          <option value="left">Left</option>
-          <option value="right">Right</option>
-        </select>
-      </div>
-
-      <div>
-        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tab Shuffle & Visibility</label>
-        <div id="tabShuffleContainer" class="space-y-1.5 text-xs max-h-56 overflow-y-auto custom-scroll pr-1"></div>
-      </div>
-
-      <button onclick="toggleModal('tabSettingsModal', false)" class="w-full bg-indigo-600 text-white font-bold py-1.5 rounded transition mt-2">Save & Close</button>
     </div>
   </div>
 
@@ -321,11 +245,6 @@
         <button onclick="toggleSideMenu(false); switchTab('viewVendors')" class="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-slate-100"><span>🏢</span> Vendors</button>
         <button onclick="toggleSideMenu(false); switchTab('viewSites')" class="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-slate-100"><span>📍</span> Sites</button>
         <button onclick="toggleSideMenu(false); switchTab('viewTeam')" class="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-slate-100"><span>👥</span> Team</button>
-      </div>
-      <div class="mt-auto pt-3 border-t">
-        <button onclick="toggleDarkMode()" class="w-full bg-slate-50 dark:bg-slate-800 border rounded-lg py-1 text-xs font-bold flex items-center justify-center gap-1.5">
-          <span id="drawerThemeIcon">🌙</span> <span id="drawerThemeLabel">Toggle Dark Mode</span>
-        </button>
       </div>
     </div>
   </div>
@@ -363,30 +282,6 @@
         <div>
           <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Site Name / Location *</label>
           <input type="text" id="formSiteName" required class="w-full border rounded px-2.5 py-1 font-bold dark:bg-slate-800 dark:text-white" placeholder="e.g. Bhilwara Plant">
-        </div>
-        <div>
-          <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Company Name</label>
-          <input type="text" id="formCompanyName" value="MAHESHWARI DISTRIBUTORS" class="w-full border rounded px-2.5 py-1 dark:bg-slate-800 dark:text-white">
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-          <div>
-            <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Process Coordinator</label>
-            <input type="text" id="formProcCoord" value="Tulsi Sen" class="w-full border rounded px-2 py-1 dark:bg-slate-800 dark:text-white">
-          </div>
-          <div>
-            <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Technical Person</label>
-            <input type="text" id="formTechPerson" value="Heera lal Ji (8003698656)" class="w-full border rounded px-2 py-1 dark:bg-slate-800 dark:text-white">
-          </div>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-          <div>
-            <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Purchaser Person</label>
-            <input type="text" id="formPurchaser" value="Ronak Ji (8107688615)" class="w-full border rounded px-2 py-1 dark:bg-slate-800 dark:text-white">
-          </div>
-          <div>
-            <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">VRE Person</label>
-            <input type="text" id="formVre" value="Aarti Bala (8824133320)" class="w-full border rounded px-2 py-1 dark:bg-slate-800 dark:text-white">
-          </div>
         </div>
         <div class="pt-2 border-t flex justify-end gap-1.5">
           <button type="button" onclick="toggleModal('siteModal', false)" class="px-2.5 py-1 font-bold text-slate-600">Cancel</button>
@@ -472,26 +367,10 @@
     </div>
   </div>
 
-  <!-- Modal: Add Team Member -->
-  <div id="addMemberModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
-    <div class="bg-white dark:bg-darkcard rounded-2xl max-w-sm w-full p-4 shadow-2xl border relative">
-      <button onclick="toggleModal('addMemberModal', false)" class="absolute right-3 top-3 text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
-      <h3 class="text-xs font-bold text-slate-900 dark:text-white mb-2">Add Team Member</h3>
-      <form onsubmit="event.preventDefault(); saveNewMember();" class="space-y-2 text-xs">
-        <input type="text" id="newMemberName" required placeholder="Full Name" class="w-full border rounded px-2 py-1 dark:bg-slate-800 dark:text-white">
-        <input type="email" id="newMemberEmail" required placeholder="Email Address" class="w-full border rounded px-2 py-1 dark:bg-slate-800 dark:text-white font-mono">
-        <input type="text" id="newMemberRole" placeholder="Role / Designation" class="w-full border rounded px-2 py-1 dark:bg-slate-800 dark:text-white">
-        <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-1.5 rounded transition">Save Member</button>
-      </form>
-    </div>
-  </div>
-
   <script>
     let activeDoers = [];
     let allData = [];
-    let allVendors = [];
     let allSitesList = [];
-    let currentAuditDoer = { email: '', name: '' };
     let pmsChartInstance = null;
 
     const API_BASE = window.location.origin.startsWith('file:') 
@@ -528,210 +407,13 @@
     }
 
     function openTabSettingsModal() {
-      renderTabShuffleList();
-      document.getElementById('barPositionSelect').value = barPosition;
       toggleModal('tabSettingsModal', true);
-    }
-
-    function renderTabShuffleList() {
-      const container = document.getElementById('tabShuffleContainer');
-      let html = '';
-      tabOrder.forEach((tabId, idx) => {
-        const meta = tabMeta[tabId];
-        const isVisible = !hiddenTabs[tabId];
-        html += `
-          <div class="flex items-center justify-between p-2 rounded border bg-slate-50 dark:bg-slate-800">
-            <div class="flex items-center gap-2">
-              <span>${meta.icon}</span>
-              <span class="font-bold">${meta.label}</span>
-            </div>
-            <div class="flex items-center gap-1.5">
-              <button type="button" onclick="moveTabOrder(${idx}, -1)" class="p-1 rounded bg-white dark:bg-darkcard border hover:bg-indigo-50" title="Move Up">⬆️</button>
-              <button type="button" onclick="moveTabOrder(${idx}, 1)" class="p-1 rounded bg-white dark:bg-darkcard border hover:bg-indigo-50" title="Move Down">⬇️</button>
-              <input type="checkbox" ${isVisible ? 'checked' : ''} onchange="toggleTabVisibility('${tabId}', this.checked)" class="rounded ml-1" title="Show/Hide">
-            </div>
-          </div>
-        `;
-      });
-      container.innerHTML = html;
-    }
-
-    function moveTabOrder(index, direction) {
-      const newIndex = index + direction;
-      if (newIndex < 0 || newIndex >= tabOrder.length) return;
-      const temp = tabOrder[index];
-      tabOrder[index] = tabOrder[newIndex];
-      tabOrder[newIndex] = temp;
-      localStorage.setItem('pms_tab_order', JSON.stringify(tabOrder));
-      renderTabShuffleList();
-      applyTabOrderAndVisibility();
-    }
-
-    function toggleTabVisibility(tabId, isVisible) {
-      hiddenTabs[tabId] = !isVisible;
-      localStorage.setItem('pms_hidden_tabs', JSON.stringify(hiddenTabs));
-      applyTabOrderAndVisibility();
-    }
-
-    function applyTabOrderAndVisibility() {
-      const capsuleBar = document.getElementById('bottomCapsuleBar');
-      if (!capsuleBar) return;
-
-      let html = '';
-      tabOrder.forEach(tabId => {
-        const meta = tabMeta[tabId];
-        const displayStyle = hiddenTabs[tabId] ? 'display: none;' : 'display: flex;';
-        const activeClass = document.getElementById(`tabBtn-${tabId}`)?.classList.contains('active') ? 'active' : '';
-        
-        let iconChar = '📦';
-        if(tabId === 'viewReview') iconChar = '🔍';
-        if(tabId === 'viewVendors') iconChar = '🏢';
-        if(tabId === 'viewSites') iconChar = '📍';
-        if(tabId === 'viewTeam') iconChar = '👥';
-
-        html += `
-          <button onclick="switchTab('${tabId}')" id="tabBtn-${tabId}" data-id="${tabId}" style="${displayStyle}" class="nav-capsule-btn ${activeClass} flex flex-col items-center text-slate-500 hover:text-indigo-600 transition">
-            <span class="text-xs">${iconChar}</span>
-            <span class="text-[10px]">${meta.label.replace(' Tab', '')}</span>
-          </button>
-        `;
-      });
-      capsuleBar.innerHTML = html;
-    }
-
-    function changeBarPosition(pos) {
-      barPosition = pos;
-      localStorage.setItem('pms_bar_position', pos);
-      applyBarPosition();
-    }
-
-    function applyBarPosition() {
-      const wrapper = document.getElementById('bottomBarWrapper');
-      if (!wrapper) return;
-      wrapper.className = 'fixed bottom-3 z-40 transition-all duration-300';
-      if (barPosition === 'left') {
-        wrapper.style.left = '16px';
-        wrapper.style.transform = 'none';
-      } else if (barPosition === 'right') {
-        wrapper.style.left = 'auto';
-        wrapper.style.right = '16px';
-        wrapper.style.transform = 'none';
-      } else {
-        wrapper.style.left = '50%';
-        wrapper.style.right = 'auto';
-        wrapper.style.transform = 'translateX(-50%)';
-      }
     }
 
     function toggleSideMenu(show) { document.getElementById('sideMenuDrawer').classList.toggle('hidden', !show); }
     function toggleModal(id, show) { document.getElementById(id).classList.toggle('hidden', !show); }
-    function initTheme() {
-      const isDark = localStorage.getItem('pms_theme') === 'dark';
-      document.documentElement.classList.toggle('dark', isDark);
-      lucide.createIcons();
-    }
-
-    function openAddVendorModal() {
-      document.getElementById('editVendorId').value = '';
-      document.getElementById('vName').value = '';
-      document.getElementById('vPhone').value = '';
-      document.getElementById('modalVendorTitle').innerText = 'Add New Vendor';
-      toggleModal('addVendorModal', true);
-    }
-
-    function openEditVendorModal(id, name, phone) {
-      document.getElementById('editVendorId').value = id;
-      document.getElementById('vName').value = name;
-      document.getElementById('vPhone').value = phone;
-      document.getElementById('modalVendorTitle').innerText = 'Edit Vendor Details';
-      toggleModal('addVendorModal', true);
-    }
-
-    async function saveVendor() {
-      const id = document.getElementById('editVendorId').value.trim();
-      const payload = {
-        name: document.getElementById('vName').value.trim(),
-        phone: document.getElementById('vPhone').value.trim()
-      };
-
-      const url = id ? `${API_BASE}/api/vendors/${id}` : `${API_BASE}/api/vendors`;
-      const method = id ? 'PUT' : 'POST';
-
-      try {
-        const res = await fetch(url, {
-          method,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        const json = await res.json();
-        if (json.success) {
-          toggleModal('addVendorModal', false);
-          renderVendorsView();
-        } else {
-          alert(json.error || 'Failed to save vendor.');
-        }
-      } catch (err) {
-        alert('Network error: ' + err.message);
-      }
-    }
-
-    async function deleteVendor(id) {
-      if (!confirm('Are you sure you want to delete this vendor?')) return;
-      const res = await fetch(`${API_BASE}/api/vendors/${id}`, { method: 'DELETE' });
-      const json = await res.json();
-      if (json.success) {
-        renderVendorsView();
-      } else {
-        alert(json.error);
-      }
-    }
-
-    async function renderVendorsView() {
-      const container = document.getElementById('vendorCardsContainer');
-      if (!container) return;
-      try {
-        const res = await fetch(`${API_BASE}/api/vendors`);
-        const json = await res.json();
-        const vendors = json.data || [];
-        document.getElementById('vendorTotalCountBadge').innerText = `${vendors.length} Vendors`;
-        let html = '';
-        vendors.forEach(v => {
-          html += `
-            <div class="bg-white dark:bg-darkcard p-3 rounded-xl border border-slate-200 dark:border-darkborder shadow-2xs space-y-1 text-xs relative">
-              <div class="flex items-center justify-between">
-                <h4 class="font-bold text-slate-900 dark:text-white text-sm">🏢 ${v.name}</h4>
-                <div class="flex items-center gap-1">
-                  <button onclick="openEditVendorModal('${v._id}', '${v.name.replace(/'/g, "\\'")}', '${v.phone}')" class="text-slate-400 hover:text-indigo-600 p-1" title="Edit Vendor">
-                    <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
-                  </button>
-                  <button onclick="deleteVendor('${v._id}')" class="text-slate-300 hover:text-rose-600 p-1" title="Delete Vendor">
-                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                  </button>
-                </div>
-              </div>
-              <p class="text-[11px] text-slate-500 dark:text-slate-400 font-mono">📞 ${v.phone}</p>
-            </div>
-          `;
-        });
-        container.innerHTML = html || '<p class="text-xs text-slate-400 py-6 text-center">No vendors found.</p>';
-        lucide.createIcons();
-      } catch (err) {
-        console.error(err);
-      }
-    }
-
-    function handleRoleSwitch() {
-      const role = document.getElementById('userRole').value;
-      document.getElementById('doerDropdownSelect').classList.toggle('hidden', role !== 'DOER');
-      document.getElementById('activeDoerBanner').classList.toggle('hidden', role !== 'DOER');
-      applyFilters();
-    }
-
-    function onDoerUserChange() { applyFilters(); }
 
     document.addEventListener('DOMContentLoaded', function () {
-      applyTabOrderAndVisibility();
-      applyBarPosition();
       loadDashboardData();
     });
 
@@ -787,26 +469,6 @@
       applyFilters();
     }
 
-    async function toggleSiteHideStatus(siteId, currentHiddenState) {
-      try {
-        const res = await fetch(`${API_BASE}/api/sites/${siteId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ isHidden: !currentHiddenState })
-        });
-        const json = await res.json();
-        if (json.success) {
-          loadSitesList();
-          renderProjectFilterDropdown();
-        } else {
-          alert(json.error || 'Failed to update site status.');
-        }
-      } catch (err) {
-        alert('Network error: ' + err.message);
-      }
-    }
-
-    // RENDER REVIEW ANALYTICS CHART ONLY
     function renderReviewChart() {
       const canvas = document.getElementById('pmsChart');
       if (!canvas) return;
@@ -844,7 +506,6 @@
       });
     }
 
-    // STRICT SEQUENTIAL VALIDATION
     function validateSequentialCompletion(steps, currentStepWbsNo, newStatus) {
       const currentWbs = parseInt(currentStepWbsNo, 10);
       
@@ -868,19 +529,26 @@
       return true;
     }
 
-    // DIRECT TOGGLE STATUS UPDATE (No popup modal needed)
-    async function directToggleStepStatus(taskId, stepId, currentStatus, wbsNo, taskSteps) {
+    // DIRECT TOGGLE STATUS UPDATE WITH PROMPT FOR REMARKS
+    async function directToggleStepStatus(taskId, stepId, currentStatus, wbsNo, taskSteps, existingRemarks) {
       const newStatus = (currentStatus === 'Completed') ? 'Pending' : 'Completed';
       
-      // Run sequential check
       const isValid = validateSequentialCompletion(taskSteps, wbsNo, newStatus);
       if (!isValid) return;
+
+      let remarksText = existingRemarks || '';
+      if (newStatus === 'Completed') {
+        const userRemark = prompt("Enter remark for this step (Optional):", existingRemarks || '');
+        if (userRemark !== null) {
+          remarksText = userRemark.trim();
+        }
+      }
 
       const payload = {
         uniqueId: taskId,
         stepId: stepId,
         status: newStatus,
-        remarks: '',
+        remarks: remarksText,
         actualEndDate: newStatus === 'Completed' ? new Date().toISOString() : null
       };
 
@@ -901,12 +569,37 @@
       }
     }
 
-    // RENDER TABLE WITH DIRECT TOGGLE ACTION BUTTON
+    // EDIT REMARKS VIA PROMPT
+    async function editStepRemarks(taskId, stepId, currentRemarks) {
+      const newRemarks = prompt("Update remark:", currentRemarks || '');
+      if (newRemarks === null) return;
+
+      const payload = {
+        uniqueId: taskId,
+        stepId: stepId,
+        remarks: newRemarks.trim()
+      };
+
+      try {
+        const res = await fetch(`${API_BASE}/api/pms/update-step`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (json.success) {
+          await loadDashboardData();
+        } else {
+          alert(json.error || 'Failed to update remark.');
+        }
+      } catch (err) {
+        alert('Network error: ' + err.message);
+      }
+    }
+
     function renderStructuredTableGrid(data) {
       const tbody = document.getElementById('tableRows');
-      const role = document.getElementById('userRole').value;
       const selectedSite = document.getElementById('filterByProject').value;
-      const doerEmail = document.getElementById('doerDropdownSelect').value.toLowerCase().trim();
 
       const backBar = document.getElementById('backToSitesBar');
       if (selectedSite && selectedSite !== 'ALL') {
@@ -939,11 +632,6 @@
 
       filteredData.forEach(item => {
         let sortedSteps = [...item.steps].sort(naturalWbsSort);
-        if (role === 'DOER' && doerEmail) {
-          sortedSteps = sortedSteps.filter(s => (s.assignedEmail || '').toLowerCase().trim() === doerEmail);
-          if (sortedSteps.length === 0) return;
-        }
-
         const isCollapsed = collapsedTasks[item.uniqueId] !== undefined ? collapsedTasks[item.uniqueId] : true;
 
         const total = sortedSteps.length;
@@ -1014,7 +702,6 @@
             const actualStartStr = s.actualStartDate ? new Date(s.actualStartDate).toLocaleDateString('en-GB') : (s.plannedStartDate ? new Date(s.plannedStartDate).toLocaleDateString('en-GB') : '—');
             const actualEndStr = (isCompleted && s.actualEndDate) ? new Date(s.actualEndDate).toLocaleDateString('en-GB') : (isCompleted && s.updatedAt ? new Date(s.updatedAt).toLocaleDateString('en-GB') : (isCompleted ? new Date().toLocaleDateString('en-GB') : '—'));
 
-            // Direct Toggle Action Button (Clicking toggles between Done and Pending instantly)
             const toggleButtonText = isCompleted ? '↺ Make Pending' : '✓ Mark Done';
             const toggleButtonClass = isCompleted ? 'bg-amber-50 text-amber-700 hover:bg-amber-100 border-amber-200' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200';
 
@@ -1041,14 +728,14 @@
                     ${timer.label}
                   </span>
                 </td>
-                <td class="py-3 px-3 text-slate-600 dark:text-slate-300 text-[11px] whitespace-normal break-words italic">
-                  ${s.remarks ? `💬 ${s.remarks}` : '<span class="text-slate-300">—</span>'}
+                <td class="py-3 px-3 text-slate-600 dark:text-slate-300 text-[11px] whitespace-normal break-words italic cursor-pointer hover:bg-indigo-50/50 transition rounded" onclick="editStepRemarks('${item.uniqueId}', '${s._id}', '${(s.remarks || '').replace(/'/g, "\\'")}')" title="Click to edit remark">
+                  ${s.remarks ? `💬 ${s.remarks}` : '<span class="text-slate-300">Add remark...</span>'}
                 </td>
                 <td class="py-3 px-3 whitespace-nowrap">
                   <span class="px-2 py-0.5 text-[9px] font-bold rounded ${statusBadgeClass}">${statusLabel}</span>
                 </td>
                 <td class="py-3 px-3 text-center whitespace-nowrap">
-                  <button onclick="directToggleStepStatus('${item.uniqueId}', '${s._id}', '${s.status}', '${s.wbsNo}', ${JSON.stringify(item.steps).replace(/"/g, '&quot;')})" class="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[10px] font-bold shadow-2xs border transition ${toggleButtonClass}">
+                  <button onclick="directToggleStepStatus('${item.uniqueId}', '${s._id}', '${s.status}', '${s.wbsNo}', ${JSON.stringify(item.steps).replace(/"/g, '&quot;')}, '${(s.remarks || '').replace(/'/g, "\\'")}')" class="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[10px] font-bold shadow-2xs border transition ${toggleButtonClass}">
                     ${toggleButtonText}
                   </button>
                 </td>
@@ -1090,15 +777,11 @@
         activeDoers = doersJson.data || [];
         allSitesList = sitesJson.data || [];
 
-        renderDoerHeaderDropdown(activeDoers);
         renderProjectFilterDropdown();
         applyFilters();
 
         if(!document.getElementById('viewSites').classList.contains('hidden')) {
           loadSitesList();
-        }
-        if(!document.getElementById('viewTeam').classList.contains('hidden')) {
-          renderTeamView();
         }
       } catch (err) {
         console.error("Dashboard Load Error:", err);
@@ -1164,7 +847,7 @@
                   <button onclick="toggleSiteHideStatus('${s._id}', ${Boolean(s.isHidden)})" class="p-1.5 rounded border ${hideBtnClass}" title="${hideTitle}">
                     <i data-lucide="${hideIcon}" class="w-3.5 h-3.5"></i>
                   </button>
-                  <button onclick="openEditSiteModal('${s._id}', '${s.siteName.replace(/'/g, "\\'")}', '${(s.companyName || '').replace(/'/g, "\\'")}', '${(s.processCoordinator || '').replace(/'/g, "\\'")}', '${(s.technicalPerson || '').replace(/'/g, "\\'")}', '${(s.purchaserPerson || '').replace(/'/g, "\\'")}', '${(s.vrePerson || '').replace(/'/g, "\\'")}')" class="text-slate-400 hover:text-indigo-600 p-1" title="Edit Site">
+                  <button onclick="openEditSiteModal('${s._id}', '${s.siteName.replace(/'/g, "\\'")}')" class="text-slate-400 hover:text-indigo-600 p-1" title="Edit Site">
                     <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
                   </button>
                   <button onclick="deleteSite('${s._id}')" class="text-slate-300 hover:text-rose-600 p-1" title="Delete Site">
@@ -1181,11 +864,6 @@
                 <div class="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
                   <div class="bg-emerald-500 h-full rounded-full" style="width: ${siteProgress}%"></div>
                 </div>
-                <div class="flex gap-2 text-[9px] font-bold pt-0.5">
-                  <span class="text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded">Done: ${completedSteps}</span>
-                  <span class="text-slate-700 bg-slate-200 px-1.5 py-0.2 rounded">Pending: ${pendingSteps}</span>
-                  <span class="text-rose-700 bg-rose-50 px-1.5 py-0.2 rounded">Delayed: ${delayedSteps}</span>
-                </div>
               </div>
             </div>
           `;
@@ -1200,38 +878,12 @@
     function openSiteModal() {
       document.getElementById('editSiteId').value = '';
       document.getElementById('formSiteName').value = '';
-      document.getElementById('formCompanyName').value = 'MAHESHWARI DISTRIBUTORS';
-      document.getElementById('formProcCoord').value = 'Tulsi Sen';
-      document.getElementById('formTechPerson').value = 'Heera lal Ji (8003698656)';
-      document.getElementById('formPurchaser').value = 'Ronak Ji (8107688615)';
-      document.getElementById('formVre').value = 'Aarti Bala (8824133320)';
-      document.getElementById('modalSiteTitle').innerText = 'Add New Site / Project';
-      toggleModal('siteModal', true);
-    }
-
-    function openEditSiteModal(id, name, comp, coord, tech, pur, vre) {
-      document.getElementById('editSiteId').value = id;
-      document.getElementById('formSiteName').value = name;
-      document.getElementById('formCompanyName').value = comp || 'MAHESHWARI DISTRIBUTORS';
-      document.getElementById('formProcCoord').value = coord || 'Tulsi Sen';
-      document.getElementById('formTechPerson').value = tech || 'Heera lal Ji (8003698656)';
-      document.getElementById('formPurchaser').value = pur || 'Ronak Ji (8107688615)';
-      document.getElementById('formVre').value = vre || 'Aarti Bala (8824133320)';
-      document.getElementById('modalSiteTitle').innerText = 'Edit Site Details';
       toggleModal('siteModal', true);
     }
 
     async function saveSiteData() {
       const id = document.getElementById('editSiteId').value;
-      const payload = {
-        siteName: document.getElementById('formSiteName').value.trim(),
-        companyName: document.getElementById('formCompanyName').value.trim(),
-        processCoordinator: document.getElementById('formProcCoord').value.trim(),
-        technicalPerson: document.getElementById('formTechPerson').value.trim(),
-        purchaserPerson: document.getElementById('formPurchaser').value.trim(),
-        vrePerson: document.getElementById('formVre').value.trim()
-      };
-
+      const payload = { siteName: document.getElementById('formSiteName').value.trim() };
       const url = id ? `${API_BASE}/api/sites/${id}` : `${API_BASE}/api/sites`;
       const method = id ? 'PUT' : 'POST';
 
@@ -1253,185 +905,7 @@
       if (!confirm('Are you sure you want to delete this site?')) return;
       const res = await fetch(`${API_BASE}/api/sites/${id}`, { method: 'DELETE' });
       const json = await res.json();
-      if (json.success) {
-        loadDashboardData();
-      }
-    }
-
-    function renderDoerHeaderDropdown(doers) {
-      const select = document.getElementById('doerDropdownSelect');
-      if (!select) return;
-      let html = '';
-      doers.forEach(d => html += `<option value="${d.email}">${d.name} (${d.email})</option>`);
-      select.innerHTML = html;
-    }
-
-    function renderTeamView() {
-      const container = document.getElementById('teamCardsContainer');
-      if (!container) return;
-      let html = '';
-      const period = document.getElementById('mainAuditPeriodSelect')?.value || 'ALL';
-      const now = new Date();
-
-      let startDateLimit = new Date(0);
-      if (period === 'WEEK') {
-        startDateLimit = new Date();
-        startDateLimit.setDate(now.getDate() - 7);
-      } else if (period === 'MONTH') {
-        startDateLimit = new Date();
-        startDateLimit.setDate(now.getDate() - 30);
-      } else if (period === 'QUARTER') {
-        startDateLimit = new Date();
-        startDateLimit.setDate(now.getDate() - 90);
-      }
-
-      activeDoers.forEach(d => {
-        let assignedTotal = 0, completedCount = 0, pendingCount = 0, backlogCount = 0;
-
-        allData.forEach(task => {
-          task.steps.forEach(st => {
-            if ((st.assignedEmail || '').toLowerCase().trim() === (d.email || '').toLowerCase().trim() || 
-                (st.assignedName || '').toLowerCase().trim() === (d.name || '').toLowerCase().trim()) {
-              
-              const pStart = new Date(st.plannedStartDate);
-              const pEnd = new Date(st.plannedEndDate);
-              const isBacklog = (st.status !== 'Completed' && pEnd < now);
-
-              let isInPeriod = true;
-              if (period !== 'ALL') {
-                isInPeriod = (pStart >= startDateLimit) || (pEnd >= startDateLimit) || isBacklog;
-              }
-
-              if (isInPeriod) {
-                assignedTotal++;
-                if (st.status === 'Completed') completedCount++;
-                else if (isBacklog) backlogCount++;
-                else pendingCount++;
-              }
-            }
-          });
-        });
-
-        const doerProgress = assignedTotal > 0 ? Math.round((completedCount / assignedTotal) * 100) : 0;
-
-        html += `
-          <div class="bg-white dark:bg-darkcard p-3 rounded-xl border border-slate-200 dark:border-darkborder shadow-2xs space-y-2">
-            <div class="flex items-center justify-between">
-              <div>
-                <h4 class="font-bold text-xs text-slate-900 dark:text-white">👤 ${d.name}</h4>
-                <p class="text-[10px] text-slate-400 font-mono">${d.email}</p>
-              </div>
-              <div class="flex items-center gap-1.5">
-                <span class="px-2 py-0.5 text-[9px] text-indigo-600 bg-indigo-50 font-bold rounded">${d.role || 'Executive'}</span>
-                <button onclick="openDoerAuditModal('${d.email}', '${d.name.replace(/'/g, "\\'")}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 rounded text-[10px] font-bold shadow-xs transition">
-                  🔍 View Details
-                </button>
-              </div>
-            </div>
-
-            <div class="bg-slate-50 dark:bg-slate-800 p-2 rounded-lg border space-y-1">
-              <div class="flex justify-between text-[10px] font-bold">
-                <span class="text-slate-600 dark:text-slate-300">Score (${period}): ${completedCount}/${assignedTotal} Done (${doerProgress}%)</span>
-              </div>
-              <div class="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
-                <div class="bg-emerald-500 h-full rounded-full" style="width: ${doerProgress}%"></div>
-              </div>
-              <div class="flex gap-2 text-[9px] font-bold pt-0.5">
-                <span class="text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded">Done: ${completedCount}</span>
-                <span class="text-slate-700 bg-slate-200 px-1.5 py-0.2 rounded">Pending: ${pendingCount}</span>
-                <span class="text-purple-700 bg-purple-50 px-1.5 py-0.2 rounded">Backlog: ${backlogCount}</span>
-              </div>
-            </div>
-          </div>
-        `;
-      });
-
-      container.innerHTML = html || '<p class="text-xs text-slate-400 py-4">No members found.</p>';
-      lucide.createIcons();
-    }
-
-    function openDoerAuditModal(email, name) {
-      currentAuditDoer = { email, name };
-      document.getElementById('auditModalTitle').innerText = `Performance Audit: ${name} (${email})`;
-      const container = document.getElementById('auditModalContent');
-      const now = new Date();
-      const period = document.getElementById('mainAuditPeriodSelect')?.value || 'ALL';
-
-      let startDateLimit = new Date(0);
-      if (period === 'WEEK') {
-        startDateLimit = new Date();
-        startDateLimit.setDate(now.getDate() - 7);
-      } else if (period === 'MONTH') {
-        startDateLimit = new Date();
-        startDateLimit.setDate(now.getDate() - 30);
-      } else if (period === 'QUARTER') {
-        startDateLimit = new Date();
-        startDateLimit.setDate(now.getDate() - 90);
-      }
-
-      let assignedSteps = [];
-      allData.forEach(task => {
-        task.steps.forEach(st => {
-          if ((st.assignedEmail || '').toLowerCase().trim() === (email || '').toLowerCase().trim() || 
-              (st.assignedName || '').toLowerCase().trim() === (name || '').toLowerCase().trim()) {
-            
-            const pStart = new Date(st.plannedStartDate);
-            const pEnd = new Date(st.plannedEndDate);
-            const isBacklog = (st.status !== 'Completed' && pEnd < now);
-
-            let isInPeriod = true;
-            if (period !== 'ALL') {
-              isInPeriod = (pStart >= startDateLimit) || (pEnd >= startDateLimit) || isBacklog;
-            }
-
-            if (isInPeriod) {
-              assignedSteps.push({
-                uniqueId: task.uniqueId,
-                projectName: task.projectName || 'General',
-                mainItemName: task.mainItemName,
-                step: st,
-                isCompleted: st.status === 'Completed',
-                isBacklog: isBacklog,
-                isDelayed: st.status === 'Delayed'
-              });
-            }
-          }
-        });
-      });
-
-      if (assignedSteps.length === 0) {
-        container.innerHTML = '<p class="text-xs text-slate-400 py-8 text-center">No tasks found for the selected period.</p>';
-        toggleModal('doerAuditModal', true);
-        return;
-      }
-
-      let html = '';
-      assignedSteps.forEach((item) => {
-        let statusBadge = '';
-        if (item.isCompleted) statusBadge = '<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold">✓ Done</span>';
-        else if (item.isBacklog) statusBadge = '<span class="px-2 py-0.5 bg-purple-100 text-purple-800 rounded font-bold">Backlog (Date Passed)</span>';
-        else if (item.isDelayed) statusBadge = '<span class="px-2 py-0.5 bg-rose-100 text-rose-800 rounded font-bold animate-pulse">Overdue</span>';
-        else statusBadge = '<span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded font-bold">Pending</span>';
-
-        const startDateStr = new Date(item.step.plannedStartDate).toLocaleDateString('en-GB');
-        const endDateStr = new Date(item.step.plannedEndDate).toLocaleDateString('en-GB');
-
-        html += `
-          <div class="bg-slate-50 dark:bg-slate-800 p-2.5 rounded-lg border space-y-1">
-            <div class="flex items-center justify-between font-bold">
-              <span class="text-indigo-600 dark:text-indigo-400 font-mono text-[10px]">${item.uniqueId} | Site: ${item.projectName}</span>
-              ${statusBadge}
-            </div>
-            <p class="font-semibold text-slate-900 dark:text-white">Task: ${item.mainItemName}</p>
-            <p class="text-slate-700 dark:text-slate-200"><b>Step #${item.step.wbsNo}:</b> ${item.step.stepTitle}</p>
-            <p class="text-[10px] text-slate-400 font-mono">📅 Plan Date: <b>${startDateStr}</b> ➔ <b>${endDateStr}</b></p>
-            ${item.step.remarks ? `<p class="text-[10px] text-slate-500 italic">Remarks: ${item.step.remarks}</p>` : ''}
-          </div>
-        `;
-      });
-
-      container.innerHTML = html;
-      toggleModal('doerAuditModal', true);
+      if (json.success) loadDashboardData();
     }
 
     function updateTemplateDropdown() {
@@ -1447,16 +921,12 @@
     function saveAsTemplate() {
       const stepCards = document.querySelectorAll('#stepsContainer .step-card');
       if (stepCards.length === 0) return alert('No steps available to save!');
-      
       let titles = [];
       stepCards.forEach(c => titles.push(c.querySelector('.step-title').value.trim()));
-      const bulkText = titles.join('\n');
-
       const name = document.getElementById('mItemName').value.trim() || prompt('Enter Template Name:');
       if(!name) return;
-
       const templates = JSON.parse(localStorage.getItem('pms_saved_templates') || '[]');
-      templates.push({ name, steps: bulkText });
+      templates.push({ name, steps: titles.join('\n') });
       localStorage.setItem('pms_saved_templates', JSON.stringify(templates));
       updateTemplateDropdown();
       alert('Template Saved Successfully!');
@@ -1479,7 +949,6 @@
       document.getElementById('mItemName').value = '';
       document.getElementById('bulkStepsInput').value = '';
       document.getElementById('stepsContainer').innerHTML = '<p class="text-xs text-slate-400 text-center py-4 italic">No steps generated yet. Click "Generate From List".</p>';
-      
       updateTemplateDropdown();
       toggleModal('createTaskModal', true);
     }
@@ -1487,7 +956,6 @@
     function openEditTaskModal(uniqueId) {
       const task = allData.find(t => t.uniqueId === uniqueId);
       if(!task) return;
-
       document.getElementById('editTaskIdField').value = task.uniqueId;
       document.getElementById('modalTaskTitle').innerText = `Update Task Package: ${task.uniqueId}`;
       document.getElementById('mProject').value = task.projectName || '';
@@ -1498,18 +966,7 @@
 
       const container = document.getElementById('stepsContainer');
       let html = '';
-      
       task.steps.sort(naturalWbsSort).forEach((s, i) => {
-        let doerOptions = '';
-        if (activeDoers && activeDoers.length > 0) {
-          activeDoers.forEach(d => {
-            const selected = (d.name === s.assignedName || d.email === s.assignedEmail) ? 'selected' : '';
-            doerOptions += `<option value="${d.name}" data-email="${d.email}" ${selected}>${d.name}</option>`;
-          });
-        } else {
-          doerOptions = `<option value="${s.assignedName || 'Unassigned'}" data-email="${s.assignedEmail || 'doer@domain.com'}">${s.assignedName || 'Unassigned'}</option>`;
-        }
-
         const stepId = s._id || s.stepId || '';
         const status = s.status || 'Pending';
         const remarks = s.remarks ? String(s.remarks).replace(/"/g, '&quot;') : '';
@@ -1534,10 +991,9 @@
               <button type="button" onclick="this.closest('.step-card').remove();" class="text-rose-500 hover:underline">Remove</button>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-12 gap-1.5 items-center">
-              <input type="text" class="step-title md:col-span-7 border rounded px-1.5 py-0.5 text-xs dark:bg-slate-800 dark:text-white" value="${safeTitle}">
-              <select class="step-doer md:col-span-3 border rounded px-1.5 py-0.5 text-[11px] dark:bg-slate-800 dark:text-white">${doerOptions}</select>
-              <div class="md:col-span-2 flex items-center gap-1">
-                <input type="number" min="1" value="${s.durationDays || 2}" class="step-days w-full border rounded px-1 py-0.5 text-xs font-bold text-center dark:bg-slate-800 dark:text-white" title="Duration in Days">
+              <input type="text" class="step-title md:col-span-8 border rounded px-1.5 py-0.5 text-xs dark:bg-slate-800 dark:text-white" value="${safeTitle}">
+              <div class="md:col-span-4 flex items-center gap-1">
+                <input type="number" min="1" value="${s.durationDays || 2}" class="step-days w-full border rounded px-1 py-0.5 text-xs font-bold text-center dark:bg-slate-800 dark:text-white" title="Duration">
                 <span class="text-[9px] text-slate-400">d</span>
               </div>
             </div>
@@ -1545,10 +1001,7 @@
         `;
       });
       container.innerHTML = html;
-
-      let titles = task.steps.sort(naturalWbsSort).map(s => s.stepTitle).join('\n');
-      document.getElementById('bulkStepsInput').value = titles;
-
+      document.getElementById('bulkStepsInput').value = task.steps.sort(naturalWbsSort).map(s => s.stepTitle).join('\n');
       updateTemplateDropdown();
       toggleModal('createTaskModal', true);
     }
@@ -1580,19 +1033,11 @@
         alert('Please paste or type your step titles list in the text box first.');
         return;
       }
-
       const lines = bulkText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
       let html = '';
-
       lines.forEach((line, i) => {
-        let match = existingSteps.find(s => String(s.wbsNo) === String(i + 1)) ||
+        let match = existingSteps.find(s => String(s.wbsNo) === String(i + 1)) || 
                     existingSteps.find(s => s.stepTitle.trim().toLowerCase() === line.toLowerCase());
-
-        let doerOptions = '';
-        activeDoers.forEach(d => {
-          const selected = match && (d.name === match.assignedName || d.email === match.assignedEmail) ? 'selected' : '';
-          doerOptions += `<option value="${d.name}" data-email="${d.email}" ${selected}>${d.name}</option>`;
-        });
 
         const stepId = match ? (match._id || match.stepId || '') : '';
         const status = match ? (match.status || 'Pending') : 'Pending';
@@ -1619,10 +1064,9 @@
               <button type="button" onclick="this.closest('.step-card').remove();" class="text-rose-500 hover:underline">Remove</button>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-12 gap-1.5 items-center">
-              <input type="text" class="step-title md:col-span-7 border rounded px-1.5 py-0.5 text-xs dark:bg-slate-800 dark:text-white" value="${safeLine}">
-              <select class="step-doer md:col-span-3 border rounded px-1.5 py-0.5 text-[11px] dark:bg-slate-800 dark:text-white">${doerOptions}</select>
-              <div class="md:col-span-2 flex items-center gap-1">
-                <input type="number" min="1" value="${duration}" class="step-days w-full border rounded px-1 py-0.5 text-xs font-bold text-center dark:bg-slate-800 dark:text-white" title="Duration in Days">
+              <input type="text" class="step-title md:col-span-8 border rounded px-1.5 py-0.5 text-xs dark:bg-slate-800 dark:text-white" value="${safeLine}">
+              <div class="md:col-span-4 flex items-center gap-1">
+                <input type="number" min="1" value="${duration}" class="step-days w-full border rounded px-1 py-0.5 text-xs font-bold text-center dark:bg-slate-800 dark:text-white" title="Duration">
                 <span class="text-[9px] text-slate-400">d</span>
               </div>
             </div>
@@ -1635,13 +1079,7 @@
     function addSingleStepRow() {
       const container = document.getElementById('stepsContainer');
       if(container.querySelector('p')) container.innerHTML = '';
-      
       const count = container.children.length + 1;
-      let doerOptions = '';
-      activeDoers.forEach(d => {
-        doerOptions += `<option value="${d.name}" data-email="${d.email}">${d.name}</option>`;
-      });
-
       const div = document.createElement('div');
       div.className = 'step-card bg-slate-50 dark:bg-slate-800 p-2 rounded border space-y-1';
       div.setAttribute('data-status', 'Pending');
@@ -1654,10 +1092,9 @@
           <button type="button" onclick="this.closest('.step-card').remove();" class="text-rose-500 hover:underline">Remove</button>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-12 gap-1.5 items-center">
-          <input type="text" class="step-title md:col-span-7 border rounded px-1.5 py-0.5 text-xs dark:bg-slate-800 dark:text-white" placeholder="Enter step title...">
-          <select class="step-doer md:col-span-3 border rounded px-1.5 py-0.5 text-[11px] dark:bg-slate-800 dark:text-white">${doerOptions}</select>
-          <div class="md:col-span-2 flex items-center gap-1">
-            <input type="number" min="1" value="2" class="step-days w-full border rounded px-1 py-0.5 text-xs font-bold text-center dark:bg-slate-800 dark:text-white" title="Duration in Days">
+          <input type="text" class="step-title md:col-span-8 border rounded px-1.5 py-0.5 text-xs dark:bg-slate-800 dark:text-white" placeholder="Enter step title...">
+          <div class="md:col-span-4 flex items-center gap-1">
+            <input type="number" min="1" value="2" class="step-days w-full border rounded px-1 py-0.5 text-xs font-bold text-center dark:bg-slate-800 dark:text-white" title="Duration">
             <span class="text-[9px] text-slate-400">d</span>
           </div>
         </div>
@@ -1697,11 +1134,7 @@
 
       stepCards.forEach((card, idx) => {
         const title = card.querySelector('.step-title').value.trim() || `Step #${idx + 1}`;
-        const selectDoer = card.querySelector('.step-doer');
-        const doerName = selectDoer.value;
-        const doerEmail = selectDoer.options[selectDoer.selectedIndex].getAttribute('data-email') || 'doer@domain.com';
         const durationDays = parseInt(card.querySelector('.step-days').value, 10) || 2;
-
         const stepStart = new Date(baseDate);
         const stepEnd = new Date(stepStart);
         stepEnd.setDate(stepEnd.getDate() + durationDays);
@@ -1728,8 +1161,8 @@
         const stepObj = {
           wbsNo: String(idx + 1),
           stepTitle: title,
-          assignedName: doerName,
-          assignedEmail: doerEmail,
+          assignedName: 'Team',
+          assignedEmail: 'team@domain.com',
           durationDays: durationDays,
           plannedStartDate: stepStart,
           plannedEndDate: stepEnd,
@@ -1763,32 +1196,6 @@
         }
       } catch (err) {
         alert('Network error: ' + err.message);
-      }
-    }
-
-    function openAddMemberModal() {
-      document.getElementById('newMemberName').value = '';
-      document.getElementById('newMemberEmail').value = '';
-      document.getElementById('newMemberRole').value = '';
-      toggleModal('addMemberModal', true);
-    }
-
-    async function saveNewMember() {
-      const name = document.getElementById('newMemberName').value.trim();
-      const email = document.getElementById('newMemberEmail').value.trim();
-      const role = document.getElementById('newMemberRole').value.trim();
-
-      const res = await fetch(`${API_BASE}/api/doers`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, role })
-      });
-      const json = await res.json();
-      if(json.success) {
-        toggleModal('addMemberModal', false);
-        loadDashboardData();
-      } else {
-        alert(json.error);
       }
     }
   </script>
