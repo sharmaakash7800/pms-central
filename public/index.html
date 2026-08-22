@@ -211,7 +211,7 @@
           <span class="text-base">📍</span>
           <div>
             <h2 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Sites & Projects Directory</h2>
-            <p class="text-[9px] text-slate-400">Click on any site name to quickly create a task for it</p>
+            <p class="text-[9px] text-slate-400">Click on any site name to view its tasks and open all steps</p>
           </div>
         </div>
         <button onclick="openSiteModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1">
@@ -598,6 +598,26 @@
       renderStructuredTableGrid(allData);
     }
 
+    // Direct filter and auto-expand function when clicking on a site
+    function filterBySiteAndOpenSteps(siteName) {
+      switchTab('viewPmsBoard');
+      
+      const filterSelect = document.getElementById('filterByProject');
+      if (filterSelect) {
+        filterSelect.value = siteName;
+      }
+      
+      // Auto expand all tasks for this site
+      allData.forEach(t => {
+        if ((t.projectName || '').toLowerCase().trim() === siteName.toLowerCase().trim()) {
+          collapsedTasks[t.uniqueId] = false;
+        }
+      });
+      localStorage.setItem('pms_collapsed_tasks', JSON.stringify(collapsedTasks));
+      
+      applyFilters();
+    }
+
     function renderStructuredTableGrid(data) {
       const tbody = document.getElementById('tableRows');
       const role = document.getElementById('userRole').value;
@@ -826,7 +846,7 @@
             html += `
               <div class="bg-white dark:bg-darkcard p-3 rounded-xl border border-slate-200 dark:border-darkborder shadow-2xs space-y-1.5 text-xs">
                 <div class="flex items-center justify-between font-bold">
-                  <span onclick="openCreateModalWithSite('${s.siteName.replace(/'/g, "\\'")}')" class="text-indigo-600 dark:text-indigo-400 text-xs font-extrabold cursor-pointer hover:underline" title="Click to create task for this site">📍 ${s.siteName}</span>
+                  <span onclick="filterBySiteAndOpenSteps('${s.siteName.replace(/'/g, "\\'")}')" class="text-indigo-600 dark:text-indigo-400 text-xs font-extrabold cursor-pointer hover:underline" title="Click to view all tasks & open steps">📍 ${s.siteName}</span>
                   <div class="flex items-center gap-1">
                     <button onclick="openEditSiteModal('${s._id}', '${s.siteName.replace(/'/g, "\\'")}', '${(s.companyName || '').replace(/'/g, "\\'")}', '${(s.projectTitle || '').replace(/'/g, "\\'")}', '${(s.poNumber || '').replace(/'/g, "\\'")}', '${(s.dataEntryOperator || '').replace(/'/g, "\\'")}', '${(s.processCoordinator || '').replace(/'/g, "\\'")}', '${(s.technicalPerson || '').replace(/'/g, "\\'")}', '${(s.purchaserPerson || '').replace(/'/g, "\\'")}', '${(s.vrePerson || '').replace(/'/g, "\\'")}', '${(s.projectOwner || '').replace(/'/g, "\\'")}')" class="text-slate-400 hover:text-indigo-600 p-1" title="Edit Site">
                       <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
@@ -864,15 +884,6 @@
     function openSiteModal() {
       document.getElementById('editSiteId').value = '';
       document.getElementById('formSiteName').value = '';
-      document.getElementById('formCompanyName').value = 'MAHESHWARI DISTRIBUTORS';
-      document.getElementById('formProjectTitle').value = '';
-      document.getElementById('formPoNumber').value = '';
-      document.getElementById('formDataEntryOp').value = '';
-      document.getElementById('formProcCoord').value = 'Tulsi Sen';
-      document.getElementById('formTechPerson').value = 'Heera lal Ji (8003698656)';
-      document.getElementById('formPurchaser').value = 'Ronak Ji (8107688615)';
-      document.getElementById('formVre').value = 'Aarti Bala (8824133320)';
-      document.getElementById('formProjectOwner').value = '';
       document.getElementById('modalSiteTitle').innerText = 'Add New Site / Project';
       toggleModal('siteModal', true);
     }
@@ -880,15 +891,6 @@
     function openEditSiteModal(id, name, comp, proj, po, operator, coord, tech, pur, vre, owner) {
       document.getElementById('editSiteId').value = id;
       document.getElementById('formSiteName').value = name;
-      document.getElementById('formCompanyName').value = comp || '';
-      document.getElementById('formProjectTitle').value = proj || '';
-      document.getElementById('formPoNumber').value = po || '';
-      document.getElementById('formDataEntryOp').value = operator || '';
-      document.getElementById('formProcCoord').value = coord || '';
-      document.getElementById('formTechPerson').value = tech || '';
-      document.getElementById('formPurchaser').value = pur || '';
-      document.getElementById('formVre').value = vre || '';
-      document.getElementById('formProjectOwner').value = owner || '';
       document.getElementById('modalSiteTitle').innerText = 'Edit Site Details';
       toggleModal('siteModal', true);
     }
@@ -896,16 +898,7 @@
     async function saveSiteData() {
       const id = document.getElementById('editSiteId').value;
       const payload = {
-        siteName: document.getElementById('formSiteName').value.trim(),
-        companyName: document.getElementById('formCompanyName').value.trim(),
-        projectTitle: document.getElementById('formProjectTitle').value.trim(),
-        poNumber: document.getElementById('formPoNumber').value.trim(),
-        dataEntryOperator: document.getElementById('formDataEntryOp').value.trim(),
-        processCoordinator: document.getElementById('formProcCoord').value.trim(),
-        technicalPerson: document.getElementById('formTechPerson').value.trim(),
-        purchaserPerson: document.getElementById('formPurchaser').value.trim(),
-        vrePerson: document.getElementById('formVre').value.trim(),
-        projectOwner: document.getElementById('formProjectOwner').value.trim()
+        siteName: document.getElementById('formSiteName').value.trim()
       };
 
       const url = id ? `${API_BASE}/api/sites/${id}` : `${API_BASE}/api/sites`;
