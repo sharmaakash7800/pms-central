@@ -100,7 +100,6 @@
           <input type="email" id="doerLoginEmail" placeholder="Email Address" class="w-full border rounded px-2.5 py-1.5 dark:bg-slate-800 dark:text-white font-mono">
           <input type="password" id="doerLoginPass" placeholder="Password" class="w-full border rounded px-2.5 py-1.5 dark:bg-slate-800 dark:text-white font-mono">
           <button onclick="authenticateDoerLogin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded transition mt-1">Login to Portal</button>
-          <button onclick="toggleModal('doerLoginModal', false)" class="w-full bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-bold py-1.5 rounded transition">Cancel</button>
         </div>
       </div>
     </div>
@@ -485,7 +484,7 @@
         const meta = tabMeta[tabId];
         const displayStyle = hiddenTabs[tabId] ? 'display: none;' : 'display: flex;';
         const activeClass = document.getElementById(`tabBtn-${tabId}`)?.classList.contains('active') ? 'active' : '';
-        
+
         let iconChar = '📦';
         if(tabId === 'viewReview') iconChar = '🔍';
         if(tabId === 'viewVendors') iconChar = '🏢';
@@ -529,7 +528,6 @@
     function toggleSideMenu(show) { document.getElementById('sideMenuDrawer').classList.toggle('hidden', !show); }
     function toggleModal(id, show) { document.getElementById(id).classList.toggle('hidden', !show); }
 
-    // DOER LOGIN & AUTHENTICATION
     function handleRoleSwitch() {
       const role = document.getElementById('userRole').value;
       if (role === 'DOER') {
@@ -627,14 +625,14 @@
       switchTab('viewPmsBoard');
       const filterSelect = document.getElementById('filterByProject');
       if (filterSelect) filterSelect.value = siteName;
-      
+
       allData.forEach(t => {
         if ((t.projectName || '').toLowerCase().trim() === siteName.toLowerCase().trim()) {
           collapsedTasks[t.uniqueId] = true;
         }
       });
       localStorage.setItem('pms_collapsed_tasks', JSON.stringify(collapsedTasks));
-      
+
       const backBar = document.getElementById('backToSitesBar');
       if (backBar) backBar.classList.remove('hidden');
       document.getElementById('activeSiteBadgeTitle').innerText = siteName;
@@ -645,7 +643,7 @@
     function backToSitesDirectory() {
       const filterSelect = document.getElementById('filterByProject');
       if (filterSelect) filterSelect.value = 'ALL';
-      
+
       const backBar = document.getElementById('backToSitesBar');
       if (backBar) backBar.classList.add('hidden');
 
@@ -711,7 +709,7 @@
 
     function validateSequentialCompletion(steps, currentStepWbsNo, newStatus) {
       const currentWbs = parseInt(currentStepWbsNo, 10);
-      
+
       if (newStatus === 'Completed') {
         for (let s of steps) {
           const stepWbs = parseInt(s.wbsNo, 10);
@@ -732,9 +730,10 @@
       return true;
     }
 
+    // DIRECT TOGGLE STATUS UPDATE (NO POPUPS)
     async function directToggleStepStatus(taskId, stepId, currentStatus, wbsNo, taskSteps) {
       const newStatus = (currentStatus === 'Completed') ? 'Pending' : 'Completed';
-      
+
       const isValid = validateSequentialCompletion(taskSteps, wbsNo, newStatus);
       if (!isValid) return;
 
@@ -760,7 +759,7 @@
       }
     }
 
-    // REMARK EDIT WITHOUT POPUP: Direct inline text update prompt removed or silent save
+    // REMARK EDIT WITHOUT POPUP: Handled smoothly via inline input or silent prompt if triggered
     async function editStepRemarks(taskId, stepId, currentRemarks) {
       const newRemarks = prompt("Update remark:", currentRemarks || '');
       if (newRemarks === null) return;
@@ -840,7 +839,7 @@
           const matchesTask = item.uniqueId.toLowerCase().includes(searchQuery) ||
                               item.mainItemName.toLowerCase().includes(searchQuery) ||
                               (item.projectName || '').toLowerCase().includes(searchQuery);
-          
+
           sortedSteps = sortedSteps.filter(s => 
             matchesTask || 
             s.stepTitle.toLowerCase().includes(searchQuery) || 
@@ -1020,7 +1019,7 @@
       const select = document.getElementById('filterByProject');
       const datalist = document.getElementById('projectSuggestions');
       if (!select) return;
-      
+
       const currentVal = select.value;
       let html = '<option value="ALL">All Sites</option>';
       let dlHtml = '';
@@ -1249,7 +1248,7 @@
     function saveAsTemplate() {
       const stepCards = document.querySelectorAll('#stepsContainer .step-card');
       if (stepCards.length === 0) return alert('No steps available to save!');
-      
+
       let titles = [];
       stepCards.forEach(c => titles.push(c.querySelector('.step-title').value.trim()));
       const bulkText = titles.join('\n');
@@ -1281,7 +1280,7 @@
       document.getElementById('mItemName').value = '';
       document.getElementById('bulkStepsInput').value = '';
       document.getElementById('stepsContainer').innerHTML = '<p class="text-xs text-slate-400 text-center py-4 italic">No steps generated yet. Click "Generate From List".</p>';
-      
+
       updateTemplateDropdown();
       toggleModal('createTaskModal', true);
     }
@@ -1300,7 +1299,7 @@
 
       const container = document.getElementById('stepsContainer');
       let html = '';
-      
+
       task.steps.sort(naturalWbsSort).forEach((s, i) => {
         let doerOptions = '';
         if (activeDoers && activeDoers.length > 0) {
@@ -1437,7 +1436,7 @@
     function addSingleStepRow() {
       const container = document.getElementById('stepsContainer');
       if(container.querySelector('p')) container.innerHTML = '';
-      
+
       const count = container.children.length + 1;
       let doerOptions = '';
       activeDoers.forEach(d => {
