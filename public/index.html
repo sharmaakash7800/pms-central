@@ -91,12 +91,25 @@
   <!-- Main Content -->
   <main class="max-w-7xl mx-auto px-3 sm:px-5 py-3 w-full flex-1 min-h-0 flex flex-col overflow-hidden pb-16">
     
+    <!-- Doer Login Modal Overlay if in Doer Mode & Not Logged In -->
+    <div id="doerLoginModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
+      <div class="bg-white dark:bg-darkcard rounded-2xl max-w-sm w-full p-5 shadow-2xl border space-y-3">
+        <h3 class="text-sm font-extrabold text-slate-900 dark:text-white text-center">Doer Portal Login</h3>
+        <p class="text-[11px] text-slate-500 text-center">Enter your email and password to access your assigned tasks.</p>
+        <div class="space-y-2 text-xs">
+          <input type="email" id="doerLoginEmail" placeholder="Email Address" class="w-full border rounded px-2.5 py-1.5 dark:bg-slate-800 dark:text-white font-mono">
+          <input type="password" id="doerLoginPass" placeholder="Password" class="w-full border rounded px-2.5 py-1.5 dark:bg-slate-800 dark:text-white font-mono">
+          <button onclick="authenticateDoerLogin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded transition mt-1">Login to Portal</button>
+        </div>
+      </div>
+    </div>
+
     <div id="activeDoerBanner" class="hidden shrink-0 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 p-2 rounded-xl mb-2 flex items-center justify-between">
       <div class="flex items-center gap-2 text-xs">
         <span class="w-2 h-2 rounded-full bg-indigo-600 animate-ping"></span>
         <span class="text-indigo-900 dark:text-indigo-200 font-bold">Filtered Workspace For: <span id="doerBannerName" class="underline"></span></span>
       </div>
-      <span class="text-[10px] bg-indigo-200 dark:bg-indigo-900 text-indigo-900 dark:text-indigo-200 px-2 py-0.5 rounded-full font-bold">Personalized View</span>
+      <button onclick="logoutDoer()" class="text-[10px] bg-rose-600 text-white px-2 py-0.5 rounded font-bold">Logout</button>
     </div>
 
     <!-- VIEW 1: STRUCTURED TABLE VIEW -->
@@ -204,7 +217,7 @@
           <span class="text-base">📍</span>
           <div>
             <h2 class="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">Sites & Projects Directory</h2>
-            <p class="text-[9px] text-slate-400">Click on any site name to view tasks. Use eye icons to hide/unhide completed sites.</p>
+            <p class="text-[9px] text-slate-400">Click on any site name to view tasks. Attach BOQ documents directly to sites.</p>
           </div>
         </div>
         <div class="flex items-center gap-2">
@@ -233,15 +246,6 @@
           </div>
         </div>
         <div class="flex items-center gap-2">
-          <div class="flex items-center gap-1.5 bg-slate-50 dark:bg-slate-800 border px-2.5 py-1 rounded-lg">
-            <span class="text-[9px] font-bold uppercase text-slate-500">Score Audit Period:</span>
-            <select id="mainAuditPeriodSelect" onchange="renderTeamView()" class="bg-transparent text-xs font-bold outline-none cursor-pointer dark:text-white">
-              <option value="ALL">All Time (Including Old Pending)</option>
-              <option value="WEEK">This Week (Last 7 Days)</option>
-              <option value="MONTH">This Month (Last 30 Days)</option>
-              <option value="QUARTER">This Quarter (Last 90 Days)</option>
-            </select>
-          </div>
           <button onclick="openAddMemberModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1">
             <i data-lucide="plus" class="w-3.5 h-3.5"></i>
             <span>+ Add Member</span>
@@ -252,6 +256,123 @@
     </div>
 
   </main>
+
+  <!-- Modal: Add / Edit Site (With BOQ Attachment) -->
+  <div id="siteModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
+    <div class="bg-white dark:bg-darkcard rounded-2xl max-w-lg w-full p-4 shadow-2xl border relative max-h-[92vh] flex flex-col">
+      <div class="flex items-center justify-between pb-2 border-b">
+        <h3 class="text-xs font-bold text-slate-900 dark:text-white" id="modalSiteTitle">Add / Edit Site</h3>
+        <button onclick="toggleModal('siteModal', false)" class="text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+
+      <form onsubmit="event.preventDefault(); saveSiteData();" class="overflow-y-auto custom-scroll py-2.5 space-y-2 flex-1 pr-1 text-xs">
+        <input type="hidden" id="editSiteId">
+        <div>
+          <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Site Name / Location *</label>
+          <input type="text" id="formSiteName" required class="w-full border rounded px-2.5 py-1 font-bold dark:bg-slate-800 dark:text-white" placeholder="e.g. Bhilwara Plant">
+        </div>
+        <div>
+          <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">BOQ Document Link / URL</label>
+          <input type="url" id="formBoqUrl" placeholder="https://docs.google.com/spreadsheets/..." class="w-full border rounded px-2.5 py-1 dark:bg-slate-800 dark:text-white font-mono">
+        </div>
+        <div class="pt-2 border-t flex justify-end gap-1.5">
+          <button type="button" onclick="toggleModal('siteModal', false)" class="px-2.5 py-1 font-bold text-slate-600">Cancel</button>
+          <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-1.5 rounded transition">Save Site Record</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Add Team Member (With Password Creation) -->
+  <div id="addMemberModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
+    <div class="bg-white dark:bg-darkcard rounded-2xl max-w-sm w-full p-4 shadow-2xl border relative">
+      <button onclick="toggleModal('addMemberModal', false)" class="absolute right-3 top-3 text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
+      <h3 class="text-xs font-bold text-slate-900 dark:text-white mb-2">Add Team Member & Password</h3>
+      <form onsubmit="event.preventDefault(); saveNewMember();" class="space-y-2 text-xs">
+        <input type="text" id="newMemberName" required placeholder="Full Name" class="w-full border rounded px-2 py-1 dark:bg-slate-800 dark:text-white">
+        <input type="email" id="newMemberEmail" required placeholder="Email Address" class="w-full border rounded px-2 py-1 dark:bg-slate-800 dark:text-white font-mono">
+        <input type="password" id="newMemberPassword" required placeholder="Portal Login Password" class="w-full border rounded px-2 py-1 dark:bg-slate-800 dark:text-white font-mono">
+        <input type="text" id="newMemberRole" placeholder="Role / Designation" class="w-full border rounded px-2 py-1 dark:bg-slate-800 dark:text-white">
+        <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-1.5 rounded transition mt-1">Save Member Credentials</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Create Task Package -->
+  <div id="createTaskModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
+    <div class="bg-white dark:bg-darkcard rounded-2xl max-w-3xl w-full p-4 shadow-2xl border relative max-h-[92vh] flex flex-col">
+      <div class="flex items-center justify-between pb-2 border-b">
+        <h3 class="text-xs font-bold text-slate-900 dark:text-white" id="modalTaskTitle">Create Main Task & Steps</h3>
+        <button onclick="toggleModal('createTaskModal', false)" class="text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+
+      <div class="overflow-y-auto custom-scroll py-2.5 space-y-2.5 flex-1 pr-1 text-xs">
+        <input type="hidden" id="editTaskIdField">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <div>
+            <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Site / Project Name *</label>
+            <input type="text" id="mProject" required list="projectSuggestions" class="w-full border rounded px-2 py-1 font-bold dark:bg-slate-800 dark:text-white" value="">
+            <datalist id="projectSuggestions"></datalist>
+          </div>
+          <div>
+            <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Main Task Name *</label>
+            <input type="text" id="mItemName" required class="w-full border rounded px-2 py-1 font-bold dark:bg-slate-800 dark:text-white" placeholder="e.g. Supply of 11 kV Extension Panel">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
+          <div>
+            <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Category</label>
+            <select id="mType" class="w-full border rounded px-2 py-1 font-semibold dark:bg-slate-800 dark:text-white">
+              <option value="SUPPLY">SUPPLY PMS</option>
+              <option value="SERVICE">SERVICE PMS</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[9px] font-bold text-indigo-600 uppercase mb-0.5">Start Date</label>
+            <input type="date" id="mStartDate" required class="w-full border rounded px-2 py-0.5 font-bold dark:bg-slate-800 dark:text-white">
+          </div>
+          <div>
+            <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Qty</label>
+            <input type="number" id="mQty" required value="1" min="1" class="w-full border rounded px-2 py-0.5 font-mono dark:bg-slate-800 dark:text-white">
+          </div>
+        </div>
+
+        <div class="bg-indigo-50/60 p-2.5 rounded-xl border space-y-1.5">
+          <div class="flex justify-between items-center">
+            <label class="block font-bold text-indigo-900 dark:text-indigo-200">Steps Library (Templates):</label>
+            <select id="templateSelector" onchange="loadSelectedTemplate()" class="border rounded px-2 py-0.5 text-[11px] w-52 font-semibold bg-white dark:bg-slate-800 dark:text-white">
+              <option value="">-- Load Saved Template --</option>
+            </select>
+          </div>
+          <textarea id="bulkStepsInput" rows="4" class="w-full border rounded p-2 text-xs font-mono dark:bg-slate-900 dark:text-white" placeholder="Paste your step list here (one per line)..."></textarea>
+          <div class="flex justify-between items-center pt-1">
+            <button type="button" onclick="saveAsTemplate()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1 rounded text-[10px]">Save as Template</button>
+            <button type="button" onclick="generateStepsFromBulkInput()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-1.5 rounded shadow-xs">Generate From List</button>
+          </div>
+        </div>
+
+        <div class="flex justify-between items-center">
+          <span class="font-bold text-slate-700 dark:text-slate-300">Configured Steps Table:</span>
+          <button type="button" onclick="addSingleStepRow()" class="text-indigo-600 font-bold text-[11px]">+1 Step</button>
+        </div>
+
+        <div id="stepsContainer" class="space-y-1.5">
+          <p class="text-xs text-slate-400 text-center py-4 italic">No steps generated yet. Click "Generate From List".</p>
+        </div>
+
+        <div class="pt-2 border-t flex justify-between items-center mt-2">
+          <button type="button" onclick="deleteTaskPackage(document.getElementById('editTaskIdField').value)" class="bg-rose-50 text-rose-600 hover:bg-rose-100 font-bold px-3 py-1.5 rounded text-[11px] flex items-center gap-1 transition">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Delete Task
+          </button>
+          <div class="flex gap-1.5">
+            <button type="button" onclick="toggleModal('createTaskModal', false)" class="px-2.5 py-1 font-bold text-slate-600">Cancel</button>
+            <button type="button" onclick="submitFullTaskPackage()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-1.5 rounded transition">Save in DB</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Modal: Doer Performance Audit Breakdown -->
   <div id="doerAuditModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
@@ -350,148 +471,13 @@
     </div>
   </div>
 
-  <!-- Modal: Add / Edit Site -->
-  <div id="siteModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
-    <div class="bg-white dark:bg-darkcard rounded-2xl max-w-lg w-full p-4 shadow-2xl border relative max-h-[92vh] flex flex-col">
-      <div class="flex items-center justify-between pb-2 border-b">
-        <h3 class="text-xs font-bold text-slate-900 dark:text-white" id="modalSiteTitle">Add / Edit Site</h3>
-        <button onclick="toggleModal('siteModal', false)" class="text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
-      </div>
-
-      <form onsubmit="event.preventDefault(); saveSiteData();" class="overflow-y-auto custom-scroll py-2.5 space-y-2 flex-1 pr-1 text-xs">
-        <input type="hidden" id="editSiteId">
-        <div>
-          <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Site Name / Location *</label>
-          <input type="text" id="formSiteName" required class="w-full border rounded px-2.5 py-1 font-bold dark:bg-slate-800 dark:text-white" placeholder="e.g. Bhilwara Plant">
-        </div>
-        <div>
-          <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Company Name</label>
-          <input type="text" id="formCompanyName" value="MAHESHWARI DISTRIBUTORS" class="w-full border rounded px-2.5 py-1 dark:bg-slate-800 dark:text-white">
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-          <div>
-            <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Process Coordinator</label>
-            <input type="text" id="formProcCoord" value="Tulsi Sen" class="w-full border rounded px-2 py-1 dark:bg-slate-800 dark:text-white">
-          </div>
-          <div>
-            <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Technical Person</label>
-            <input type="text" id="formTechPerson" value="Heera lal Ji (8003698656)" class="w-full border rounded px-2 py-1 dark:bg-slate-800 dark:text-white">
-          </div>
-        </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-          <div>
-            <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Purchaser Person</label>
-            <input type="text" id="formPurchaser" value="Ronak Ji (8107688615)" class="w-full border rounded px-2 py-1 dark:bg-slate-800 dark:text-white">
-          </div>
-          <div>
-            <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">VRE Person</label>
-            <input type="text" id="formVre" value="Aarti Bala (8824133320)" class="w-full border rounded px-2 py-1 dark:bg-slate-800 dark:text-white">
-          </div>
-        </div>
-        <div class="pt-2 border-t flex justify-end gap-1.5">
-          <button type="button" onclick="toggleModal('siteModal', false)" class="px-2.5 py-1 font-bold text-slate-600">Cancel</button>
-          <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-1.5 rounded transition">Save Site Record</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Modal: Create Task Package -->
-  <div id="createTaskModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
-    <div class="bg-white dark:bg-darkcard rounded-2xl max-w-3xl w-full p-4 shadow-2xl border relative max-h-[92vh] flex flex-col">
-      <div class="flex items-center justify-between pb-2 border-b">
-        <h3 class="text-xs font-bold text-slate-900 dark:text-white" id="modalTaskTitle">Create Main Task & Steps</h3>
-        <button onclick="toggleModal('createTaskModal', false)" class="text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
-      </div>
-
-      <div class="overflow-y-auto custom-scroll py-2.5 space-y-2.5 flex-1 pr-1 text-xs">
-        <input type="hidden" id="editTaskIdField">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
-          <div>
-            <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Site / Project Name *</label>
-            <input type="text" id="mProject" required list="projectSuggestions" class="w-full border rounded px-2 py-1 font-bold dark:bg-slate-800 dark:text-white" value="">
-            <datalist id="projectSuggestions"></datalist>
-          </div>
-          <div>
-            <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Main Task Name *</label>
-            <input type="text" id="mItemName" required class="w-full border rounded px-2 py-1 font-bold dark:bg-slate-800 dark:text-white" placeholder="e.g. Supply of 11 kV Extension Panel">
-          </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
-          <div>
-            <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Category</label>
-            <select id="mType" class="w-full border rounded px-2 py-1 font-semibold dark:bg-slate-800 dark:text-white">
-              <option value="SUPPLY">SUPPLY PMS</option>
-              <option value="SERVICE">SERVICE PMS</option>
-            </select>
-          </div>
-          <div>
-            <label class="block text-[9px] font-bold text-indigo-600 uppercase mb-0.5">Start Date</label>
-            <input type="date" id="mStartDate" required class="w-full border rounded px-2 py-0.5 font-bold dark:bg-slate-800 dark:text-white">
-          </div>
-          <div>
-            <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Qty</label>
-            <input type="number" id="mQty" required value="1" min="1" class="w-full border rounded px-2 py-0.5 font-mono dark:bg-slate-800 dark:text-white">
-          </div>
-        </div>
-
-        <div class="bg-indigo-50/60 p-2.5 rounded-xl border space-y-1.5">
-          <div class="flex justify-between items-center">
-            <label class="block font-bold text-indigo-900 dark:text-indigo-200">Steps Library (Templates):</label>
-            <select id="templateSelector" onchange="loadSelectedTemplate()" class="border rounded px-2 py-0.5 text-[11px] w-52 font-semibold bg-white dark:bg-slate-800 dark:text-white">
-              <option value="">-- Load Saved Template --</option>
-            </select>
-          </div>
-          <textarea id="bulkStepsInput" rows="4" class="w-full border rounded p-2 text-xs font-mono dark:bg-slate-900 dark:text-white" placeholder="Paste your step list here (one per line)..."></textarea>
-          <div class="flex justify-between items-center pt-1">
-            <button type="button" onclick="saveAsTemplate()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold px-3 py-1 rounded text-[10px]">Save as Template</button>
-            <button type="button" onclick="generateStepsFromBulkInput()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-1.5 rounded shadow-xs">Generate From List</button>
-          </div>
-        </div>
-
-        <div class="flex justify-between items-center">
-          <span class="font-bold text-slate-700 dark:text-slate-300">Configured Steps Table:</span>
-          <button type="button" onclick="addSingleStepRow()" class="text-indigo-600 font-bold text-[11px]">+1 Step</button>
-        </div>
-
-        <div id="stepsContainer" class="space-y-1.5">
-          <p class="text-xs text-slate-400 text-center py-4 italic">No steps generated yet. Click "Generate From List".</p>
-        </div>
-
-        <div class="pt-2 border-t flex justify-between items-center mt-2">
-          <button type="button" onclick="deleteTaskPackage(document.getElementById('editTaskIdField').value)" class="bg-rose-50 text-rose-600 hover:bg-rose-100 font-bold px-3 py-1.5 rounded text-[11px] flex items-center gap-1 transition">
-            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Delete Task
-          </button>
-          <div class="flex gap-1.5">
-            <button type="button" onclick="toggleModal('createTaskModal', false)" class="px-2.5 py-1 font-bold text-slate-600">Cancel</button>
-            <button type="button" onclick="submitFullTaskPackage()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-1.5 rounded transition">Save in DB</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal: Add Team Member -->
-  <div id="addMemberModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
-    <div class="bg-white dark:bg-darkcard rounded-2xl max-w-sm w-full p-4 shadow-2xl border relative">
-      <button onclick="toggleModal('addMemberModal', false)" class="absolute right-3 top-3 text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
-      <h3 class="text-xs font-bold text-slate-900 dark:text-white mb-2">Add Team Member</h3>
-      <form onsubmit="event.preventDefault(); saveNewMember();" class="space-y-2 text-xs">
-        <input type="text" id="newMemberName" required placeholder="Full Name" class="w-full border rounded px-2 py-1 dark:bg-slate-800 dark:text-white">
-        <input type="email" id="newMemberEmail" required placeholder="Email Address" class="w-full border rounded px-2 py-1 dark:bg-slate-800 dark:text-white font-mono">
-        <input type="text" id="newMemberRole" placeholder="Role / Designation" class="w-full border rounded px-2 py-1 dark:bg-slate-800 dark:text-white">
-        <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-1.5 rounded transition">Save Member</button>
-      </form>
-    </div>
-  </div>
-
   <script>
     let activeDoers = [];
     let allData = [];
     let allVendors = [];
     let allSitesList = [];
-    let currentAuditDoer = { email: '', name: '' };
+    let loggedInDoerEmail = localStorage.getItem('pms_doer_email') || '';
+    let loggedInDoerName = localStorage.getItem('pms_doer_name') || '';
     let pmsChartInstance = null;
 
     const API_BASE = window.location.origin.startsWith('file:') 
@@ -625,114 +611,76 @@
 
     function toggleSideMenu(show) { document.getElementById('sideMenuDrawer').classList.toggle('hidden', !show); }
     function toggleModal(id, show) { document.getElementById(id).classList.toggle('hidden', !show); }
-    function initTheme() {
-      const isDark = localStorage.getItem('pms_theme') === 'dark';
-      document.documentElement.classList.toggle('dark', isDark);
-      lucide.createIcons();
-    }
-
-    function openAddVendorModal() {
-      document.getElementById('editVendorId').value = '';
-      document.getElementById('vName').value = '';
-      document.getElementById('vPhone').value = '';
-      document.getElementById('modalVendorTitle').innerText = 'Add New Vendor';
-      toggleModal('addVendorModal', true);
-    }
-
-    function openEditVendorModal(id, name, phone) {
-      document.getElementById('editVendorId').value = id;
-      document.getElementById('vName').value = name;
-      document.getElementById('vPhone').value = phone;
-      document.getElementById('modalVendorTitle').innerText = 'Edit Vendor Details';
-      toggleModal('addVendorModal', true);
-    }
-
-    async function saveVendor() {
-      const id = document.getElementById('editVendorId').value.trim();
-      const payload = {
-        name: document.getElementById('vName').value.trim(),
-        phone: document.getElementById('vPhone').value.trim()
-      };
-
-      const url = id ? `${API_BASE}/api/vendors/${id}` : `${API_BASE}/api/vendors`;
-      const method = id ? 'PUT' : 'POST';
-
-      try {
-        const res = await fetch(url, {
-          method,
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        const json = await res.json();
-        if (json.success) {
-          toggleModal('addVendorModal', false);
-          renderVendorsView();
-        } else {
-          alert(json.error || 'Failed to save vendor.');
-        }
-      } catch (err) {
-        alert('Network error: ' + err.message);
-      }
-    }
-
-    async function deleteVendor(id) {
-      if (!confirm('Are you sure you want to delete this vendor?')) return;
-      const res = await fetch(`${API_BASE}/api/vendors/${id}`, { method: 'DELETE' });
-      const json = await res.json();
-      if (json.success) {
-        renderVendorsView();
-      } else {
-        alert(json.error);
-      }
-    }
-
-    async function renderVendorsView() {
-      const container = document.getElementById('vendorCardsContainer');
-      if (!container) return;
-      try {
-        const res = await fetch(`${API_BASE}/api/vendors`);
-        const json = await res.json();
-        const vendors = json.data || [];
-        document.getElementById('vendorTotalCountBadge').innerText = `${vendors.length} Vendors`;
-        let html = '';
-        vendors.forEach(v => {
-          html += `
-            <div class="bg-white dark:bg-darkcard p-3 rounded-xl border border-slate-200 dark:border-darkborder shadow-2xs space-y-1 text-xs relative">
-              <div class="flex items-center justify-between">
-                <h4 class="font-bold text-slate-900 dark:text-white text-sm">🏢 ${v.name}</h4>
-                <div class="flex items-center gap-1">
-                  <button onclick="openEditVendorModal('${v._id}', '${v.name.replace(/'/g, "\\'")}', '${v.phone}')" class="text-slate-400 hover:text-indigo-600 p-1" title="Edit Vendor">
-                    <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
-                  </button>
-                  <button onclick="deleteVendor('${v._id}')" class="text-slate-300 hover:text-rose-600 p-1" title="Delete Vendor">
-                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                  </button>
-                </div>
-              </div>
-              <p class="text-[11px] text-slate-500 dark:text-slate-400 font-mono">📞 ${v.phone}</p>
-            </div>
-          `;
-        });
-        container.innerHTML = html || '<p class="text-xs text-slate-400 py-6 text-center">No vendors found.</p>';
-        lucide.createIcons();
-      } catch (err) {
-        console.error(err);
-      }
-    }
 
     function handleRoleSwitch() {
       const role = document.getElementById('userRole').value;
-      document.getElementById('doerDropdownSelect').classList.toggle('hidden', role !== 'DOER');
-      document.getElementById('activeDoerBanner').classList.toggle('hidden', role !== 'DOER');
+      if (role === 'DOER') {
+        if (!loggedInDoerEmail) {
+          toggleModal('doerLoginModal', true);
+        } else {
+          activateDoerWorkspace();
+        }
+      } else {
+        loggedInDoerEmail = '';
+        loggedInDoerName = '';
+        localStorage.removeItem('pms_doer_email');
+        localStorage.removeItem('pms_doer_name');
+        document.getElementById('activeDoerBanner').classList.add('hidden');
+        applyFilters();
+      }
+    }
+
+    async function authenticateDoerLogin() {
+      const email = document.getElementById('doerLoginEmail').value.trim().toLowerCase();
+      const pass = document.getElementById('doerLoginPass').value.trim();
+
+      try {
+        const res = await fetch(`${API_BASE}/api/doers/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password: pass })
+        });
+        const json = await res.json();
+        if (json.success) {
+          loggedInDoerEmail = json.data.email;
+          loggedInDoerName = json.data.name;
+          localStorage.setItem('pms_doer_email', loggedInDoerEmail);
+          localStorage.setItem('pms_doer_name', loggedInDoerName);
+          toggleModal('doerLoginModal', false);
+          activateDoerWorkspace();
+        } else {
+          alert(json.error || 'Invalid credentials.');
+        }
+      } catch (err) {
+        alert('Login network error: ' + err.message);
+      }
+    }
+
+    function activateDoerWorkspace() {
+      document.getElementById('userRole').value = 'DOER';
+      document.getElementById('activeDoerBanner').classList.remove('hidden');
+      document.getElementById('doerBannerName').innerText = `${loggedInDoerName} (${loggedInDoerEmail})`;
       applyFilters();
     }
 
-    function onDoerUserChange() { applyFilters(); }
+    function logoutDoer() {
+      loggedInDoerEmail = '';
+      loggedInDoerName = '';
+      localStorage.removeItem('pms_doer_email');
+      localStorage.removeItem('pms_doer_name');
+      document.getElementById('userRole').value = 'ADMIN';
+      document.getElementById('activeDoerBanner').classList.add('hidden');
+      applyFilters();
+    }
 
     document.addEventListener('DOMContentLoaded', function () {
       applyTabOrderAndVisibility();
       applyBarPosition();
-      loadDashboardData();
+      loadDashboardData().then(() => {
+        if (loggedInDoerEmail) {
+          activateDoerWorkspace();
+        }
+      });
     });
 
     let collapsedTasks = JSON.parse(localStorage.getItem('pms_collapsed_tasks') || '{}');
@@ -806,7 +754,6 @@
       }
     }
 
-    // RENDER REVIEW ANALYTICS CHART ONLY
     function renderReviewChart() {
       const canvas = document.getElementById('pmsChart');
       if (!canvas) return;
@@ -844,7 +791,6 @@
       });
     }
 
-    // STRICT SEQUENTIAL VALIDATION (Inline Notification instead of alert popup)
     function validateSequentialCompletion(steps, currentStepWbsNo, newStatus) {
       const currentWbs = parseInt(currentStepWbsNo, 10);
       
@@ -868,7 +814,6 @@
       return true;
     }
 
-    // COMPLETELY CLEANED: NO POPUPS, NO PROMPTS WHEN MARKING DONE OR EDITING REMARKS
     async function directToggleStepStatus(taskId, stepId, currentStatus, wbsNo, taskSteps) {
       const newStatus = (currentStatus === 'Completed') ? 'Pending' : 'Completed';
       
@@ -899,9 +844,7 @@
       }
     }
 
-    // REMARKS EDIT WITHOUT POPUP: Uses a smooth inline text approach or silent update if desired
     async function editStepRemarks(taskId, stepId, currentRemarks) {
-      // Replaced window.prompt with a cleaner direct flow if needed, but since user dislikes prompts, we can use a direct inline prompt or skip if not clicked. To keep it fully functional without annoying native popups, we can make remarks editable or use a subtle inline method. Let's make it smooth:
       const newRemarks = prompt("Update remark:", currentRemarks || '');
       if (newRemarks === null) return;
 
@@ -926,12 +869,11 @@
       }
     }
 
-    // RENDER TABLE WITH CORRECT "✓ Done" LABEL AND WORKING SEARCH
+    // RENDER TABLE WITH BIGGER TITLE & VISIBLE SUBTITLE
     function renderStructuredTableGrid(data) {
       const tbody = document.getElementById('tableRows');
       const role = document.getElementById('userRole').value;
       const selectedSite = document.getElementById('filterByProject').value;
-      const doerEmail = document.getElementById('doerDropdownSelect').value.toLowerCase().trim();
       const searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
 
       const backBar = document.getElementById('backToSitesBar');
@@ -948,15 +890,27 @@
       }
 
       let filteredData = data;
+
+      // DOER DATA ISOLATION: If role is DOER, filter only tasks/steps assigned to logged in doer email
+      if (role === 'DOER' && loggedInDoerEmail) {
+        filteredData = filteredData.map(task => {
+          let matchedSteps = task.steps.filter(s => (s.assignedEmail || '').toLowerCase().trim() === loggedInDoerEmail.toLowerCase());
+          if (matchedSteps.length > 0) {
+            return { ...task, steps: matchedSteps };
+          }
+          return null;
+        }).filter(Boolean);
+      }
+
       if (selectedSite && selectedSite !== 'ALL') {
-        filteredData = data.filter(item => (item.projectName || '').toLowerCase().trim() === selectedSite.toLowerCase().trim());
+        filteredData = filteredData.filter(item => (item.projectName || '').toLowerCase().trim() === selectedSite.toLowerCase().trim());
       } else {
         const hiddenSiteNames = allSitesList.filter(s => s.isHidden).map(s => s.siteName.toLowerCase().trim());
-        filteredData = data.filter(item => !hiddenSiteNames.includes((item.projectName || '').toLowerCase().trim()));
+        filteredData = filteredData.filter(item => !hiddenSiteNames.includes((item.projectName || '').toLowerCase().trim()));
       }
 
       if (!filteredData || filteredData.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="11" class="text-center py-10 text-slate-400">No active tasks found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="11" class="text-center py-12 text-slate-400">No active tasks found for your workspace.</td></tr>`;
         return;
       }
 
@@ -965,12 +919,7 @@
 
       filteredData.forEach(item => {
         let sortedSteps = [...item.steps].sort(naturalWbsSort);
-        if (role === 'DOER' && doerEmail) {
-          sortedSteps = sortedSteps.filter(s => (s.assignedEmail || '').toLowerCase().trim() === doerEmail);
-          if (sortedSteps.length === 0) return;
-        }
 
-        // Apply Search Query Filter
         if (searchQuery) {
           const matchesTask = item.uniqueId.toLowerCase().includes(searchQuery) ||
                               item.mainItemName.toLowerCase().includes(searchQuery) ||
@@ -993,9 +942,9 @@
         const overdueCount = sortedSteps.filter(s => (new Date(s.plannedEndDate) < now && s.status !== 'Completed') || s.status === 'Delayed').length;
         const pendingCount = total - doneCount - overdueCount;
         const percentage = total > 0 ? Math.round((doneCount / total) * 100) : 0;
-        const qtyDisplay = item.totalQty ? `| Qty: ${item.totalQty}` : '';
+        const qtyDisplay = item.totalQty ? `Qty: ${item.totalQty}` : '';
 
-        // Parent Row
+        // Parent Row with Bigger Title & Distinct Subtitle block
         html += `
           <tr class="bg-indigo-50/90 dark:bg-indigo-950/70 border-t-2 border-indigo-200 dark:border-indigo-900">
             <td class="py-3 px-3 font-mono text-indigo-700 dark:text-indigo-300 align-top font-bold flex items-center gap-1.5">
@@ -1003,8 +952,11 @@
               <span>${item.uniqueId}</span>
             </td>
             <td class="py-3 px-3 text-slate-900 dark:text-white align-top" colspan="9">
-              <div class="font-bold text-xs mb-1.5 whitespace-normal break-words">${item.mainItemName} <span class="text-[10px] text-slate-400 font-normal">(${item.projectName || 'General'} ${qtyDisplay})</span></div>
-              <div class="flex items-center gap-3 text-[10px] flex-wrap">
+              <div class="space-y-1">
+                <div class="font-extrabold text-sm text-slate-900 dark:text-white tracking-tight">${item.mainItemName}</div>
+                <div class="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold">📍 Site: ${item.projectName || 'General'} &nbsp;|&nbsp; 📦 ${qtyDisplay}</div>
+              </div>
+              <div class="flex items-center gap-3 text-[10px] flex-wrap mt-2">
                 <span class="px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold">${doneCount} Done</span>
                 <span class="px-1.5 py-0.5 bg-rose-100 text-rose-800 rounded font-bold">${overdueCount} Overdue</span>
                 <span class="px-1.5 py-0.5 bg-slate-200 text-slate-700 rounded font-bold">${pendingCount} Pending</span>
@@ -1196,6 +1148,7 @@
           const hideIcon = s.isHidden ? 'eye-off' : 'eye';
           const hideTitle = s.isHidden ? 'Unhide Site' : 'Hide Site';
           const hideBtnClass = s.isHidden ? 'text-emerald-600 hover:bg-emerald-50' : 'text-slate-400 hover:text-amber-600 hover:bg-amber-50';
+          const boqLinkHtml = s.boqUrl ? `<a href="${s.boqUrl}" target="_blank" class="text-indigo-600 underline font-semibold">📎 View BOQ Document</a>` : '<span class="text-slate-300">No BOQ attached</span>';
 
           html += `
             <div class="${cardOpacity} p-3 rounded-xl border border-slate-200 dark:border-darkborder shadow-2xs space-y-2 transition">
@@ -1205,7 +1158,7 @@
                   <button onclick="toggleSiteHideStatus('${s._id}', ${Boolean(s.isHidden)})" class="p-1.5 rounded border ${hideBtnClass}" title="${hideTitle}">
                     <i data-lucide="${hideIcon}" class="w-3.5 h-3.5"></i>
                   </button>
-                  <button onclick="openEditSiteModal('${s._id}', '${s.siteName.replace(/'/g, "\\'")}', '${(s.companyName || '').replace(/'/g, "\\'")}', '${(s.processCoordinator || '').replace(/'/g, "\\'")}', '${(s.technicalPerson || '').replace(/'/g, "\\'")}', '${(s.purchaserPerson || '').replace(/'/g, "\\'")}', '${(s.vrePerson || '').replace(/'/g, "\\'")}')" class="text-slate-400 hover:text-indigo-600 p-1" title="Edit Site">
+                  <button onclick="openEditSiteModal('${s._id}', '${s.siteName.replace(/'/g, "\\'")}', '${(s.boqUrl || '').replace(/'/g, "\\'")}')" class="text-slate-400 hover:text-indigo-600 p-1" title="Edit Site">
                     <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
                   </button>
                   <button onclick="deleteSite('${s._id}')" class="text-slate-300 hover:text-rose-600 p-1" title="Delete Site">
@@ -1222,10 +1175,8 @@
                 <div class="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
                   <div class="bg-emerald-500 h-full rounded-full" style="width: ${siteProgress}%"></div>
                 </div>
-                <div class="flex gap-2 text-[9px] font-bold pt-0.5">
-                  <span class="text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded">Done: ${completedSteps}</span>
-                  <span class="text-slate-700 bg-slate-200 px-1.5 py-0.2 rounded">Pending: ${pendingSteps}</span>
-                  <span class="text-rose-700 bg-rose-50 px-1.5 py-0.2 rounded">Delayed: ${delayedSteps}</span>
+                <div class="pt-1 text-[10px] flex justify-between items-center border-t border-slate-200 dark:border-darkborder mt-1">
+                  <span>${boqLinkHtml}</span>
                 </div>
               </div>
             </div>
@@ -1241,24 +1192,16 @@
     function openSiteModal() {
       document.getElementById('editSiteId').value = '';
       document.getElementById('formSiteName').value = '';
-      document.getElementById('formCompanyName').value = 'MAHESHWARI DISTRIBUTORS';
-      document.getElementById('formProcCoord').value = 'Tulsi Sen';
-      document.getElementById('formTechPerson').value = 'Heera lal Ji (8003698656)';
-      document.getElementById('formPurchaser').value = 'Ronak Ji (8107688615)';
-      document.getElementById('formVre').value = 'Aarti Bala (8824133320)';
+      document.getElementById('formBoqUrl').value = '';
       document.getElementById('modalSiteTitle').innerText = 'Add New Site / Project';
       toggleModal('siteModal', true);
     }
 
-    function openEditSiteModal(id, name, comp, coord, tech, pur, vre) {
+    function openEditSiteModal(id, name, boqUrl) {
       document.getElementById('editSiteId').value = id;
       document.getElementById('formSiteName').value = name;
-      document.getElementById('formCompanyName').value = comp || 'MAHESHWARI DISTRIBUTORS';
-      document.getElementById('formProcCoord').value = coord || 'Tulsi Sen';
-      document.getElementById('formTechPerson').value = tech || 'Heera lal Ji (8003698656)';
-      document.getElementById('formPurchaser').value = pur || 'Ronak Ji (8107688615)';
-      document.getElementById('formVre').value = vre || 'Aarti Bala (8824133320)';
-      document.getElementById('modalSiteTitle').innerText = 'Edit Site Details';
+      document.getElementById('formBoqUrl').value = boqUrl || '';
+      document.getElementById('modalSiteTitle').innerText = 'Edit Site Details & BOQ';
       toggleModal('siteModal', true);
     }
 
@@ -1266,11 +1209,7 @@
       const id = document.getElementById('editSiteId').value;
       const payload = {
         siteName: document.getElementById('formSiteName').value.trim(),
-        companyName: document.getElementById('formCompanyName').value.trim(),
-        processCoordinator: document.getElementById('formProcCoord').value.trim(),
-        technicalPerson: document.getElementById('formTechPerson').value.trim(),
-        purchaserPerson: document.getElementById('formPurchaser').value.trim(),
-        vrePerson: document.getElementById('formVre').value.trim()
+        boqUrl: document.getElementById('formBoqUrl').value.trim()
       };
 
       const url = id ? `${API_BASE}/api/sites/${id}` : `${API_BASE}/api/sites`;
@@ -1311,50 +1250,7 @@
       const container = document.getElementById('teamCardsContainer');
       if (!container) return;
       let html = '';
-      const period = document.getElementById('mainAuditPeriodSelect')?.value || 'ALL';
-      const now = new Date();
-
-      let startDateLimit = new Date(0);
-      if (period === 'WEEK') {
-        startDateLimit = new Date();
-        startDateLimit.setDate(now.getDate() - 7);
-      } else if (period === 'MONTH') {
-        startDateLimit = new Date();
-        startDateLimit.setDate(now.getDate() - 30);
-      } else if (period === 'QUARTER') {
-        startDateLimit = new Date();
-        startDateLimit.setDate(now.getDate() - 90);
-      }
-
       activeDoers.forEach(d => {
-        let assignedTotal = 0, completedCount = 0, pendingCount = 0, backlogCount = 0;
-
-        allData.forEach(task => {
-          task.steps.forEach(st => {
-            if ((st.assignedEmail || '').toLowerCase().trim() === (d.email || '').toLowerCase().trim() || 
-                (st.assignedName || '').toLowerCase().trim() === (d.name || '').toLowerCase().trim()) {
-              
-              const pStart = new Date(st.plannedStartDate);
-              const pEnd = new Date(st.plannedEndDate);
-              const isBacklog = (st.status !== 'Completed' && pEnd < now);
-
-              let isInPeriod = true;
-              if (period !== 'ALL') {
-                isInPeriod = (pStart >= startDateLimit) || (pEnd >= startDateLimit) || isBacklog;
-              }
-
-              if (isInPeriod) {
-                assignedTotal++;
-                if (st.status === 'Completed') completedCount++;
-                else if (isBacklog) backlogCount++;
-                else pendingCount++;
-              }
-            }
-          });
-        });
-
-        const doerProgress = assignedTotal > 0 ? Math.round((completedCount / assignedTotal) * 100) : 0;
-
         html += `
           <div class="bg-white dark:bg-darkcard p-3 rounded-xl border border-slate-200 dark:border-darkborder shadow-2xs space-y-2">
             <div class="flex items-center justify-between">
@@ -1362,117 +1258,42 @@
                 <h4 class="font-bold text-xs text-slate-900 dark:text-white">👤 ${d.name}</h4>
                 <p class="text-[10px] text-slate-400 font-mono">${d.email}</p>
               </div>
-              <div class="flex items-center gap-1.5">
-                <span class="px-2 py-0.5 text-[9px] text-indigo-600 bg-indigo-50 font-bold rounded">${d.role || 'Executive'}</span>
-                <button onclick="openDoerAuditModal('${d.email}', '${d.name.replace(/'/g, "\\'")}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 rounded text-[10px] font-bold shadow-xs transition">
-                  🔍 View Details
-                </button>
-              </div>
-            </div>
-
-            <div class="bg-slate-50 dark:bg-slate-800 p-2 rounded-lg border space-y-1">
-              <div class="flex justify-between text-[10px] font-bold">
-                <span class="text-slate-600 dark:text-slate-300">Score (${period}): ${completedCount}/${assignedTotal} Done (${doerProgress}%)</span>
-              </div>
-              <div class="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
-                <div class="bg-emerald-500 h-full rounded-full" style="width: ${doerProgress}%"></div>
-              </div>
-              <div class="flex gap-2 text-[9px] font-bold pt-0.5">
-                <span class="text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded">Done: ${completedCount}</span>
-                <span class="text-slate-700 bg-slate-200 px-1.5 py-0.2 rounded">Pending: ${pendingCount}</span>
-                <span class="text-purple-700 bg-purple-50 px-1.5 py-0.2 rounded">Backlog: ${backlogCount}</span>
-              </div>
+              <span class="px-2 py-0.5 text-[9px] text-indigo-600 bg-indigo-50 font-bold rounded">${d.role || 'Executive'}</span>
             </div>
           </div>
         `;
       });
-
       container.innerHTML = html || '<p class="text-xs text-slate-400 py-4">No members found.</p>';
       lucide.createIcons();
     }
 
-    function openDoerAuditModal(email, name) {
-      currentAuditDoer = { email, name };
-      document.getElementById('auditModalTitle').innerText = `Performance Audit: ${name} (${email})`;
-      const container = document.getElementById('auditModalContent');
-      const now = new Date();
-      const period = document.getElementById('mainAuditPeriodSelect')?.value || 'ALL';
+    function openAddMemberModal() {
+      document.getElementById('newMemberName').value = '';
+      document.getElementById('newMemberEmail').value = '';
+      document.getElementById('newMemberPassword').value = '';
+      document.getElementById('newMemberRole').value = '';
+      toggleModal('addMemberModal', true);
+    }
 
-      let startDateLimit = new Date(0);
-      if (period === 'WEEK') {
-        startDateLimit = new Date();
-        startDateLimit.setDate(now.getDate() - 7);
-      } else if (period === 'MONTH') {
-        startDateLimit = new Date();
-        startDateLimit.setDate(now.getDate() - 30);
-      } else if (period === 'QUARTER') {
-        startDateLimit = new Date();
-        startDateLimit.setDate(now.getDate() - 90);
-      }
+    async function saveNewMember() {
+      const name = document.getElementById('newMemberName').value.trim();
+      const email = document.getElementById('newMemberEmail').value.trim().toLowerCase();
+      const password = document.getElementById('newMemberPassword').value.trim();
+      const role = document.getElementById('newMemberRole').value.trim();
 
-      let assignedSteps = [];
-      allData.forEach(task => {
-        task.steps.forEach(st => {
-          if ((st.assignedEmail || '').toLowerCase().trim() === (email || '').toLowerCase().trim() || 
-              (st.assignedName || '').toLowerCase().trim() === (name || '').toLowerCase().trim()) {
-            
-            const pStart = new Date(st.plannedStartDate);
-            const pEnd = new Date(st.plannedEndDate);
-            const isBacklog = (st.status !== 'Completed' && pEnd < now);
-
-            let isInPeriod = true;
-            if (period !== 'ALL') {
-              isInPeriod = (pStart >= startDateLimit) || (pEnd >= startDateLimit) || isBacklog;
-            }
-
-            if (isInPeriod) {
-              assignedSteps.push({
-                uniqueId: task.uniqueId,
-                projectName: task.projectName || 'General',
-                mainItemName: task.mainItemName,
-                step: st,
-                isCompleted: st.status === 'Completed',
-                isBacklog: isBacklog,
-                isDelayed: st.status === 'Delayed'
-              });
-            }
-          }
-        });
+      const res = await fetch(`${API_BASE}/api/doers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password, role })
       });
-
-      if (assignedSteps.length === 0) {
-        container.innerHTML = '<p class="text-xs text-slate-400 py-8 text-center">No tasks found for the selected period.</p>';
-        toggleModal('doerAuditModal', true);
-        return;
+      const json = await res.json();
+      if(json.success) {
+        toggleModal('addMemberModal', false);
+        loadDashboardData();
+        alert('Doer account created successfully!');
+      } else {
+        alert(json.error || 'Failed to create doer account.');
       }
-
-      let html = '';
-      assignedSteps.forEach((item) => {
-        let statusBadge = '';
-        if (item.isCompleted) statusBadge = '<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold">✓ Done</span>';
-        else if (item.isBacklog) statusBadge = '<span class="px-2 py-0.5 bg-purple-100 text-purple-800 rounded font-bold">Backlog (Date Passed)</span>';
-        else if (item.isDelayed) statusBadge = '<span class="px-2 py-0.5 bg-rose-100 text-rose-800 rounded font-bold animate-pulse">Overdue</span>';
-        else statusBadge = '<span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded font-bold">Pending</span>';
-
-        const startDateStr = new Date(item.step.plannedStartDate).toLocaleDateString('en-GB');
-        const endDateStr = new Date(item.step.plannedEndDate).toLocaleDateString('en-GB');
-
-        html += `
-          <div class="bg-slate-50 dark:bg-slate-800 p-2.5 rounded-lg border space-y-1">
-            <div class="flex items-center justify-between font-bold">
-              <span class="text-indigo-600 dark:text-indigo-400 font-mono text-[10px]">${item.uniqueId} | Site: ${item.projectName}</span>
-              ${statusBadge}
-            </div>
-            <p class="font-semibold text-slate-900 dark:text-white">Task: ${item.mainItemName}</p>
-            <p class="text-slate-700 dark:text-slate-200"><b>Step #${item.step.wbsNo}:</b> ${item.step.stepTitle}</p>
-            <p class="text-[10px] text-slate-400 font-mono">📅 Plan Date: <b>${startDateStr}</b> ➔ <b>${endDateStr}</b></p>
-            ${item.step.remarks ? `<p class="text-[10px] text-slate-500 italic">Remarks: ${item.step.remarks}</p>` : ''}
-          </div>
-        `;
-      });
-
-      container.innerHTML = html;
-      toggleModal('doerAuditModal', true);
     }
 
     function updateTemplateDropdown() {
