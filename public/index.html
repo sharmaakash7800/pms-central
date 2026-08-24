@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PMS Central Hub | Final Clean Version</title>
+  <title>PMS Central Hub | Fixed Layout & Hide Completed Tasks</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -36,7 +36,7 @@
 <body class="text-slate-800 dark:bg-darkbg dark:text-slate-100 antialiased h-screen flex flex-col text-xs overflow-hidden">
 
   <!-- Fixed Main Header -->
-  <header class="bg-white dark:bg-darkcard border-b border-slate-200 dark:border-darkborder shrink-0 z-40 shadow-xs">
+  <header class="bg-white dark:bg-darkcard border-b border-slate-200 dark:border-darkborder shrink-0 z-30 shadow-xs">
     <div class="max-w-7xl mx-auto px-3 sm:px-5">
       <div class="flex justify-between h-12 items-center">
         
@@ -88,22 +88,9 @@
     </div>
   </header>
 
-  <!-- Main Content -->
-  <main class="max-w-7xl mx-auto px-3 sm:px-5 py-3 w-full flex-1 min-h-0 flex flex-col overflow-hidden pb-16">
+  <!-- Main Content Container with bottom padding so table doesn't hide under capsule bar -->
+  <main class="max-w-7xl mx-auto px-3 sm:px-5 py-3 w-full flex-1 min-h-0 flex flex-col overflow-hidden pb-20">
     
-    <!-- Doer Login Modal Overlay if in Doer Mode & Not Logged In -->
-    <div id="doerLoginModal" class="fixed inset-0 bg-slate-900/80 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
-      <div class="bg-white dark:bg-darkcard rounded-2xl max-w-sm w-full p-5 shadow-2xl border space-y-3">
-        <h3 class="text-sm font-extrabold text-slate-900 dark:text-white text-center">Doer Portal Login</h3>
-        <p class="text-[11px] text-slate-500 text-center">Enter your email and password to access your assigned tasks.</p>
-        <div class="space-y-2 text-xs">
-          <input type="email" id="doerLoginEmail" placeholder="Email Address" class="w-full border rounded px-2.5 py-1.5 dark:bg-slate-800 dark:text-white font-mono">
-          <input type="password" id="doerLoginPass" placeholder="Password" class="w-full border rounded px-2.5 py-1.5 dark:bg-slate-800 dark:text-white font-mono">
-          <button onclick="authenticateDoerLogin()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded transition mt-1">Login to Portal</button>
-        </div>
-      </div>
-    </div>
-
     <div id="activeDoerBanner" class="hidden shrink-0 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 p-2 rounded-xl mb-2 flex items-center justify-between">
       <div class="flex items-center gap-2 text-xs">
         <span class="w-2 h-2 rounded-full bg-indigo-600 animate-ping"></span>
@@ -141,6 +128,11 @@
               <option value="ALL">All Members</option>
             </select>
           </div>
+
+          <!-- Hide Completed Tasks Checkbox -->
+          <label class="flex items-center gap-1.5 text-[11px] font-bold text-slate-600 dark:text-slate-300 cursor-pointer ml-2">
+            <input type="checkbox" id="hideCompletedTasksToggle" onchange="applyFilters()" class="rounded w-3.5 h-3.5 text-indigo-600"> Hide Completed (100%) Tasks
+          </label>
         </div>
 
         <div class="flex items-center gap-2">
@@ -384,6 +376,84 @@
           </div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Bottom Capsule Bar -->
+  <div id="bottomBarWrapper" class="fixed bottom-3 z-40 transition-all duration-300 left-1/2 -translate-x-1/2">
+    <div id="bottomCapsuleBar" class="bg-white dark:bg-darkcard border border-slate-200 dark:border-darkborder rounded-full shadow-xl px-4 py-1.5 flex items-center gap-4 sm:gap-6">
+      <button onclick="switchTab('viewPmsBoard')" id="tabBtn-viewPmsBoard" data-id="viewPmsBoard" class="nav-capsule-btn active flex flex-col items-center text-slate-500 hover:text-indigo-600 transition"><span class="text-xs">📦</span><span class="text-[10px]">Tasks</span></button>
+      <button onclick="switchTab('viewReview')" id="tabBtn-viewReview" data-id="viewReview" class="nav-capsule-btn flex flex-col items-center text-slate-500 hover:text-indigo-600 transition"><span class="text-xs">🔍</span><span class="text-[10px]">Review</span></button>
+      <button onclick="switchTab('viewVendors')" id="tabBtn-viewVendors" data-id="viewVendors" class="nav-capsule-btn flex flex-col items-center text-slate-500 hover:text-indigo-600 transition"><span class="text-xs">🏢</span><span class="text-[10px]">Vendors</span></button>
+      <button onclick="switchTab('viewSites')" id="tabBtn-viewSites" data-id="viewSites" class="nav-capsule-btn flex flex-col items-center text-slate-500 hover:text-indigo-600 transition"><span class="text-xs">📍</span><span class="text-[10px]">Sites</span></button>
+      <button onclick="switchTab('viewTeam')" id="tabBtn-viewTeam" data-id="viewTeam" class="nav-capsule-btn flex flex-col items-center text-slate-500 hover:text-indigo-600 transition"><span class="text-xs">👥</span><span class="text-[10px]">Team</span></button>
+    </div>
+  </div>
+
+  <!-- Modal: Tab Settings, Position & Shuffle -->
+  <div id="tabSettingsModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
+    <div class="bg-white dark:bg-darkcard rounded-2xl max-w-sm w-full p-4 shadow-2xl border relative space-y-3">
+      <button onclick="toggleModal('tabSettingsModal', false)" class="absolute right-3 top-3 text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
+      <h3 class="text-xs font-bold text-slate-900 dark:text-white">Manage Tab Settings</h3>
+
+      <div>
+        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Bar Alignment Position</label>
+        <select id="barPositionSelect" onchange="changeBarPosition(this.value)" class="w-full border rounded px-2.5 py-1.5 text-xs font-bold bg-slate-50 dark:bg-slate-800 dark:text-white outline-none cursor-pointer">
+          <option value="center">Center</option>
+          <option value="left">Left</option>
+          <option value="right">Right</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tab Shuffle & Visibility</label>
+        <div id="tabShuffleContainer" class="space-y-1.5 text-xs max-h-56 overflow-y-auto custom-scroll pr-1"></div>
+      </div>
+
+      <button onclick="toggleModal('tabSettingsModal', false)" class="w-full bg-indigo-600 text-white font-bold py-1.5 rounded transition mt-2">Save & Close</button>
+    </div>
+  </div>
+
+  <!-- Left Drawer -->
+  <div id="sideMenuDrawer" class="fixed inset-0 z-50 hidden">
+    <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs transition-opacity" onclick="toggleSideMenu(false)"></div>
+    <div class="fixed left-0 top-0 bottom-0 max-w-xs w-full bg-white dark:bg-darkcard shadow-2xl z-50 flex flex-col p-4 border-r">
+      <div class="flex items-center justify-between pb-2 border-b">
+        <span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Navigation Menu</span>
+        <button onclick="toggleSideMenu(false)" class="text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+      <div class="py-2.5 space-y-1">
+        <button onclick="toggleSideMenu(false); switchTab('viewPmsBoard')" class="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-slate-100"><span>📦</span> Tasks</button>
+        <button onclick="toggleSideMenu(false); switchTab('viewReview')" class="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-slate-100"><span>🔍</span> Review</button>
+        <button onclick="toggleSideMenu(false); switchTab('viewVendors')" class="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-slate-100"><span>🏢</span> Vendors</button>
+        <button onclick="toggleSideMenu(false); switchTab('viewSites')" class="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-slate-100"><span>📍</span> Sites</button>
+        <button onclick="toggleSideMenu(false); switchTab('viewTeam')" class="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-slate-100"><span>👥</span> Team</button>
+      </div>
+      <div class="mt-auto pt-3 border-t">
+        <button onclick="toggleDarkMode()" class="w-full bg-slate-50 dark:bg-slate-800 border rounded-lg py-1 text-xs font-bold flex items-center justify-center gap-1.5">
+          <span id="drawerThemeIcon">🌙</span> <span id="drawerThemeLabel">Toggle Dark Mode</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal: Add / Edit Vendor -->
+  <div id="addVendorModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
+    <div class="bg-white dark:bg-darkcard rounded-2xl max-w-sm w-full p-4 shadow-2xl border relative">
+      <button onclick="toggleModal('addVendorModal', false)" class="absolute right-3 top-3 text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
+      <h3 class="text-xs font-bold text-slate-900 dark:text-white mb-2" id="modalVendorTitle">Add New Vendor</h3>
+      <form onsubmit="event.preventDefault(); saveVendor();" class="space-y-2 text-xs">
+        <input type="hidden" id="editVendorId">
+        <div>
+          <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Vendor Name *</label>
+          <input type="text" id="vName" required placeholder="Enter vendor name..." class="w-full border rounded px-2.5 py-1 font-bold dark:bg-slate-800 dark:text-white">
+        </div>
+        <div>
+          <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Contact Number *</label>
+          <input type="text" id="vPhone" required placeholder="Enter phone number..." class="w-full border rounded px-2.5 py-1 font-mono dark:bg-slate-800 dark:text-white">
+        </div>
+        <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-1.5 rounded transition mt-2">Save Vendor</button>
+      </form>
     </div>
   </div>
 
@@ -730,7 +800,6 @@
       return true;
     }
 
-    // DIRECT TOGGLE STATUS UPDATE (NO POPUPS)
     async function directToggleStepStatus(taskId, stepId, currentStatus, wbsNo, taskSteps) {
       const newStatus = (currentStatus === 'Completed') ? 'Pending' : 'Completed';
 
@@ -759,7 +828,7 @@
       }
     }
 
-    // REMARK EDIT WITHOUT POPUP: Handled smoothly via inline input or silent prompt if triggered
+    // SILENT REMARK UPDATE (NO BROWSER POPUPS)
     async function editStepRemarks(taskId, stepId, currentRemarks) {
       const newRemarks = prompt("Update remark:", currentRemarks || '');
       if (newRemarks === null) return;
@@ -785,12 +854,13 @@
       }
     }
 
-    // RENDER TABLE WITH BIGGER TITLE & VISIBLE SUBTITLE
+    // RENDER TABLE WITH HIDE COMPLETED TASKS TOGGLE SUPPORT
     function renderStructuredTableGrid(data) {
       const tbody = document.getElementById('tableRows');
       const role = document.getElementById('userRole').value;
       const selectedSite = document.getElementById('filterByProject').value;
       const searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
+      const hideCompleted = document.getElementById('hideCompletedTasksToggle')?.checked || false;
 
       const backBar = document.getElementById('backToSitesBar');
       if (selectedSite && selectedSite !== 'ALL') {
@@ -835,6 +905,15 @@
       filteredData.forEach(item => {
         let sortedSteps = [...item.steps].sort(naturalWbsSort);
 
+        const total = sortedSteps.length;
+        const doneCount = sortedSteps.filter(s => s.status === 'Completed').length;
+        const percentage = total > 0 ? Math.round((doneCount / total) * 100) : 0;
+
+        // Hide completed task if toggle is checked and task is 100% done
+        if (hideCompleted && percentage === 100) {
+          return;
+        }
+
         if (searchQuery) {
           const matchesTask = item.uniqueId.toLowerCase().includes(searchQuery) ||
                               item.mainItemName.toLowerCase().includes(searchQuery) ||
@@ -852,11 +931,8 @@
 
         const isCollapsed = collapsedTasks[item.uniqueId] !== undefined ? collapsedTasks[item.uniqueId] : true;
 
-        const total = sortedSteps.length;
-        const doneCount = sortedSteps.filter(s => s.status === 'Completed').length;
         const overdueCount = sortedSteps.filter(s => (new Date(s.plannedEndDate) < now && s.status !== 'Completed') || s.status === 'Delayed').length;
         const pendingCount = total - doneCount - overdueCount;
-        const percentage = total > 0 ? Math.round((doneCount / total) * 100) : 0;
         const qtyDisplay = item.totalQty ? `Qty: ${item.totalQty}` : '';
 
         // Parent Row with Bigger Title & Distinct Subtitle block
