@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PMS Central Hub | Direct Toggle & Fixed Update</title>
+  <title>PMS Central Hub | Direct Toggle Clean</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -582,7 +582,7 @@
         const meta = tabMeta[tabId];
         const displayStyle = hiddenTabs[tabId] ? 'display: none;' : 'display: flex;';
         const activeClass = document.getElementById(`tabBtn-${tabId}`)?.classList.contains('active') ? 'active' : '';
-         
+        
         let iconChar = '📦';
         if(tabId === 'viewReview') iconChar = '🔍';
         if(tabId === 'viewVendors') iconChar = '🏢';
@@ -761,14 +761,14 @@
       switchTab('viewPmsBoard');
       const filterSelect = document.getElementById('filterByProject');
       if (filterSelect) filterSelect.value = siteName;
-       
+      
       allData.forEach(t => {
         if ((t.projectName || '').toLowerCase().trim() === siteName.toLowerCase().trim()) {
           collapsedTasks[t.uniqueId] = true;
         }
       });
       localStorage.setItem('pms_collapsed_tasks', JSON.stringify(collapsedTasks));
-       
+      
       const backBar = document.getElementById('backToSitesBar');
       if (backBar) backBar.classList.remove('hidden');
       document.getElementById('activeSiteBadgeTitle').innerText = siteName;
@@ -779,7 +779,7 @@
     function backToSitesDirectory() {
       const filterSelect = document.getElementById('filterByProject');
       if (filterSelect) filterSelect.value = 'ALL';
-       
+      
       const backBar = document.getElementById('backToSitesBar');
       if (backBar) backBar.classList.add('hidden');
 
@@ -847,7 +847,7 @@
     // STRICT SEQUENTIAL VALIDATION
     function validateSequentialCompletion(steps, currentStepWbsNo, newStatus) {
       const currentWbs = parseInt(currentStepWbsNo, 10);
-       
+      
       if (newStatus === 'Completed') {
         for (let s of steps) {
           const stepWbs = parseInt(s.wbsNo, 10);
@@ -868,11 +868,10 @@
       return true;
     }
 
-    // DIRECT TOGGLE STATUS UPDATE (No popup modal needed)
+    // DIRECT TOGGLE STATUS UPDATE (NO REMARKS PROMPT)
     async function directToggleStepStatus(taskId, stepId, currentStatus, wbsNo, taskSteps) {
       const newStatus = (currentStatus === 'Completed') ? 'Pending' : 'Completed';
-       
-      // Run sequential check
+      
       const isValid = validateSequentialCompletion(taskSteps, wbsNo, newStatus);
       if (!isValid) return;
 
@@ -880,7 +879,6 @@
         uniqueId: taskId,
         stepId: stepId,
         status: newStatus,
-        remarks: '',
         actualEndDate: newStatus === 'Completed' ? new Date().toISOString() : null
       };
 
@@ -929,12 +927,13 @@
       }
     }
 
-    // RENDER TABLE WITH DIRECT TOGGLE ACTION BUTTON
+    // RENDER TABLE WITH CORRECT "✓ Done" LABEL AND WORKING SEARCH
     function renderStructuredTableGrid(data) {
       const tbody = document.getElementById('tableRows');
       const role = document.getElementById('userRole').value;
       const selectedSite = document.getElementById('filterByProject').value;
       const doerEmail = document.getElementById('doerDropdownSelect').value.toLowerCase().trim();
+      const searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
 
       const backBar = document.getElementById('backToSitesBar');
       if (selectedSite && selectedSite !== 'ALL') {
@@ -970,6 +969,22 @@
         if (role === 'DOER' && doerEmail) {
           sortedSteps = sortedSteps.filter(s => (s.assignedEmail || '').toLowerCase().trim() === doerEmail);
           if (sortedSteps.length === 0) return;
+        }
+
+        // Apply Search Query Filter
+        if (searchQuery) {
+          const matchesTask = item.uniqueId.toLowerCase().includes(searchQuery) ||
+                              item.mainItemName.toLowerCase().includes(searchQuery) ||
+                              (item.projectName || '').toLowerCase().includes(searchQuery);
+          
+          sortedSteps = sortedSteps.filter(s => 
+            matchesTask || 
+            s.stepTitle.toLowerCase().includes(searchQuery) || 
+            s.wbsNo.toLowerCase().includes(searchQuery) ||
+            (s.assignedName || '').toLowerCase().includes(searchQuery)
+          );
+
+          if (sortedSteps.length === 0 && !matchesTask) return;
         }
 
         const isCollapsed = collapsedTasks[item.uniqueId] !== undefined ? collapsedTasks[item.uniqueId] : true;
@@ -1042,8 +1057,9 @@
             const actualStartStr = s.actualStartDate ? new Date(s.actualStartDate).toLocaleDateString('en-GB') : (s.plannedStartDate ? new Date(s.plannedStartDate).toLocaleDateString('en-GB') : '—');
             const actualEndStr = (isCompleted && s.actualEndDate) ? new Date(s.actualEndDate).toLocaleDateString('en-GB') : (isCompleted && s.updatedAt ? new Date(s.updatedAt).toLocaleDateString('en-GB') : (isCompleted ? new Date().toLocaleDateString('en-GB') : '—'));
 
-            const toggleButtonText = isCompleted ? '↺ Make Pending' : '✓ Mark Done';
-            const toggleButtonClass = isCompleted ? 'bg-amber-50 text-amber-700 hover:bg-amber-100 border-amber-200' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200';
+            // Corrected button label for Completed vs Pending
+            const toggleButtonText = isCompleted ? '✓ Done' : '✓ Mark Done';
+            const toggleButtonClass = isCompleted ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200' : 'bg-emerald-600 text-white hover:bg-emerald-700 border-emerald-600';
 
             // Child Rows
             html += `
@@ -1138,7 +1154,7 @@
       const select = document.getElementById('filterByProject');
       const datalist = document.getElementById('projectSuggestions');
       if (!select) return;
-       
+      
       const currentVal = select.value;
       let html = '<option value="ALL">All Sites</option>';
       let dlHtml = '';
@@ -1319,7 +1335,7 @@
           task.steps.forEach(st => {
             if ((st.assignedEmail || '').toLowerCase().trim() === (d.email || '').toLowerCase().trim() || 
                 (st.assignedName || '').toLowerCase().trim() === (d.name || '').toLowerCase().trim()) {
-               
+              
               const pStart = new Date(st.plannedStartDate);
               const pEnd = new Date(st.plannedEndDate);
               const isBacklog = (st.status !== 'Completed' && pEnd < now);
@@ -1401,7 +1417,7 @@
         task.steps.forEach(st => {
           if ((st.assignedEmail || '').toLowerCase().trim() === (email || '').toLowerCase().trim() || 
               (st.assignedName || '').toLowerCase().trim() === (name || '').toLowerCase().trim()) {
-             
+            
             const pStart = new Date(st.plannedStartDate);
             const pEnd = new Date(st.plannedEndDate);
             const isBacklog = (st.status !== 'Completed' && pEnd < now);
@@ -1474,7 +1490,7 @@
     function saveAsTemplate() {
       const stepCards = document.querySelectorAll('#stepsContainer .step-card');
       if (stepCards.length === 0) return alert('No steps available to save!');
-       
+      
       let titles = [];
       stepCards.forEach(c => titles.push(c.querySelector('.step-title').value.trim()));
       const bulkText = titles.join('\n');
@@ -1506,7 +1522,7 @@
       document.getElementById('mItemName').value = '';
       document.getElementById('bulkStepsInput').value = '';
       document.getElementById('stepsContainer').innerHTML = '<p class="text-xs text-slate-400 text-center py-4 italic">No steps generated yet. Click "Generate From List".</p>';
-       
+      
       updateTemplateDropdown();
       toggleModal('createTaskModal', true);
     }
@@ -1525,7 +1541,7 @@
 
       const container = document.getElementById('stepsContainer');
       let html = '';
-       
+      
       task.steps.sort(naturalWbsSort).forEach((s, i) => {
         let doerOptions = '';
         if (activeDoers && activeDoers.length > 0) {
@@ -1662,7 +1678,7 @@
     function addSingleStepRow() {
       const container = document.getElementById('stepsContainer');
       if(container.querySelector('p')) container.innerHTML = '';
-       
+      
       const count = container.children.length + 1;
       let doerOptions = '';
       activeDoers.forEach(d => {
