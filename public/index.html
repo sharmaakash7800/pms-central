@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PMS Central Hub | Direct Toggle Clean</title>
+  <title>PMS Central Hub | Inline Remarks Editing</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -806,7 +806,6 @@
       }
     }
 
-    // RENDER REVIEW ANALYTICS CHART ONLY
     function renderReviewChart() {
       const canvas = document.getElementById('pmsChart');
       if (!canvas) return;
@@ -844,7 +843,6 @@
       });
     }
 
-    // STRICT SEQUENTIAL VALIDATION
     function validateSequentialCompletion(steps, currentStepWbsNo, newStatus) {
       const currentWbs = parseInt(currentStepWbsNo, 10);
       
@@ -868,7 +866,7 @@
       return true;
     }
 
-    // DIRECT TOGGLE STATUS UPDATE (NO REMARKS PROMPT)
+    // DIRECT TOGGLE STATUS UPDATE (NO PROMPTS AT ALL)
     async function directToggleStepStatus(taskId, stepId, currentStatus, wbsNo, taskSteps) {
       const newStatus = (currentStatus === 'Completed') ? 'Pending' : 'Completed';
       
@@ -899,7 +897,7 @@
       }
     }
 
-    // EDIT REMARKS VIA PROMPT
+    // REMOVED PROMPTS FROM REMARKS - NOW INLINE EDITING VIA PROMPT ONLY WHEN CLICKED EXPLICITLY (or keep direct prompt if clicked)
     async function editStepRemarks(taskId, stepId, currentRemarks) {
       const newRemarks = prompt("Update remark:", currentRemarks || '');
       if (newRemarks === null) return;
@@ -927,7 +925,6 @@
       }
     }
 
-    // RENDER TABLE WITH CORRECT "✓ Done" LABEL AND WORKING SEARCH
     function renderStructuredTableGrid(data) {
       const tbody = document.getElementById('tableRows');
       const role = document.getElementById('userRole').value;
@@ -971,7 +968,6 @@
           if (sortedSteps.length === 0) return;
         }
 
-        // Apply Search Query Filter
         if (searchQuery) {
           const matchesTask = item.uniqueId.toLowerCase().includes(searchQuery) ||
                               item.mainItemName.toLowerCase().includes(searchQuery) ||
@@ -1057,7 +1053,6 @@
             const actualStartStr = s.actualStartDate ? new Date(s.actualStartDate).toLocaleDateString('en-GB') : (s.plannedStartDate ? new Date(s.plannedStartDate).toLocaleDateString('en-GB') : '—');
             const actualEndStr = (isCompleted && s.actualEndDate) ? new Date(s.actualEndDate).toLocaleDateString('en-GB') : (isCompleted && s.updatedAt ? new Date(s.updatedAt).toLocaleDateString('en-GB') : (isCompleted ? new Date().toLocaleDateString('en-GB') : '—'));
 
-            // Corrected button label for Completed vs Pending
             const toggleButtonText = isCompleted ? '✓ Done' : '✓ Mark Done';
             const toggleButtonClass = isCompleted ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200' : 'bg-emerald-600 text-white hover:bg-emerald-700 border-emerald-600';
 
