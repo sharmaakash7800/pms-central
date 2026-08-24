@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PMS Central Hub | Fixed Layout & Hide Completed Tasks</title>
+  <title>PMS Central Hub | Direct Toggle Clean</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -88,15 +88,15 @@
     </div>
   </header>
 
-  <!-- Main Content Container with bottom padding so table doesn't hide under capsule bar -->
-  <main class="max-w-7xl mx-auto px-3 sm:px-5 py-3 w-full flex-1 min-h-0 flex flex-col overflow-hidden pb-20">
+  <!-- Main Content -->
+  <main class="max-w-7xl mx-auto px-3 sm:px-5 py-3 w-full flex-1 min-h-0 flex flex-col overflow-hidden pb-16">
     
     <div id="activeDoerBanner" class="hidden shrink-0 bg-indigo-50 dark:bg-indigo-950/60 border border-indigo-200 dark:border-indigo-800 p-2 rounded-xl mb-2 flex items-center justify-between">
       <div class="flex items-center gap-2 text-xs">
         <span class="w-2 h-2 rounded-full bg-indigo-600 animate-ping"></span>
         <span class="text-indigo-900 dark:text-indigo-200 font-bold">Filtered Workspace For: <span id="doerBannerName" class="underline"></span></span>
       </div>
-      <button onclick="logoutDoer()" class="text-[10px] bg-rose-600 text-white px-2 py-0.5 rounded font-bold">Logout</button>
+      <span class="text-[10px] bg-indigo-200 dark:bg-indigo-900 text-indigo-900 dark:text-indigo-200 px-2 py-0.5 rounded-full font-bold">Personalized View</span>
     </div>
 
     <!-- VIEW 1: STRUCTURED TABLE VIEW -->
@@ -128,11 +128,6 @@
               <option value="ALL">All Members</option>
             </select>
           </div>
-
-          <!-- Hide Completed Tasks Checkbox -->
-          <label class="flex items-center gap-1.5 text-[11px] font-bold text-slate-600 dark:text-slate-300 cursor-pointer ml-2">
-            <input type="checkbox" id="hideCompletedTasksToggle" onchange="applyFilters()" class="rounded w-3.5 h-3.5 text-indigo-600"> Hide Completed (100%) Tasks
-          </label>
         </div>
 
         <div class="flex items-center gap-2">
@@ -170,7 +165,7 @@
       </div>
     </div>
 
-    <!-- VIEW 2: REVIEW CONSOLE -->
+    <!-- VIEW 2: REVIEW CONSOLE (CHART ONLY) -->
     <div id="viewReview" class="view-section hidden space-y-2.5 flex-1 min-h-0 overflow-y-auto custom-scroll">
       <div class="bg-white dark:bg-darkcard rounded-xl border border-slate-200 dark:border-darkborder p-4 shadow-2xs space-y-3">
         <div class="flex items-center justify-between">
@@ -257,6 +252,25 @@
     </div>
 
   </main>
+
+  <!-- Modal: Doer Performance Audit Breakdown -->
+  <div id="doerAuditModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
+    <div class="bg-white dark:bg-darkcard rounded-2xl max-w-2xl w-full p-4 shadow-2xl border relative max-h-[92vh] flex flex-col">
+      <div class="flex items-center justify-between pb-2 border-b">
+        <div>
+          <h3 class="text-xs font-bold text-slate-900 dark:text-white" id="auditModalTitle">Doer Audit Breakdown</h3>
+          <p class="text-[9px] text-slate-400">Detailed list of assigned tasks and statuses for the selected period.</p>
+        </div>
+        <button onclick="toggleModal('doerAuditModal', false)" class="text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+
+      <div id="auditModalContent" class="overflow-y-auto custom-scroll py-3 space-y-2 flex-1 pr-1 text-xs"></div>
+
+      <div class="pt-2 border-t flex justify-end">
+        <button onclick="toggleModal('doerAuditModal', false)" class="bg-slate-200 dark:bg-slate-800 text-slate-800 dark:text-white font-bold px-4 py-1.5 rounded transition">Close</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Bottom Capsule Bar -->
   <div id="bottomBarWrapper" class="fixed bottom-3 z-40 transition-all duration-300 left-1/2 -translate-x-1/2">
@@ -458,11 +472,26 @@
     </div>
   </div>
 
+  <!-- Modal: Add Team Member -->
+  <div id="addMemberModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
+    <div class="bg-white dark:bg-darkcard rounded-2xl max-w-sm w-full p-4 shadow-2xl border relative">
+      <button onclick="toggleModal('addMemberModal', false)" class="absolute right-3 top-3 text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
+      <h3 class="text-xs font-bold text-slate-900 dark:text-white mb-2">Add Team Member</h3>
+      <form onsubmit="event.preventDefault(); saveNewMember();" class="space-y-2 text-xs">
+        <input type="text" id="newMemberName" required placeholder="Full Name" class="w-full border rounded px-2 py-1 dark:bg-slate-800 dark:text-white">
+        <input type="email" id="newMemberEmail" required placeholder="Email Address" class="w-full border rounded px-2 py-1 dark:bg-slate-800 dark:text-white font-mono">
+        <input type="text" id="newMemberRole" placeholder="Role / Designation" class="w-full border rounded px-2 py-1 dark:bg-slate-800 dark:text-white">
+        <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-1.5 rounded transition">Save Member</button>
+      </form>
+    </div>
+  </div>
+
   <script>
     let activeDoers = [];
     let allData = [];
     let allVendors = [];
     let allSitesList = [];
+    let currentAuditDoer = { email: '', name: '' };
     let pmsChartInstance = null;
 
     const API_BASE = window.location.origin.startsWith('file:') 
@@ -596,6 +625,100 @@
 
     function toggleSideMenu(show) { document.getElementById('sideMenuDrawer').classList.toggle('hidden', !show); }
     function toggleModal(id, show) { document.getElementById(id).classList.toggle('hidden', !show); }
+    function initTheme() {
+      const isDark = localStorage.getItem('pms_theme') === 'dark';
+      document.documentElement.classList.toggle('dark', isDark);
+      lucide.createIcons();
+    }
+
+    function openAddVendorModal() {
+      document.getElementById('editVendorId').value = '';
+      document.getElementById('vName').value = '';
+      document.getElementById('vPhone').value = '';
+      document.getElementById('modalVendorTitle').innerText = 'Add New Vendor';
+      toggleModal('addVendorModal', true);
+    }
+
+    function openEditVendorModal(id, name, phone) {
+      document.getElementById('editVendorId').value = id;
+      document.getElementById('vName').value = name;
+      document.getElementById('vPhone').value = phone;
+      document.getElementById('modalVendorTitle').innerText = 'Edit Vendor Details';
+      toggleModal('addVendorModal', true);
+    }
+
+    async function saveVendor() {
+      const id = document.getElementById('editVendorId').value.trim();
+      const payload = {
+        name: document.getElementById('vName').value.trim(),
+        phone: document.getElementById('vPhone').value.trim()
+      };
+
+      const url = id ? `${API_BASE}/api/vendors/${id}` : `${API_BASE}/api/vendors`;
+      const method = id ? 'PUT' : 'POST';
+
+      try {
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (json.success) {
+          toggleModal('addVendorModal', false);
+          renderVendorsView();
+        } else {
+          alert(json.error || 'Failed to save vendor.');
+        }
+      } catch (err) {
+        alert('Network error: ' + err.message);
+      }
+    }
+
+    async function deleteVendor(id) {
+      if (!confirm('Are you sure you want to delete this vendor?')) return;
+      const res = await fetch(`${API_BASE}/api/vendors/${id}`, { method: 'DELETE' });
+      const json = await res.json();
+      if (json.success) {
+        renderVendorsView();
+      } else {
+        alert(json.error);
+      }
+    }
+
+    async function renderVendorsView() {
+      const container = document.getElementById('vendorCardsContainer');
+      if (!container) return;
+      try {
+        const res = await fetch(`${API_BASE}/api/vendors`);
+        const json = await res.json();
+        const vendors = json.data || [];
+        document.getElementById('vendorTotalCountBadge').innerText = `${vendors.length} Vendors`;
+        let html = '';
+        vendors.forEach(v => {
+          html += `
+            <div class="bg-white dark:bg-darkcard p-3 rounded-xl border border-slate-200 dark:border-darkborder shadow-2xs space-y-1 text-xs relative">
+              <div class="flex items-center justify-between">
+                <h4 class="font-bold text-slate-900 dark:text-white text-sm">🏢 ${v.name}</h4>
+                <div class="flex items-center gap-1">
+                  <button onclick="openEditVendorModal('${v._id}', '${v.name.replace(/'/g, "\\'")}', '${v.phone}')" class="text-slate-400 hover:text-indigo-600 p-1" title="Edit Vendor">
+                    <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
+                  </button>
+                  <button onclick="deleteVendor('${v._id}')" class="text-slate-300 hover:text-rose-600 p-1" title="Delete Vendor">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                  </button>
+                </div>
+              </div>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400 font-mono">📞 ${v.phone}</p>
+            </div>
+          `;
+        });
+        container.innerHTML = html || '<p class="text-xs text-slate-400 py-6 text-center">No vendors found.</p>';
+        lucide.createIcons();
+      } catch (err) {
+        console.error(err);
+      }
+    }
 
     function handleRoleSwitch() {
       const role = document.getElementById('userRole').value;
@@ -664,7 +787,6 @@
       applyFilters();
     }
 
-    // FIX APPLIED HERE: Site unhide toggle state is now immediately synced with local array to update UI instantly without refresh
     async function toggleSiteHideStatus(siteId, currentHiddenState) {
       try {
         const res = await fetch(`${API_BASE}/api/sites/${siteId}`, {
@@ -674,10 +796,6 @@
         });
         const json = await res.json();
         if (json.success) {
-          // Immediately update local array state so UI reflects the unhide/hide action instantly
-          const site = allSitesList.find(s => s._id === siteId);
-          if (site) site.isHidden = !currentHiddenState;
-
           loadSitesList();
           renderProjectFilterDropdown();
         } else {
@@ -688,6 +806,7 @@
       }
     }
 
+    // RENDER REVIEW ANALYTICS CHART ONLY
     function renderReviewChart() {
       const canvas = document.getElementById('pmsChart');
       if (!canvas) return;
@@ -725,9 +844,10 @@
       });
     }
 
+    // STRICT SEQUENTIAL VALIDATION
     function validateSequentialCompletion(steps, currentStepWbsNo, newStatus) {
       const currentWbs = parseInt(currentStepWbsNo, 10);
-       
+      
       if (newStatus === 'Completed') {
         for (let s of steps) {
           const stepWbs = parseInt(s.wbsNo, 10);
@@ -748,9 +868,10 @@
       return true;
     }
 
+    // DIRECT TOGGLE STATUS UPDATE (NO REMARKS PROMPT)
     async function directToggleStepStatus(taskId, stepId, currentStatus, wbsNo, taskSteps) {
       const newStatus = (currentStatus === 'Completed') ? 'Pending' : 'Completed';
-       
+      
       const isValid = validateSequentialCompletion(taskSteps, wbsNo, newStatus);
       if (!isValid) return;
 
@@ -758,7 +879,6 @@
         uniqueId: taskId,
         stepId: stepId,
         status: newStatus,
-        remarks: '',
         actualEndDate: newStatus === 'Completed' ? new Date().toISOString() : null
       };
 
@@ -779,6 +899,7 @@
       }
     }
 
+    // EDIT REMARKS VIA PROMPT
     async function editStepRemarks(taskId, stepId, currentRemarks) {
       const newRemarks = prompt("Update remark:", currentRemarks || '');
       if (newRemarks === null) return;
@@ -806,11 +927,13 @@
       }
     }
 
+    // RENDER TABLE WITH CORRECT "✓ Done" LABEL AND WORKING SEARCH
     function renderStructuredTableGrid(data) {
       const tbody = document.getElementById('tableRows');
       const role = document.getElementById('userRole').value;
       const selectedSite = document.getElementById('filterByProject').value;
       const doerEmail = document.getElementById('doerDropdownSelect').value.toLowerCase().trim();
+      const searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
 
       const backBar = document.getElementById('backToSitesBar');
       if (selectedSite && selectedSite !== 'ALL') {
@@ -830,7 +953,7 @@
         filteredData = data.filter(item => (item.projectName || '').toLowerCase().trim() === selectedSite.toLowerCase().trim());
       } else {
         const hiddenSiteNames = allSitesList.filter(s => s.isHidden).map(s => s.siteName.toLowerCase().trim());
-        filteredData = filteredData.filter(item => !hiddenSiteNames.includes((item.projectName || '').toLowerCase().trim()));
+        filteredData = data.filter(item => !hiddenSiteNames.includes((item.projectName || '').toLowerCase().trim()));
       }
 
       if (!filteredData || filteredData.length === 0) {
@@ -846,6 +969,22 @@
         if (role === 'DOER' && doerEmail) {
           sortedSteps = sortedSteps.filter(s => (s.assignedEmail || '').toLowerCase().trim() === doerEmail);
           if (sortedSteps.length === 0) return;
+        }
+
+        // Apply Search Query Filter
+        if (searchQuery) {
+          const matchesTask = item.uniqueId.toLowerCase().includes(searchQuery) ||
+                              item.mainItemName.toLowerCase().includes(searchQuery) ||
+                              (item.projectName || '').toLowerCase().includes(searchQuery);
+          
+          sortedSteps = sortedSteps.filter(s => 
+            matchesTask || 
+            s.stepTitle.toLowerCase().includes(searchQuery) || 
+            s.wbsNo.toLowerCase().includes(searchQuery) ||
+            (s.assignedName || '').toLowerCase().includes(searchQuery)
+          );
+
+          if (sortedSteps.length === 0 && !matchesTask) return;
         }
 
         const isCollapsed = collapsedTasks[item.uniqueId] !== undefined ? collapsedTasks[item.uniqueId] : true;
@@ -918,8 +1057,9 @@
             const actualStartStr = s.actualStartDate ? new Date(s.actualStartDate).toLocaleDateString('en-GB') : (s.plannedStartDate ? new Date(s.plannedStartDate).toLocaleDateString('en-GB') : '—');
             const actualEndStr = (isCompleted && s.actualEndDate) ? new Date(s.actualEndDate).toLocaleDateString('en-GB') : (isCompleted && s.updatedAt ? new Date(s.updatedAt).toLocaleDateString('en-GB') : (isCompleted ? new Date().toLocaleDateString('en-GB') : '—'));
 
-            const toggleButtonText = isCompleted ? '↺ Make Pending' : '✓ Mark Done';
-            const toggleButtonClass = isCompleted ? 'bg-amber-50 text-amber-700 hover:bg-amber-100 border-amber-200' : 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200';
+            // Corrected button label for Completed vs Pending
+            const toggleButtonText = isCompleted ? '✓ Done' : '✓ Mark Done';
+            const toggleButtonClass = isCompleted ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border-emerald-200' : 'bg-emerald-600 text-white hover:bg-emerald-700 border-emerald-600';
 
             // Child Rows
             html += `
@@ -1014,7 +1154,7 @@
       const select = document.getElementById('filterByProject');
       const datalist = document.getElementById('projectSuggestions');
       if (!select) return;
-        
+      
       const currentVal = select.value;
       let html = '<option value="ALL">All Sites</option>';
       let dlHtml = '';
@@ -1161,11 +1301,62 @@
       }
     }
 
+    function renderDoerHeaderDropdown(doers) {
+      const select = document.getElementById('doerDropdownSelect');
+      if (!select) return;
+      let html = '';
+      doers.forEach(d => html += `<option value="${d.email}">${d.name} (${d.email})</option>`);
+      select.innerHTML = html;
+    }
+
     function renderTeamView() {
       const container = document.getElementById('teamCardsContainer');
       if (!container) return;
       let html = '';
+      const period = document.getElementById('mainAuditPeriodSelect')?.value || 'ALL';
+      const now = new Date();
+
+      let startDateLimit = new Date(0);
+      if (period === 'WEEK') {
+        startDateLimit = new Date();
+        startDateLimit.setDate(now.getDate() - 7);
+      } else if (period === 'MONTH') {
+        startDateLimit = new Date();
+        startDateLimit.setDate(now.getDate() - 30);
+      } else if (period === 'QUARTER') {
+        startDateLimit = new Date();
+        startDateLimit.setDate(now.getDate() - 90);
+      }
+
       activeDoers.forEach(d => {
+        let assignedTotal = 0, completedCount = 0, pendingCount = 0, backlogCount = 0;
+
+        allData.forEach(task => {
+          task.steps.forEach(st => {
+            if ((st.assignedEmail || '').toLowerCase().trim() === (d.email || '').toLowerCase().trim() || 
+                (st.assignedName || '').toLowerCase().trim() === (d.name || '').toLowerCase().trim()) {
+              
+              const pStart = new Date(st.plannedStartDate);
+              const pEnd = new Date(st.plannedEndDate);
+              const isBacklog = (st.status !== 'Completed' && pEnd < now);
+
+              let isInPeriod = true;
+              if (period !== 'ALL') {
+                isInPeriod = (pStart >= startDateLimit) || (pEnd >= startDateLimit) || isBacklog;
+              }
+
+              if (isInPeriod) {
+                assignedTotal++;
+                if (st.status === 'Completed') completedCount++;
+                else if (isBacklog) backlogCount++;
+                else pendingCount++;
+              }
+            }
+          });
+        });
+
+        const doerProgress = assignedTotal > 0 ? Math.round((completedCount / assignedTotal) * 100) : 0;
+
         html += `
           <div class="bg-white dark:bg-darkcard p-3 rounded-xl border border-slate-200 dark:border-darkborder shadow-2xs space-y-2">
             <div class="flex items-center justify-between">
@@ -1173,39 +1364,448 @@
                 <h4 class="font-bold text-xs text-slate-900 dark:text-white">👤 ${d.name}</h4>
                 <p class="text-[10px] text-slate-400 font-mono">${d.email}</p>
               </div>
-              <span class="px-2 py-0.5 text-[9px] text-indigo-600 bg-indigo-50 font-bold rounded">${d.role || 'Executive'}</span>
+              <div class="flex items-center gap-1.5">
+                <span class="px-2 py-0.5 text-[9px] text-indigo-600 bg-indigo-50 font-bold rounded">${d.role || 'Executive'}</span>
+                <button onclick="openDoerAuditModal('${d.email}', '${d.name.replace(/'/g, "\\'")}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 rounded text-[10px] font-bold shadow-xs transition">
+                  🔍 View Details
+                </button>
+              </div>
+            </div>
+
+            <div class="bg-slate-50 dark:bg-slate-800 p-2 rounded-lg border space-y-1">
+              <div class="flex justify-between text-[10px] font-bold">
+                <span class="text-slate-600 dark:text-slate-300">Score (${period}): ${completedCount}/${assignedTotal} Done (${doerProgress}%)</span>
+              </div>
+              <div class="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
+                <div class="bg-emerald-500 h-full rounded-full" style="width: ${doerProgress}%"></div>
+              </div>
+              <div class="flex gap-2 text-[9px] font-bold pt-0.5">
+                <span class="text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded">Done: ${completedCount}</span>
+                <span class="text-slate-700 bg-slate-200 px-1.5 py-0.2 rounded">Pending: ${pendingCount}</span>
+                <span class="text-purple-700 bg-purple-50 px-1.5 py-0.2 rounded">Backlog: ${backlogCount}</span>
+              </div>
             </div>
           </div>
         `;
       });
+
       container.innerHTML = html || '<p class="text-xs text-slate-400 py-4">No members found.</p>';
       lucide.createIcons();
     }
 
-    function openAddMemberModal() {
-      document.getElementById('newMemberName').value = '';
-      document.getElementById('newMemberEmail').value = '';
-      document.getElementById('newMemberRole').value = '';
-      toggleModal('addMemberModal', true);
+    function openDoerAuditModal(email, name) {
+      currentAuditDoer = { email, name };
+      document.getElementById('auditModalTitle').innerText = `Performance Audit: ${name} (${email})`;
+      const container = document.getElementById('auditModalContent');
+      const now = new Date();
+      const period = document.getElementById('mainAuditPeriodSelect')?.value || 'ALL';
+
+      let startDateLimit = new Date(0);
+      if (period === 'WEEK') {
+        startDateLimit = new Date();
+        startDateLimit.setDate(now.getDate() - 7);
+      } else if (period === 'MONTH') {
+        startDateLimit = new Date();
+        startDateLimit.setDate(now.getDate() - 30);
+      } else if (period === 'QUARTER') {
+        startDateLimit = new Date();
+        startDateLimit.setDate(now.getDate() - 90);
+      }
+
+      let assignedSteps = [];
+      allData.forEach(task => {
+        task.steps.forEach(st => {
+          if ((st.assignedEmail || '').toLowerCase().trim() === (email || '').toLowerCase().trim() || 
+              (st.assignedName || '').toLowerCase().trim() === (name || '').toLowerCase().trim()) {
+            
+            const pStart = new Date(st.plannedStartDate);
+            const pEnd = new Date(st.plannedEndDate);
+            const isBacklog = (st.status !== 'Completed' && pEnd < now);
+
+            let isInPeriod = true;
+            if (period !== 'ALL') {
+              isInPeriod = (pStart >= startDateLimit) || (pEnd >= startDateLimit) || isBacklog;
+            }
+
+            if (isInPeriod) {
+              assignedSteps.push({
+                uniqueId: task.uniqueId,
+                projectName: task.projectName || 'General',
+                mainItemName: task.mainItemName,
+                step: st,
+                isCompleted: st.status === 'Completed',
+                isBacklog: isBacklog,
+                isDelayed: st.status === 'Delayed'
+              });
+            }
+          }
+        });
+      });
+
+      if (assignedSteps.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-400 py-8 text-center">No tasks found for the selected period.</p>';
+        toggleModal('doerAuditModal', true);
+        return;
+      }
+
+      let html = '';
+      assignedSteps.forEach((item) => {
+        let statusBadge = '';
+        if (item.isCompleted) statusBadge = '<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold">✓ Done</span>';
+        else if (item.isBacklog) statusBadge = '<span class="px-2 py-0.5 bg-purple-100 text-purple-800 rounded font-bold">Backlog (Date Passed)</span>';
+        else if (item.isDelayed) statusBadge = '<span class="px-2 py-0.5 bg-rose-100 text-rose-800 rounded font-bold animate-pulse">Overdue</span>';
+        else statusBadge = '<span class="px-2 py-0.5 bg-amber-100 text-amber-800 rounded font-bold">Pending</span>';
+
+        const startDateStr = new Date(item.step.plannedStartDate).toLocaleDateString('en-GB');
+        const endDateStr = new Date(item.step.plannedEndDate).toLocaleDateString('en-GB');
+
+        html += `
+          <div class="bg-slate-50 dark:bg-slate-800 p-2.5 rounded-lg border space-y-1">
+            <div class="flex items-center justify-between font-bold">
+              <span class="text-indigo-600 dark:text-indigo-400 font-mono text-[10px]">${item.uniqueId} | Site: ${item.projectName}</span>
+              ${statusBadge}
+            </div>
+            <p class="font-semibold text-slate-900 dark:text-white">Task: ${item.mainItemName}</p>
+            <p class="text-slate-700 dark:text-slate-200"><b>Step #${item.step.wbsNo}:</b> ${item.step.stepTitle}</p>
+            <p class="text-[10px] text-slate-400 font-mono">📅 Plan Date: <b>${startDateStr}</b> ➔ <b>${endDateStr}</b></p>
+            ${item.step.remarks ? `<p class="text-[10px] text-slate-500 italic">Remarks: ${item.step.remarks}</p>` : ''}
+          </div>
+        `;
+      });
+
+      container.innerHTML = html;
+      toggleModal('doerAuditModal', true);
     }
 
-    async function saveNewMember() {
-      const name = document.getElementById('newMemberName').value.trim();
-      const email = document.getElementById('newMemberEmail').value.trim().toLowerCase();
-      const role = document.getElementById('newMemberRole').value.trim();
-
-      const res = await fetch(`${API_BASE}/api/doers`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, role })
+    function updateTemplateDropdown() {
+      const selector = document.getElementById('templateSelector');
+      if (!selector) return;
+      const templates = JSON.parse(localStorage.getItem('pms_saved_templates') || '[]');
+      selector.innerHTML = '<option value="">-- Load Saved Template --</option>';
+      templates.forEach((t, i) => {
+        selector.innerHTML += `<option value="${i}">${t.name}</option>`;
       });
+    }
+
+    function saveAsTemplate() {
+      const stepCards = document.querySelectorAll('#stepsContainer .step-card');
+      if (stepCards.length === 0) return alert('No steps available to save!');
+      
+      let titles = [];
+      stepCards.forEach(c => titles.push(c.querySelector('.step-title').value.trim()));
+      const bulkText = titles.join('\n');
+
+      const name = document.getElementById('mItemName').value.trim() || prompt('Enter Template Name:');
+      if(!name) return;
+
+      const templates = JSON.parse(localStorage.getItem('pms_saved_templates') || '[]');
+      templates.push({ name, steps: bulkText });
+      localStorage.setItem('pms_saved_templates', JSON.stringify(templates));
+      updateTemplateDropdown();
+      alert('Template Saved Successfully!');
+    }
+
+    function loadSelectedTemplate() {
+      const selector = document.getElementById('templateSelector');
+      if(!selector || !selector.value) return;
+      const templates = JSON.parse(localStorage.getItem('pms_saved_templates') || '[]');
+      const template = templates[selector.value];
+      document.getElementById('bulkStepsInput').value = template.steps;
+      generateStepsFromBulkInput();
+    }
+
+    function openCreateModal() {
+      document.getElementById('editTaskIdField').value = '';
+      document.getElementById('modalTaskTitle').innerText = 'Create Main Task & Steps';
+      document.getElementById('mStartDate').value = new Date().toISOString().slice(0, 10);
+      document.getElementById('mProject').value = '';
+      document.getElementById('mItemName').value = '';
+      document.getElementById('bulkStepsInput').value = '';
+      document.getElementById('stepsContainer').innerHTML = '<p class="text-xs text-slate-400 text-center py-4 italic">No steps generated yet. Click "Generate From List".</p>';
+      
+      updateTemplateDropdown();
+      toggleModal('createTaskModal', true);
+    }
+
+    function openEditTaskModal(uniqueId) {
+      const task = allData.find(t => t.uniqueId === uniqueId);
+      if(!task) return;
+
+      document.getElementById('editTaskIdField').value = task.uniqueId;
+      document.getElementById('modalTaskTitle').innerText = `Update Task Package: ${task.uniqueId}`;
+      document.getElementById('mProject').value = task.projectName || '';
+      document.getElementById('mItemName').value = task.mainItemName || '';
+      document.getElementById('mType').value = task.pmsType || 'SUPPLY';
+      document.getElementById('mQty').value = task.totalQty || 1;
+      document.getElementById('mStartDate').value = task.startDate ? new Date(task.startDate).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10);
+
+      const container = document.getElementById('stepsContainer');
+      let html = '';
+      
+      task.steps.sort(naturalWbsSort).forEach((s, i) => {
+        let doerOptions = '';
+        if (activeDoers && activeDoers.length > 0) {
+          activeDoers.forEach(d => {
+            const selected = (d.name === s.assignedName || d.email === s.assignedEmail) ? 'selected' : '';
+            doerOptions += `<option value="${d.name}" data-email="${d.email}" ${selected}>${d.name}</option>`;
+          });
+        } else {
+          doerOptions = `<option value="${s.assignedName || 'Unassigned'}" data-email="${s.assignedEmail || 'doer@domain.com'}">${s.assignedName || 'Unassigned'}</option>`;
+        }
+
+        const stepId = s._id || s.stepId || '';
+        const status = s.status || 'Pending';
+        const remarks = s.remarks ? String(s.remarks).replace(/"/g, '&quot;') : '';
+        const actualStart = s.actualStartDate || '';
+        const actualEnd = s.actualEndDate || '';
+        const safeTitle = s.stepTitle ? String(s.stepTitle).replace(/"/g, '&quot;') : '';
+
+        html += `
+          <div class="step-card bg-slate-50 dark:bg-slate-800 p-2 rounded border space-y-1"
+               data-step-id="${stepId}" 
+               data-status="${status}" 
+               data-remarks="${remarks}" 
+               data-actual-start="${actualStart}" 
+               data-actual-end="${actualEnd}">
+            <div class="flex justify-between items-center font-bold text-[10px]">
+              <span class="flex items-center gap-1.5">
+                <span>#${i+1}</span>
+                <span class="px-1.5 py-0.2 rounded text-[9px] ${status === 'Completed' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'}">
+                  ${status === 'Completed' ? '✓ Completed' : status}
+                </span>
+              </span>
+              <button type="button" onclick="this.closest('.step-card').remove();" class="text-rose-500 hover:underline">Remove</button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-1.5 items-center">
+              <input type="text" class="step-title md:col-span-7 border rounded px-1.5 py-0.5 text-xs dark:bg-slate-800 dark:text-white" value="${safeTitle}">
+              <select class="step-doer md:col-span-3 border rounded px-1.5 py-0.5 text-[11px] dark:bg-slate-800 dark:text-white">${doerOptions}</select>
+              <div class="md:col-span-2 flex items-center gap-1">
+                <input type="number" min="1" value="${s.durationDays || 2}" class="step-days w-full border rounded px-1 py-0.5 text-xs font-bold text-center dark:bg-slate-800 dark:text-white" title="Duration in Days">
+                <span class="text-[9px] text-slate-400">d</span>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+
+      let titles = task.steps.sort(naturalWbsSort).map(s => s.stepTitle).join('\n');
+      document.getElementById('bulkStepsInput').value = titles;
+
+      updateTemplateDropdown();
+      toggleModal('createTaskModal', true);
+    }
+
+    async function deleteTaskPackage(uniqueId) {
+      if(!confirm(`Are you sure you want to delete task package ${uniqueId}?`)) return;
+      const res = await fetch(`${API_BASE}/api/pms/delete/${uniqueId}`, { method: 'DELETE' });
       const json = await res.json();
       if(json.success) {
-        toggleModal('addMemberModal', false);
+        toggleModal('createTaskModal', false);
         loadDashboardData();
-        alert('Member added successfully!');
       } else {
-        alert(json.error || 'Failed to save member.');
+        alert(json.error || 'Failed to delete task.');
+      }
+    }
+
+    function generateStepsFromBulkInput() {
+      const bulkText = document.getElementById('bulkStepsInput').value.trim();
+      const container = document.getElementById('stepsContainer');
+      const editId = document.getElementById('editTaskIdField').value.trim();
+
+      let existingSteps = [];
+      if (editId) {
+        const task = allData.find(t => t.uniqueId === editId);
+        if (task && task.steps) existingSteps = task.steps;
+      }
+
+      if (!bulkText) {
+        alert('Please paste or type your step titles list in the text box first.');
+        return;
+      }
+
+      const lines = bulkText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
+      let html = '';
+
+      lines.forEach((line, i) => {
+        let match = existingSteps.find(s => String(s.wbsNo) === String(i + 1)) || 
+                    existingSteps.find(s => s.stepTitle.trim().toLowerCase() === line.toLowerCase());
+
+        let doerOptions = '';
+        activeDoers.forEach(d => {
+          const selected = match && (d.name === match.assignedName || d.email === match.assignedEmail) ? 'selected' : '';
+          doerOptions += `<option value="${d.name}" data-email="${d.email}" ${selected}>${d.name}</option>`;
+        });
+
+        const stepId = match ? (match._id || match.stepId || '') : '';
+        const status = match ? (match.status || 'Pending') : 'Pending';
+        const remarks = match && match.remarks ? String(match.remarks).replace(/"/g, '&quot;') : '';
+        const actualStart = match && match.actualStartDate ? match.actualStartDate : '';
+        const actualEnd = match && match.actualEndDate ? match.actualEndDate : '';
+        const duration = match ? (match.durationDays || 2) : 2;
+        const safeLine = line.replace(/"/g, '&quot;');
+
+        html += `
+          <div class="step-card bg-slate-50 dark:bg-slate-800 p-2 rounded border space-y-1"
+               data-step-id="${stepId}" 
+               data-status="${status}" 
+               data-remarks="${remarks}" 
+               data-actual-start="${actualStart}" 
+               data-actual-end="${actualEnd}">
+            <div class="flex justify-between items-center font-bold text-[10px]">
+              <span class="flex items-center gap-1.5">
+                <span>#${i+1}</span>
+                <span class="px-1.5 py-0.2 rounded text-[9px] ${status === 'Completed' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'}">
+                  ${status === 'Completed' ? '✓ Completed' : status}
+                </span>
+              </span>
+              <button type="button" onclick="this.closest('.step-card').remove();" class="text-rose-500 hover:underline">Remove</button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-1.5 items-center">
+              <input type="text" class="step-title md:col-span-7 border rounded px-1.5 py-0.5 text-xs dark:bg-slate-800 dark:text-white" value="${safeLine}">
+              <select class="step-doer md:col-span-3 border rounded px-1.5 py-0.5 text-[11px] dark:bg-slate-800 dark:text-white">${doerOptions}</select>
+              <div class="md:col-span-2 flex items-center gap-1">
+                <input type="number" min="1" value="${duration}" class="step-days w-full border rounded px-1 py-0.5 text-xs font-bold text-center dark:bg-slate-800 dark:text-white" title="Duration in Days">
+                <span class="text-[9px] text-slate-400">d</span>
+              </div>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    }
+
+    function addSingleStepRow() {
+      const container = document.getElementById('stepsContainer');
+      if(container.querySelector('p')) container.innerHTML = '';
+      
+      const count = container.children.length + 1;
+      let doerOptions = '';
+      activeDoers.forEach(d => {
+        doerOptions += `<option value="${d.name}" data-email="${d.email}">${d.name}</option>`;
+      });
+
+      const div = document.createElement('div');
+      div.className = 'step-card bg-slate-50 dark:bg-slate-800 p-2 rounded border space-y-1';
+      div.setAttribute('data-status', 'Pending');
+      div.innerHTML = `
+        <div class="flex justify-between items-center font-bold text-[10px]">
+          <span class="flex items-center gap-1.5">
+            <span>#${count}</span>
+            <span class="px-1.5 py-0.2 rounded text-[9px] bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">Pending</span>
+          </span>
+          <button type="button" onclick="this.closest('.step-card').remove();" class="text-rose-500 hover:underline">Remove</button>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-1.5 items-center">
+          <input type="text" class="step-title md:col-span-7 border rounded px-1.5 py-0.5 text-xs dark:bg-slate-800 dark:text-white" placeholder="Enter step title...">
+          <select class="step-doer md:col-span-3 border rounded px-1.5 py-0.5 text-[11px] dark:bg-slate-800 dark:text-white">${doerOptions}</select>
+          <div class="md:col-span-2 flex items-center gap-1">
+            <input type="number" min="1" value="2" class="step-days w-full border rounded px-1 py-0.5 text-xs font-bold text-center dark:bg-slate-800 dark:text-white" title="Duration in Days">
+            <span class="text-[9px] text-slate-400">d</span>
+          </div>
+        </div>
+      `;
+      container.appendChild(div);
+    }
+
+    async function submitFullTaskPackage() {
+      const editId = document.getElementById('editTaskIdField').value.trim();
+      const projectName = document.getElementById('mProject').value.trim();
+      const mainItemName = document.getElementById('mItemName').value.trim();
+      const startDate = document.getElementById('mStartDate').value;
+      const pmsType = document.getElementById('mType').value;
+      const totalQty = document.getElementById('mQty').value;
+
+      if (!projectName || !mainItemName || !startDate) {
+        alert('Please fill Site Name, Main Task Name, and Start Date.');
+        return;
+      }
+
+      const stepCards = document.querySelectorAll('#stepsContainer .step-card');
+      if (stepCards.length === 0) {
+        alert('Please generate or add at least one step.');
+        return;
+      }
+
+      let existingTaskSteps = [];
+      if (editId) {
+        const existingTask = allData.find(t => t.uniqueId === editId);
+        if (existingTask && existingTask.steps) {
+          existingTaskSteps = existingTask.steps;
+        }
+      }
+
+      const steps = [];
+      let baseDate = new Date(startDate);
+
+      stepCards.forEach((card, idx) => {
+        const title = card.querySelector('.step-title').value.trim() || `Step #${idx + 1}`;
+        const selectDoer = card.querySelector('.step-doer');
+        const doerName = selectDoer.value;
+        const doerEmail = selectDoer.options[selectDoer.selectedIndex].getAttribute('data-email') || 'doer@domain.com';
+        const durationDays = parseInt(card.querySelector('.step-days').value, 10) || 2;
+
+        const stepStart = new Date(baseDate);
+        const stepEnd = new Date(stepStart);
+        stepEnd.setDate(stepEnd.getDate() + durationDays);
+        baseDate = new Date(stepEnd);
+
+        let stepId = card.dataset.stepId || undefined;
+        let status = card.dataset.status || undefined;
+        let remarks = card.dataset.remarks !== undefined ? card.dataset.remarks : undefined;
+        let actualStartDate = card.dataset.actualStart || undefined;
+        let actualEndDate = card.dataset.actualEnd || undefined;
+
+        if (!status && existingTaskSteps.length > 0) {
+          const match = existingTaskSteps.find(s => String(s.wbsNo) === String(idx + 1)) || 
+                        existingTaskSteps.find(s => s.stepTitle.trim().toLowerCase() === title.toLowerCase());
+          if (match) {
+            stepId = match._id || match.stepId;
+            status = match.status;
+            remarks = match.remarks;
+            actualStartDate = match.actualStartDate;
+            actualEndDate = match.actualEndDate;
+          }
+        }
+
+        const stepObj = {
+          wbsNo: String(idx + 1),
+          stepTitle: title,
+          assignedName: doerName,
+          assignedEmail: doerEmail,
+          durationDays: durationDays,
+          plannedStartDate: stepStart,
+          plannedEndDate: stepEnd,
+          status: status || 'Pending',
+          remarks: remarks || ''
+        };
+
+        if (stepId) stepObj._id = stepId;
+        if (actualStartDate) stepObj.actualStartDate = actualStartDate;
+        if (actualEndDate) stepObj.actualEndDate = actualEndDate;
+
+        steps.push(stepObj);
+      });
+
+      const payload = { uniqueId: editId, projectName, mainItemName, pmsType, startDate, totalQty, steps };
+      const url = editId ? `${API_BASE}/api/pms/update-package` : `${API_BASE}/api/pms/create-custom-package`;
+      const method = editId ? 'PUT' : 'POST';
+
+      try {
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if(json.success) {
+          toggleModal('createTaskModal', false);
+          loadDashboardData();
+        } else {
+          alert(json.error || 'Failed to save task.');
+        }
+      } catch (err) {
+        alert('Network error: ' + err.message);
       }
     }
   </script>
