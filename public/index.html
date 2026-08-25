@@ -877,24 +877,28 @@
     }
 
     // साइट को छिपाने या अनहाइड करने का स्टेटस बदलना
-    async function toggleSiteHideStatus(siteId, currentHiddenState) {
-      try {
-        const res = await fetch(`${API_BASE}/api/sites/${siteId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ isHidden: !currentHiddenState })
-        });
-        const json = await res.json();
-        if (json.success) {
-          loadSitesList();
-          renderProjectFilterDropdown();
-        } else {
-          alert(json.error || 'Failed to update site status.');
-        }
-      } catch (err) {
-        alert('Network error: ' + err.message);
-      }
+   async function toggleSiteHideStatus(siteId, currentHiddenState) {
+  try {
+    const res = await fetch(`${API_BASE}/api/sites/${siteId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isHidden: !currentHiddenState })
+    });
+    const json = await res.json();
+    if (json.success) {
+      // ✅ Local cache ko bhi update karo, tabhi UI turant reflect karega
+      const site = allSitesList.find(s => s._id === siteId);
+      if (site) site.isHidden = !currentHiddenState;
+
+      loadSitesList();
+      renderProjectFilterDropdown();
+    } else {
+      alert(json.error || 'Failed to update site status.');
     }
+  } catch (err) {
+    alert('Network error: ' + err.message);
+  }
+}
 
     // समीक्षा और एनालिटिक्स डोनट चार्ट (Chart.js) बनाना
     function renderReviewChart() {
