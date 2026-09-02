@@ -188,7 +188,7 @@ app.delete('/api/pms/delete/:uniqueId', async (req, res) => {
 
 app.patch('/api/pms/update-step', async (req, res) => {
   try {
-    const { uniqueId, stepId, status, remarks, actualEndDate, actualStartDate } = req.body;
+    const { uniqueId, stepId, status, remarks, actualEndDate, actualStartDate, attachmentUrl } = req.body;
     const task = await PmsTask.findOne({ uniqueId });
     if (!task) return res.status(404).json({ success: false, error: 'Task not found' });
 
@@ -196,9 +196,10 @@ app.patch('/api/pms/update-step', async (req, res) => {
     if (!step) return res.status(404).json({ success: false, error: 'Step not found' });
 
     if (status) step.status = status;
-    if (remarks !== undefined && remarks !== '') step.remarks = remarks;
+    if (remarks !== undefined) step.remarks = remarks;
     if (actualEndDate !== undefined) step.actualEndDate = actualEndDate;
     if (actualStartDate !== undefined) step.actualStartDate = actualStartDate;
+    if (attachmentUrl !== undefined) step.attachmentUrl = attachmentUrl;
 
     await task.save();
 
@@ -214,7 +215,8 @@ app.patch('/api/pms/update-step', async (req, res) => {
       status: step.status,
       remarks: step.remarks,
       actualStartDate: step.actualStartDate,
-      actualEndDate: step.actualEndDate
+      actualEndDate: step.actualEndDate,
+      attachmentUrl: step.attachmentUrl
     });
 
     res.json({ success: true, data: task });

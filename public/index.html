@@ -959,6 +959,34 @@
       }
     }
 
+    // EDIT ATTACHMENT LINK
+    async function editStepAttachment(taskId, stepId, currentAttachment) {
+      const url = prompt("Paste Attachment Link (Google Drive / PDF / Image URL):", currentAttachment || '');
+      if (url === null) return;
+
+      const payload = {
+        uniqueId: taskId,
+        stepId: stepId,
+        attachmentUrl: url.trim()
+      };
+
+      try {
+        const res = await fetch(`${API_BASE}/api/pms/update-step`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (json.success) {
+          await loadDashboardData();
+        } else {
+          alert(json.error || 'Failed to update attachment.');
+        }
+      } catch (err) {
+        alert('Network error: ' + err.message);
+      }
+    }
+
     // RENDER TABLE WITH CORRECT "✓ Done" LABEL AND WORKING SEARCH
     function renderStructuredTableGrid(data) {
       const tbody = document.getElementById('tableRows');
@@ -1116,8 +1144,13 @@
                     ${timer.label}
                   </span>
                 </td>
-                <td class="py-3 px-3 text-slate-600 dark:text-slate-300 text-[11px] whitespace-normal break-words italic cursor-pointer hover:bg-indigo-50/50 transition rounded" onclick="editStepRemarks('${item.uniqueId}', '${s._id}', '${(s.remarks || '').replace(/'/g, "\\'")}')" title="Click to edit remark">
-                  ${s.remarks ? `💬 ${s.remarks}` : '<span class="text-slate-300">Add remark...</span>'}
+                <td class="py-3 px-3 text-slate-600 dark:text-slate-300 text-[11px] whitespace-normal break-words italic">
+                  <div class="cursor-pointer hover:bg-indigo-50/50 transition rounded p-1" onclick="editStepRemarks('${item.uniqueId}', '${s._id}', '${(s.remarks || '').replace(/'/g, "\\'")}')" title="Click to edit remark">
+                    ${s.remarks ? `💬 ${s.remarks}` : '<span class="text-slate-300">Add remark...</span>'}
+                  </div>
+                  <div class="mt-0.5">
+                    ${s.attachmentUrl ? `<a href="${s.attachmentUrl}" target="_blank" class="text-indigo-600 dark:text-indigo-400 text-[10px] font-semibold underline inline-flex items-center gap-0.5 hover:text-indigo-800" onclick="event.stopPropagation()">📎 View Attachment</a> <button onclick="editStepAttachment('${item.uniqueId}', '${s._id}', '${(s.attachmentUrl || '').replace(/'/g, "\\'")}')" class="text-[9px] text-slate-400 hover:text-indigo-600 ml-1">✏️</button>` : `<button onclick="editStepAttachment('${item.uniqueId}', '${s._id}', '')" class="text-[9px] text-slate-400 hover:text-indigo-600 inline-flex items-center gap-0.5">📎 + Attachment</button>`}
+                  </div>
                 </td>
                 <td class="py-3 px-3 whitespace-nowrap">
                   <span class="px-2 py-0.5 text-[9px] font-bold rounded ${statusBadgeClass}">${statusLabel}</span>
