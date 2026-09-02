@@ -66,10 +66,37 @@ const vendorSchema = new mongoose.Schema({
   phone: { type: String, required: true }
 });
 
+const settingSchema = new mongoose.Schema({
+  key: { type: String, unique: true, required: true },
+  value: mongoose.Schema.Types.Mixed
+});
+
 const PmsTask = mongoose.models.PmsTask || mongoose.model('PmsTask', pmsTaskSchema);
 const Site = mongoose.models.Site || mongoose.model('Site', siteSchema);
 const Doer = mongoose.models.Doer || mongoose.model('Doer', doerSchema);
 const Vendor = mongoose.models.Vendor || mongoose.model('Vendor', vendorSchema);
+const Setting = mongoose.models.Setting || mongoose.model('Setting', settingSchema);
+
+async function triggerGoogleSheetSync(payload) {
+  try {
+    let webhookUrl = process.env.GOOGLE_SHEET_WEBHOOK_URL;
+    if (!webhookUrl) {
+      const setting = await Setting.findOne({ key: 'googleSheetWebhookUrl' });
+      if (setting && setting.value) webhookUrl = setting.value;
+    }
+    if (!webhookUrl) return;
+
+    if (typeof fetch === 'function') {
+      fetch(webhookUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      }).catch(err => console.error('Google Sheet Sync Error:', err.message));
+    }
+  } catch (e) {
+    console.error('Trigger GSheet Error:', e.message);
+  }
+}
 
 app.get('/api/pms/all', async (req, res) => {
   try {
@@ -174,6 +201,22 @@ app.patch('/api/pms/update-step', async (req, res) => {
     if (actualStartDate !== undefined) step.actualStartDate = actualStartDate;
 
     await task.save();
+
+    triggerGoogleSheetSync({
+      action: 'UPDATE_STEP',
+      uniqueId: task.uniqueId,
+      projectName: task.projectName,
+      mainItemName: task.mainItemName,
+      wbsNo: step.wbsNo,
+      stepTitle: step.stepTitle,
+      assignedName: step.assignedName,
+      assignedEmail: step.assignedEmail,
+      status: step.status,
+      remarks: step.remarks,
+      actualStartDate: step.actualStartDate,
+      actualEndDate: step.actualEndDate
+    });
+
     res.json({ success: true, data: task });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
@@ -275,5 +318,38 @@ app.delete('/api/vendors/:id', async (req, res) => {
   }
 });
 
+app.get('/api/settings', async (req, res) => {
+  try {
+    const settings = await Setting.find({});
+    const map = {};
+    settings.forEach(s => map[s.key] = s.value);
+    res.json({ success: true, data: map });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/settings', async (req, res) => {
+  try {
+    const { key, value } = req.body;
+    if (!key) return res.status(400).json({ success: false, error: 'Key required' });
+    const setting = await Setting.findOneAndUpdate({ key }, { key, value }, { upsert: true, new: true });
+    res.json({ success: true, data: setting });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.post('/api/pms/sync-gsheet', async (req, res) => {
+  try {
+    const payload = req.body;
+    await triggerGoogleSheetSync(payload);
+    res.json({ success: true, message: 'Google Sheet sync triggered' });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+

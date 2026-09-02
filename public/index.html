@@ -300,10 +300,19 @@
 
       <div>
         <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tab Shuffle & Visibility</label>
-        <div id="tabShuffleContainer" class="space-y-1.5 text-xs max-h-56 overflow-y-auto custom-scroll pr-1"></div>
+        <div id="tabShuffleContainer" class="space-y-1.5 text-xs max-h-48 overflow-y-auto custom-scroll pr-1"></div>
       </div>
 
-      <button onclick="toggleModal('tabSettingsModal', false)" class="w-full bg-indigo-600 text-white font-bold py-1.5 rounded transition mt-2">Save & Close</button>
+      <div>
+        <label class="block text-[10px] font-bold text-emerald-600 dark:text-emerald-400 uppercase mb-1 flex items-center gap-1">
+          <i data-lucide="file-spreadsheet" class="w-3.5 h-3.5"></i>
+          <span>Google Sheets Webhook URL</span>
+        </label>
+        <input type="url" id="googleSheetWebhookInput" placeholder="https://script.google.com/macros/s/.../exec" class="w-full border border-slate-300 dark:border-darkborder rounded px-2.5 py-1.5 text-xs font-mono bg-slate-50 dark:bg-slate-800 dark:text-white outline-none focus:ring-1 focus:ring-indigo-500">
+        <p class="text-[9px] text-slate-400 mt-1">Paste your Google Apps Script Web App URL to enable real-time sheet updates.</p>
+      </div>
+
+      <button onclick="saveTabSettings()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-1.5 rounded transition mt-2">Save & Close</button>
     </div>
   </div>
 
@@ -527,10 +536,33 @@
       if (viewId === 'viewTeam') renderTeamView();
     }
 
-    function openTabSettingsModal() {
+    async function openTabSettingsModal() {
       renderTabShuffleList();
       document.getElementById('barPositionSelect').value = barPosition;
+      try {
+        const res = await fetch(`${API_BASE}/api/settings`);
+        const result = await res.json();
+        if (result.success && result.data && result.data.googleSheetWebhookUrl) {
+          document.getElementById('googleSheetWebhookInput').value = result.data.googleSheetWebhookUrl;
+        }
+      } catch (e) {
+        console.error('Error fetching settings:', e);
+      }
       toggleModal('tabSettingsModal', true);
+    }
+
+    async function saveTabSettings() {
+      const webhookUrl = document.getElementById('googleSheetWebhookInput').value.trim();
+      try {
+        await fetch(`${API_BASE}/api/settings`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key: 'googleSheetWebhookUrl', value: webhookUrl })
+        });
+      } catch (e) {
+        console.error('Error saving settings:', e);
+      }
+      toggleModal('tabSettingsModal', false);
     }
 
     function renderTabShuffleList() {
