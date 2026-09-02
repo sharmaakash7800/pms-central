@@ -1093,7 +1093,7 @@
           sortedSteps.forEach(s => {
             const isCompleted = s.status === 'Completed';
             const isDelayed = (new Date(s.plannedEndDate) < now && !isCompleted) || s.status === 'Delayed';
-            const timer = calculateTimeRemaining(s.plannedEndDate, s.status);
+            const timer = calculateTimeRemaining(s.plannedEndDate, s.status, s.actualEndDate);
 
             let statusBadgeClass = 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300';
             let statusLabel = s.status;
@@ -1170,16 +1170,43 @@
       lucide.createIcons();
     }
 
-    function calculateTimeRemaining(targetEndDate, status) {
+    function calculateTimeRemaining(targetEndDate, status, actualEndDate) {
+      if (!targetEndDate) return { label: '-', textClass: 'text-slate-400 bg-slate-50 border-slate-200' };
+
+      const plannedTime = new Date(targetEndDate).getTime();
+      if (isNaN(plannedTime)) return { label: '-', textClass: 'text-slate-400 bg-slate-50 border-slate-200' };
+
+      // Case 1: Completed Task
       if (status === 'Completed') {
-        return { label: `✓ Done`, textClass: 'text-emerald-700 bg-emerald-50 border-emerald-200' };
+        if (actualEndDate) {
+          const actualTime = new Date(actualEndDate).getTime();
+          if (!isNaN(actualTime) && actualTime > plannedTime) {
+            const diffMs = actualTime - plannedTime;
+            const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            const delayStr = days > 0 ? `+${days}d ${hours}h delay` : `+${hours}h delay`;
+            return { label: `✓ Done (${delayStr})`, textClass: 'text-amber-800 bg-amber-50 border-amber-300 font-semibold' };
+          }
+        }
+        return { label: `✓ Done (On Time)`, textClass: 'text-emerald-700 bg-emerald-50 border-emerald-200 font-bold' };
       }
-      const diff = new Date(targetEndDate).getTime() - Date.now();
-      const days = Math.floor(Math.abs(diff) / (1000 * 60 * 60 * 24));
-      if (diff < 0) {
-        return { label: `${days}d overdue`, textClass: 'text-rose-700 bg-rose-50 border-rose-200 font-bold animate-pulse' };
+
+      // Case 2: Pending / In Progress Task (Time Delay calculation matching Column J)
+      const now = Date.now();
+      const diffMs = plannedTime - now;
+
+      if (diffMs < 0) {
+        const overdueMs = Math.abs(diffMs);
+        const days = Math.floor(overdueMs / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((overdueMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const overdueStr = days > 0 ? `-${days}d ${hours}h delay` : `-${hours}h delay`;
+        return { label: `🚨 ${overdueStr}`, textClass: 'text-rose-700 bg-rose-50 border-rose-200 font-bold animate-pulse' };
+      } else {
+        const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+        const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+        const leftStr = days > 0 ? `${days}d ${hours}h left` : `${hours}h left`;
+        return { label: `⏱️ ${leftStr}`, textClass: 'text-indigo-800 bg-indigo-50 border-indigo-200 font-medium' };
       }
-      return { label: `${days}d left`, textClass: 'text-indigo-800 bg-indigo-50 border-indigo-200' };
     }
 
     async function loadDashboardData() {
