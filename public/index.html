@@ -415,7 +415,7 @@
 
       <div class="overflow-y-auto custom-scroll py-2.5 space-y-2.5 flex-1 pr-1 text-xs">
         <input type="hidden" id="editTaskIdField">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-2">
           <div>
             <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Site / Project Name *</label>
             <input type="text" id="mProject" required list="projectSuggestions" class="w-full border rounded px-2 py-1 font-bold dark:bg-slate-800 dark:text-white" value="">
@@ -424,6 +424,10 @@
           <div>
             <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Main Task Name *</label>
             <input type="text" id="mItemName" required class="w-full border rounded px-2 py-1 font-bold dark:bg-slate-800 dark:text-white" placeholder="e.g. Supply of 11 kV Extension Panel">
+          </div>
+          <div>
+            <label class="block text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase mb-0.5">Task Unique ID (Column A)</label>
+            <input type="text" id="mCustomUniqueId" class="w-full border border-emerald-300 dark:border-emerald-700 rounded px-2 py-1 font-bold font-mono text-emerald-800 dark:text-emerald-300 dark:bg-slate-800" placeholder="e.g. CRD0035">
           </div>
         </div>
 
@@ -1612,6 +1616,7 @@
       document.getElementById('mStartDate').value = new Date().toISOString().slice(0, 10);
       document.getElementById('mProject').value = '';
       document.getElementById('mItemName').value = '';
+      document.getElementById('mCustomUniqueId').value = '';
       document.getElementById('bulkStepsInput').value = '';
       document.getElementById('stepsContainer').innerHTML = '<p class="text-xs text-slate-400 text-center py-4 italic">No steps generated yet. Click "Generate From List".</p>';
       
@@ -1627,6 +1632,7 @@
       document.getElementById('modalTaskTitle').innerText = `Update Task Package: ${task.uniqueId}`;
       document.getElementById('mProject').value = task.projectName || '';
       document.getElementById('mItemName').value = task.mainItemName || '';
+      document.getElementById('mCustomUniqueId').value = task.uniqueId || '';
       document.getElementById('mType').value = task.pmsType || 'SUPPLY';
       document.getElementById('mQty').value = task.totalQty || 1;
       document.getElementById('mStartDate').value = task.startDate ? new Date(task.startDate).toISOString().slice(0, 10) : new Date().toISOString().slice(0, 10);
@@ -1879,7 +1885,10 @@
         steps.push(stepObj);
       });
 
-      const payload = { uniqueId: editId, projectName, mainItemName, pmsType, startDate, totalQty, steps };
+      const customUniqueId = document.getElementById('mCustomUniqueId').value.trim();
+      const finalUniqueId = customUniqueId || editId || undefined;
+
+      const payload = { uniqueId: finalUniqueId, projectName, mainItemName, pmsType, startDate, totalQty, steps };
       const url = editId ? `${API_BASE}/api/pms/update-package` : `${API_BASE}/api/pms/create-custom-package`;
       const method = editId ? 'PUT' : 'POST';
 

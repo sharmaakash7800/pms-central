@@ -109,12 +109,15 @@ app.get('/api/pms/all', async (req, res) => {
 
 app.post('/api/pms/create-custom-package', async (req, res) => {
   try {
-    const { projectName, mainItemName, pmsType, startDate, totalQty, steps } = req.body;
-    const count = await PmsTask.countDocuments();
-    const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
-    const uniqueId = `PMS-${dateStr}-${String(count + 1).padStart(3, '0')}`;
+    const { uniqueId, projectName, mainItemName, pmsType, startDate, totalQty, steps } = req.body;
+    let finalUniqueId = (uniqueId && uniqueId.trim()) ? uniqueId.trim() : null;
+    if (!finalUniqueId) {
+      const count = await PmsTask.countDocuments();
+      const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, '');
+      finalUniqueId = `PMS-${dateStr}-${String(count + 1).padStart(3, '0')}`;
+    }
 
-    const newTask = new PmsTask({ uniqueId, projectName, mainItemName, pmsType, startDate, totalQty, steps });
+    const newTask = new PmsTask({ uniqueId: finalUniqueId, projectName, mainItemName, pmsType, startDate, totalQty, steps });
     await newTask.save();
     res.json({ success: true, data: newTask });
   } catch (err) {
