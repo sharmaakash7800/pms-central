@@ -1724,6 +1724,10 @@
         return;
       }
 
+      const knownDoerNames = (activeDoers && activeDoers.length > 0) 
+        ? activeDoers.map(d => d.name) 
+        : ['Aarti Bala', 'Heera lal Ji', 'Gopal Ji', 'Ishita', 'Heera Lal Ji', 'Ronak Ji', 'Tulsi Sen'];
+
       const lines = bulkText.split('\n').map(l => l.trim()).filter(l => l.length > 0);
       let html = '';
 
@@ -1734,6 +1738,7 @@
         let workOwnerText = '';
         let durationVal = 2;
 
+        // Mode 1: Tab-separated columns
         if (line.indexOf('\t') !== -1) {
           const cols = line.split('\t').map(c => c.trim());
           if (cols.length >= 3) {
@@ -1743,6 +1748,27 @@
             if (cols.length >= 4) workOwnerText = cols[3];
             if (cols.length >= 7 && !isNaN(parseInt(cols[6], 10))) {
               durationVal = parseInt(cols[6], 10);
+            }
+          }
+        } 
+        // Mode 2: Space-separated line copied from browser / Excel
+        else {
+          const match = line.match(/^([A-Z0-9]{3,10})\s+(\d+)\s+(.+?)\s+(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}\s+\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}\s+\d+)$/i);
+          if (match) {
+            uniqueIdCode = match[1];
+            wbsNoVal = match[2];
+            const textAndDates = match[3];
+            const durMatch = line.match(/\d+$/);
+            if (durMatch) durationVal = parseInt(durMatch[0], 10) || 2;
+
+            stepTitleText = textAndDates;
+            for (let d of knownDoerNames) {
+              const idx = textAndDates.toLowerCase().lastIndexOf(d.toLowerCase());
+              if (idx !== -1) {
+                workOwnerText = d;
+                stepTitleText = textAndDates.slice(0, idx).trim();
+                break;
+              }
             }
           }
         }
@@ -1757,12 +1783,20 @@
         }
 
         let doerOptions = '';
+        let matchedDoerObj = activeDoers.find(d => 
+          (workOwnerText && (d.name.toLowerCase() === workOwnerText.toLowerCase() || d.email.toLowerCase() === workOwnerText.toLowerCase())) ||
+          (match && (d.name === match.assignedName || d.email === match.assignedEmail))
+        );
+
         activeDoers.forEach(d => {
-          const isSelected = (workOwnerText && (d.name.toLowerCase() === workOwnerText.toLowerCase() || d.email.toLowerCase() === workOwnerText.toLowerCase())) ||
-                             (match && (d.name === match.assignedName || d.email === match.assignedEmail));
+          const isSelected = matchedDoerObj ? (d.name === matchedDoerObj.name) : (workOwnerText && d.name.toLowerCase() === workOwnerText.toLowerCase());
           const selected = isSelected ? 'selected' : '';
           doerOptions += `<option value="${d.name}" data-email="${d.email}" ${selected}>${d.name}</option>`;
         });
+
+        if (workOwnerText && !matchedDoerObj) {
+          doerOptions += `<option value="${workOwnerText}" data-email="${workOwnerText.toLowerCase().replace(/\s+/g,'')}@domain.com" selected>${workOwnerText}</option>`;
+        }
 
         const stepId = match ? (match._id || match.stepId || '') : '';
         const status = match ? (match.status || 'Pending') : 'Pending';
