@@ -17,6 +17,7 @@ mongoose.connect(MONGO_URI, {
 }).then(() => console.log('MongoDB Connected')).catch(err => console.log('DB Error:', err));
 
 const stepSchema = new mongoose.Schema({
+  uniqueId: String,
   wbsNo: String,
   stepTitle: String,
   assignedName: String,
@@ -27,7 +28,8 @@ const stepSchema = new mongoose.Schema({
   actualStartDate: Date,
   actualEndDate: Date,
   status: { type: String, default: 'Pending' },
-  remarks: String
+  remarks: String,
+  attachmentUrl: String
 });
 
 const pmsTaskSchema = new mongoose.Schema({
@@ -157,6 +159,7 @@ app.put('/api/pms/update-package', async (req, res) => {
 
         return {
           _id: newStep._id || (existing ? existing._id : undefined),
+          uniqueId: newStep.uniqueId || (existing ? existing.uniqueId : undefined),
           wbsNo: newStep.wbsNo,
           stepTitle: newStep.stepTitle,
           assignedName: newStep.assignedName,
@@ -167,7 +170,8 @@ app.put('/api/pms/update-package', async (req, res) => {
           actualStartDate: newStep.actualStartDate || (existing ? existing.actualStartDate : undefined),
           actualEndDate: newStep.actualEndDate || (existing ? existing.actualEndDate : undefined),
           status: newStep.status || (existing ? existing.status : 'Pending'),
-          remarks: (newStep.remarks !== undefined && newStep.remarks !== '') ? newStep.remarks : (existing ? existing.remarks : '')
+          remarks: (newStep.remarks !== undefined && newStep.remarks !== '') ? newStep.remarks : (existing ? existing.remarks : ''),
+          attachmentUrl: newStep.attachmentUrl || (existing ? existing.attachmentUrl : undefined)
         };
       });
     }
@@ -208,7 +212,7 @@ app.patch('/api/pms/update-step', async (req, res) => {
 
     triggerGoogleSheetSync({
       action: 'UPDATE_STEP',
-      uniqueId: task.uniqueId,
+      uniqueId: step.uniqueId || task.uniqueId,
       projectName: task.projectName,
       mainItemName: task.mainItemName,
       wbsNo: step.wbsNo,

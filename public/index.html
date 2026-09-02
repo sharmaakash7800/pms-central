@@ -1657,6 +1657,7 @@
         const actualStart = s.actualStartDate || '';
         const actualEnd = s.actualEndDate || '';
         const safeTitle = s.stepTitle ? String(s.stepTitle).replace(/"/g, '&quot;') : '';
+        const safeUniqueId = s.uniqueId ? String(s.uniqueId).replace(/"/g, '&quot;') : '';
 
         html += `
           <div class="step-card bg-slate-50 dark:bg-slate-800 p-2 rounded border space-y-1"
@@ -1675,9 +1676,10 @@
               <button type="button" onclick="this.closest('.step-card').remove();" class="text-rose-500 hover:underline">Remove</button>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-12 gap-1.5 items-center">
-              <input type="text" class="step-title md:col-span-7 border rounded px-1.5 py-0.5 text-xs dark:bg-slate-800 dark:text-white" value="${safeTitle}">
+              <input type="text" class="step-unique-id md:col-span-2 border rounded px-1.5 py-0.5 text-xs font-mono text-emerald-700 dark:text-emerald-300 dark:bg-slate-800" placeholder="Code (CRD0053)" value="${safeUniqueId}" title="Step Unique ID (Column A)">
+              <input type="text" class="step-title md:col-span-6 border rounded px-1.5 py-0.5 text-xs dark:bg-slate-800 dark:text-white" value="${safeTitle}" placeholder="Step Title / Supply">
               <select class="step-doer md:col-span-3 border rounded px-1.5 py-0.5 text-[11px] dark:bg-slate-800 dark:text-white">${doerOptions}</select>
-              <div class="md:col-span-2 flex items-center gap-1">
+              <div class="md:col-span-1 flex items-center gap-0.5">
                 <input type="number" min="1" value="${s.durationDays || 2}" class="step-days w-full border rounded px-1 py-0.5 text-xs font-bold text-center dark:bg-slate-800 dark:text-white" title="Duration in Days">
                 <span class="text-[9px] text-slate-400">d</span>
               </div>
@@ -1718,7 +1720,7 @@
       }
 
       if (!bulkText) {
-        alert('Please paste or type your step titles list in the text box first.');
+        alert('Please paste or type your step list in the text box first.');
         return;
       }
 
@@ -1726,12 +1728,39 @@
       let html = '';
 
       lines.forEach((line, i) => {
-        let match = existingSteps.find(s => String(s.wbsNo) === String(i + 1)) || 
-                    existingSteps.find(s => s.stepTitle.trim().toLowerCase() === line.toLowerCase());
+        let uniqueIdCode = '';
+        let wbsNoVal = String(i + 1);
+        let stepTitleText = line;
+        let workOwnerText = '';
+        let durationVal = 2;
+
+        if (line.indexOf('\t') !== -1) {
+          const cols = line.split('\t').map(c => c.trim());
+          if (cols.length >= 3) {
+            uniqueIdCode = cols[0] || '';
+            wbsNoVal = cols[1] || String(i + 1);
+            stepTitleText = cols[2] || cols[0];
+            if (cols.length >= 4) workOwnerText = cols[3];
+            if (cols.length >= 7 && !isNaN(parseInt(cols[6], 10))) {
+              durationVal = parseInt(cols[6], 10);
+            }
+          }
+        }
+
+        let match = existingSteps.find(s => String(s.wbsNo) === String(wbsNoVal)) || 
+                    existingSteps.find(s => s.stepTitle.trim().toLowerCase() === stepTitleText.toLowerCase());
+
+        if (match) {
+          if (!uniqueIdCode && match.uniqueId) uniqueIdCode = match.uniqueId;
+          if (match.durationDays) durationVal = match.durationDays;
+          if (match.assignedName) workOwnerText = match.assignedName;
+        }
 
         let doerOptions = '';
         activeDoers.forEach(d => {
-          const selected = match && (d.name === match.assignedName || d.email === match.assignedEmail) ? 'selected' : '';
+          const isSelected = (workOwnerText && (d.name.toLowerCase() === workOwnerText.toLowerCase() || d.email.toLowerCase() === workOwnerText.toLowerCase())) ||
+                             (match && (d.name === match.assignedName || d.email === match.assignedEmail));
+          const selected = isSelected ? 'selected' : '';
           doerOptions += `<option value="${d.name}" data-email="${d.email}" ${selected}>${d.name}</option>`;
         });
 
@@ -1740,8 +1769,8 @@
         const remarks = match && match.remarks ? String(match.remarks).replace(/"/g, '&quot;') : '';
         const actualStart = match && match.actualStartDate ? match.actualStartDate : '';
         const actualEnd = match && match.actualEndDate ? match.actualEndDate : '';
-        const duration = match ? (match.durationDays || 2) : 2;
-        const safeLine = line.replace(/"/g, '&quot;');
+        const safeTitle = stepTitleText.replace(/"/g, '&quot;');
+        const safeUniqueId = uniqueIdCode.replace(/"/g, '&quot;');
 
         html += `
           <div class="step-card bg-slate-50 dark:bg-slate-800 p-2 rounded border space-y-1"
@@ -1752,7 +1781,7 @@
                data-actual-end="${actualEnd}">
             <div class="flex justify-between items-center font-bold text-[10px]">
               <span class="flex items-center gap-1.5">
-                <span>#${i+1}</span>
+                <span>#${wbsNoVal}</span>
                 <span class="px-1.5 py-0.2 rounded text-[9px] ${status === 'Completed' ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300'}">
                   ${status === 'Completed' ? '✓ Completed' : status}
                 </span>
@@ -1760,10 +1789,11 @@
               <button type="button" onclick="this.closest('.step-card').remove();" class="text-rose-500 hover:underline">Remove</button>
             </div>
             <div class="grid grid-cols-1 md:grid-cols-12 gap-1.5 items-center">
-              <input type="text" class="step-title md:col-span-7 border rounded px-1.5 py-0.5 text-xs dark:bg-slate-800 dark:text-white" value="${safeLine}">
+              <input type="text" class="step-unique-id md:col-span-2 border rounded px-1.5 py-0.5 text-xs font-mono text-emerald-700 dark:text-emerald-300 dark:bg-slate-800" placeholder="Code (CRD0053)" value="${safeUniqueId}" title="Step Unique ID (Column A)">
+              <input type="text" class="step-title md:col-span-6 border rounded px-1.5 py-0.5 text-xs dark:bg-slate-800 dark:text-white" value="${safeTitle}" placeholder="Step Title / Supply">
               <select class="step-doer md:col-span-3 border rounded px-1.5 py-0.5 text-[11px] dark:bg-slate-800 dark:text-white">${doerOptions}</select>
-              <div class="md:col-span-2 flex items-center gap-1">
-                <input type="number" min="1" value="${duration}" class="step-days w-full border rounded px-1 py-0.5 text-xs font-bold text-center dark:bg-slate-800 dark:text-white" title="Duration in Days">
+              <div class="md:col-span-1 flex items-center gap-0.5">
+                <input type="number" min="1" value="${durationVal}" class="step-days w-full border rounded px-1 py-0.5 text-xs font-bold text-center dark:bg-slate-800 dark:text-white" title="Duration in Days">
                 <span class="text-[9px] text-slate-400">d</span>
               </div>
             </div>
@@ -1795,9 +1825,10 @@
           <button type="button" onclick="this.closest('.step-card').remove();" class="text-rose-500 hover:underline">Remove</button>
         </div>
         <div class="grid grid-cols-1 md:grid-cols-12 gap-1.5 items-center">
-          <input type="text" class="step-title md:col-span-7 border rounded px-1.5 py-0.5 text-xs dark:bg-slate-800 dark:text-white" placeholder="Enter step title...">
+          <input type="text" class="step-unique-id md:col-span-2 border rounded px-1.5 py-0.5 text-xs font-mono text-emerald-700 dark:text-emerald-300 dark:bg-slate-800" placeholder="Code (CRD0053)" title="Step Unique ID (Column A)">
+          <input type="text" class="step-title md:col-span-6 border rounded px-1.5 py-0.5 text-xs dark:bg-slate-800 dark:text-white" placeholder="Step Title / Supply">
           <select class="step-doer md:col-span-3 border rounded px-1.5 py-0.5 text-[11px] dark:bg-slate-800 dark:text-white">${doerOptions}</select>
-          <div class="md:col-span-2 flex items-center gap-1">
+          <div class="md:col-span-1 flex items-center gap-0.5">
             <input type="number" min="1" value="2" class="step-days w-full border rounded px-1 py-0.5 text-xs font-bold text-center dark:bg-slate-800 dark:text-white" title="Duration in Days">
             <span class="text-[9px] text-slate-400">d</span>
           </div>
@@ -1837,6 +1868,8 @@
       let baseDate = new Date(startDate);
 
       stepCards.forEach((card, idx) => {
+        const uniqueIdInput = card.querySelector('.step-unique-id');
+        const stepUniqueIdVal = uniqueIdInput ? uniqueIdInput.value.trim() : undefined;
         const title = card.querySelector('.step-title').value.trim() || `Step #${idx + 1}`;
         const selectDoer = card.querySelector('.step-doer');
         const doerName = selectDoer.value;
@@ -1867,6 +1900,7 @@
         }
 
         const stepObj = {
+          uniqueId: stepUniqueIdVal || undefined,
           wbsNo: String(idx + 1),
           stepTitle: title,
           assignedName: doerName,
