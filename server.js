@@ -60,7 +60,8 @@ const siteSchema = new mongoose.Schema({
 const doerSchema = new mongoose.Schema({
   name: String,
   email: { type: String, unique: true },
-  role: String
+  role: { type: String, default: 'Executive' },
+  password: { type: String, default: '123456' }
 });
 
 const vendorSchema = new mongoose.Schema({
@@ -283,6 +284,24 @@ app.post('/api/doers', async (req, res) => {
     const newDoer = new Doer(req.body);
     await newDoer.save();
     res.json({ success: true, data: newDoer });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.put('/api/doers/:id', async (req, res) => {
+  try {
+    const updated = await Doer.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json({ success: true, data: updated });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.delete('/api/doers/:id', async (req, res) => {
+  try {
+    await Doer.findByIdAndDelete(req.params.id);
+    res.json({ success: true, message: 'Doer deleted successfully' });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }

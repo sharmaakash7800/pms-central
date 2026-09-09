@@ -77,11 +77,6 @@
               <option value="">Select Doer...</option>
             </select>
           </div>
-
-          <button onclick="openCreateModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg shadow-xs flex items-center gap-1 transition">
-            <i data-lucide="plus" class="w-3.5 h-3.5"></i>
-            <span>+ Task</span>
-          </button>
         </div>
 
       </div>
@@ -107,9 +102,15 @@
           <span>📍 Active Site View:</span>
           <span id="activeSiteBadgeTitle" class="underline bg-indigo-700 px-2 py-0.5 rounded"></span>
         </div>
-        <button onclick="backToSitesDirectory()" class="bg-white text-indigo-700 hover:bg-indigo-50 font-bold px-2.5 py-1 rounded-lg text-[10px] transition flex items-center gap-1">
-          <span>← Back to Sites</span>
-        </button>
+        <div class="flex items-center gap-2">
+          <button onclick="openCreateModal(document.getElementById('activeSiteBadgeTitle').innerText)" class="bg-emerald-500 hover:bg-emerald-600 text-white font-bold px-2.5 py-1 rounded-lg text-[10px] transition flex items-center gap-1 shadow-2xs">
+            <i data-lucide="plus" class="w-3 h-3"></i>
+            <span>+ Add Task</span>
+          </button>
+          <button onclick="backToSitesDirectory()" class="bg-white text-indigo-700 hover:bg-indigo-50 font-bold px-2.5 py-1 rounded-lg text-[10px] transition flex items-center gap-1">
+            <span>← Back to Sites</span>
+          </button>
+        </div>
       </div>
 
       <!-- Top Filter Bar -->
@@ -316,24 +317,68 @@
     </div>
   </div>
 
-  <!-- Left Drawer -->
-  <div id="sideMenuDrawer" class="fixed inset-0 z-50 hidden">
-    <div class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs transition-opacity" onclick="toggleSideMenu(false)"></div>
-    <div class="fixed left-0 top-0 bottom-0 max-w-xs w-full bg-white dark:bg-darkcard shadow-2xl z-50 flex flex-col p-4 border-r">
-      <div class="flex items-center justify-between pb-2 border-b">
-        <span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Navigation Menu</span>
-        <button onclick="toggleSideMenu(false)" class="text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
+  <!-- Left Drawer / Navigation Sidebar -->
+  <div id="sideMenuDrawer" class="fixed inset-0 z-50 hidden transition-all duration-300">
+    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" onclick="toggleSideMenu(false)"></div>
+    <div class="fixed left-0 top-0 bottom-0 max-w-[280px] w-full bg-white dark:bg-darkcard shadow-2xl z-50 flex flex-col p-5 border-r border-slate-200 dark:border-darkborder transition-transform">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-darkborder">
+        <div class="flex items-center gap-2.5">
+          <div class="w-8 h-8 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-black shadow-md shadow-indigo-200 dark:shadow-none">
+            ⚡
+          </div>
+          <div>
+            <h2 class="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wider">PMS Central</h2>
+            <p class="text-[9px] text-slate-400 font-medium">Enterprise Console</p>
+          </div>
+        </div>
+        <button onclick="toggleSideMenu(false)" class="p-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
       </div>
-      <div class="py-2.5 space-y-1">
-        <button onclick="toggleSideMenu(false); switchTab('viewPmsBoard')" class="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-slate-100"><span>📦</span> Tasks</button>
-        <button onclick="toggleSideMenu(false); switchTab('viewReview')" class="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-slate-100"><span>🔍</span> Review</button>
-        <button onclick="toggleSideMenu(false); switchTab('viewVendors')" class="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-slate-100"><span>🏢</span> Vendors</button>
-        <button onclick="toggleSideMenu(false); switchTab('viewSites')" class="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-slate-100"><span>📍</span> Sites</button>
-        <button onclick="toggleSideMenu(false); switchTab('viewTeam')" class="w-full text-left px-2.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-2 hover:bg-slate-100"><span>👥</span> Team</button>
+
+      <div class="py-4 space-y-1.5 flex-1 overflow-y-auto custom-scroll">
+        <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider px-3 mb-2">Main Navigation</div>
+        
+        <button onclick="toggleSideMenu(false); switchTab('viewPmsBoard')" class="w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 hover:text-indigo-600 dark:hover:text-indigo-400 transition group">
+          <span class="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-slate-800 flex items-center justify-center text-sm group-hover:scale-110 transition">📦</span>
+          <span>Task Tracker</span>
+        </button>
+
+        <button onclick="toggleSideMenu(false); switchTab('viewReview')" class="w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 hover:text-indigo-600 dark:hover:text-indigo-400 transition group">
+          <span class="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-slate-800 flex items-center justify-center text-sm group-hover:scale-110 transition">🔍</span>
+          <span>Analytics & Review</span>
+        </button>
+
+        <button onclick="toggleSideMenu(false); switchTab('viewVendors')" class="w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 hover:text-indigo-600 dark:hover:text-indigo-400 transition group">
+          <span class="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-slate-800 flex items-center justify-center text-sm group-hover:scale-110 transition">🏢</span>
+          <span>Vendors Directory</span>
+        </button>
+
+        <button onclick="toggleSideMenu(false); switchTab('viewSites')" class="w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 hover:text-indigo-600 dark:hover:text-indigo-400 transition group">
+          <span class="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-slate-800 flex items-center justify-center text-sm group-hover:scale-110 transition">📍</span>
+          <span>Sites & Projects</span>
+        </button>
+
+        <button onclick="toggleSideMenu(false); switchTab('viewTeam')" class="w-full text-left px-3.5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-3 text-slate-700 dark:text-slate-200 hover:bg-indigo-50 dark:hover:bg-indigo-950/60 hover:text-indigo-600 dark:hover:text-indigo-400 transition group">
+          <span class="w-7 h-7 rounded-lg bg-indigo-50 dark:bg-slate-800 flex items-center justify-center text-sm group-hover:scale-110 transition">👥</span>
+          <span>Team & Doers</span>
+        </button>
+
+        <div class="pt-3 border-t border-slate-100 dark:border-darkborder mt-3">
+          <button onclick="toggleSideMenu(false); openTabSettingsModal()" class="w-full text-left px-3.5 py-2 rounded-xl text-xs font-bold flex items-center gap-3 text-slate-500 hover:bg-slate-50 dark:hover:bg-slate-800 transition">
+            <i data-lucide="settings" class="w-4 h-4 text-slate-400"></i>
+            <span>Settings & Webhook</span>
+          </button>
+        </div>
       </div>
-      <div class="mt-auto pt-3 border-t">
-        <button onclick="toggleDarkMode()" class="w-full bg-slate-50 dark:bg-slate-800 border rounded-lg py-1 text-xs font-bold flex items-center justify-center gap-1.5">
-          <span id="drawerThemeIcon">🌙</span> <span id="drawerThemeLabel">Toggle Dark Mode</span>
+
+      <div class="mt-auto pt-4 border-t border-slate-100 dark:border-darkborder space-y-2">
+        <button onclick="toggleDarkMode()" class="w-full bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-darkborder rounded-xl py-2 px-3 text-xs font-bold flex items-center justify-between transition shadow-2xs">
+          <span class="flex items-center gap-2">
+            <span id="drawerThemeIcon">🌙</span> 
+            <span id="drawerThemeLabel" class="text-slate-700 dark:text-slate-200">Dark Mode</span>
+          </span>
+          <span class="text-[9px] px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 font-mono text-slate-600 dark:text-slate-300">Toggle</span>
         </button>
       </div>
     </div>
@@ -485,16 +530,36 @@
     </div>
   </div>
 
-  <!-- Modal: Add Team Member -->
+  <!-- Modal: Add / Edit Team Member (Doer ID & Password) -->
   <div id="addMemberModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
     <div class="bg-white dark:bg-darkcard rounded-2xl max-w-sm w-full p-4 shadow-2xl border relative">
       <button onclick="toggleModal('addMemberModal', false)" class="absolute right-3 top-3 text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
-      <h3 class="text-xs font-bold text-slate-900 dark:text-white mb-2">Add Team Member</h3>
-      <form onsubmit="event.preventDefault(); saveNewMember();" class="space-y-2 text-xs">
-        <input type="text" id="newMemberName" required placeholder="Full Name" class="w-full border rounded px-2 py-1 dark:bg-slate-800 dark:text-white">
-        <input type="email" id="newMemberEmail" required placeholder="Email Address" class="w-full border rounded px-2 py-1 dark:bg-slate-800 dark:text-white font-mono">
-        <input type="text" id="newMemberRole" placeholder="Role / Designation" class="w-full border rounded px-2 py-1 dark:bg-slate-800 dark:text-white">
-        <button type="submit" class="w-full bg-indigo-600 text-white font-bold py-1.5 rounded transition">Save Member</button>
+      <h3 class="text-xs font-bold text-slate-900 dark:text-white mb-2" id="memberModalTitle">Add / Edit Team Member</h3>
+      <form onsubmit="event.preventDefault(); saveDoerMember();" class="space-y-2 text-xs">
+        <input type="hidden" id="editMemberId">
+        <div>
+          <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Doer Full Name *</label>
+          <input type="text" id="newMemberName" required placeholder="e.g. Rahul Sharma" class="w-full border rounded px-2.5 py-1.5 dark:bg-slate-800 dark:text-white font-semibold">
+        </div>
+        <div>
+          <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Login ID / Email *</label>
+          <input type="email" id="newMemberEmail" required placeholder="doer@domain.com" class="w-full border rounded px-2.5 py-1.5 dark:bg-slate-800 dark:text-white font-mono">
+        </div>
+        <div>
+          <label class="block text-[9px] font-bold text-slate-500 uppercase mb-0.5">Role / Designation</label>
+          <input type="text" id="newMemberRole" placeholder="Executive / Coordinator" class="w-full border rounded px-2.5 py-1.5 dark:bg-slate-800 dark:text-white">
+        </div>
+        <div>
+          <label class="block text-[9px] font-bold text-emerald-600 dark:text-emerald-400 uppercase mb-0.5 flex items-center justify-between">
+            <span>Login Password *</span>
+            <button type="button" onclick="generateRandomDoerPassword()" class="text-indigo-600 hover:underline text-[9px] lowercase font-normal">generate random</button>
+          </label>
+          <div class="relative">
+            <input type="text" id="newMemberPassword" required placeholder="Enter password (e.g. 123456)" class="w-full border rounded px-2.5 py-1.5 dark:bg-slate-800 dark:text-white font-mono font-bold text-emerald-700 dark:text-emerald-400">
+          </div>
+          <p class="text-[9px] text-slate-400 mt-0.5">Super Admin can change or set this password anytime.</p>
+        </div>
+        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 rounded-xl transition shadow-xs mt-3">Save Member Credentials</button>
       </form>
     </div>
   </div>
@@ -661,9 +726,25 @@
 
     function toggleSideMenu(show) { document.getElementById('sideMenuDrawer').classList.toggle('hidden', !show); }
     function toggleModal(id, show) { document.getElementById(id).classList.toggle('hidden', !show); }
+    
+    function toggleDarkMode() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem('pms_theme', isDark ? 'dark' : 'light');
+      updateThemeDisplay(isDark);
+      lucide.createIcons();
+    }
+
+    function updateThemeDisplay(isDark) {
+      const icon = document.getElementById('drawerThemeIcon');
+      const label = document.getElementById('drawerThemeLabel');
+      if (icon) icon.innerText = isDark ? '☀️' : '🌙';
+      if (label) label.innerText = isDark ? 'Light Mode' : 'Dark Mode';
+    }
+
     function initTheme() {
       const isDark = localStorage.getItem('pms_theme') === 'dark';
       document.documentElement.classList.toggle('dark', isDark);
+      updateThemeDisplay(isDark);
       lucide.createIcons();
     }
 
@@ -766,6 +847,7 @@
     function onDoerUserChange() { applyFilters(); }
 
     document.addEventListener('DOMContentLoaded', function () {
+      initTheme();
       applyTabOrderAndVisibility();
       applyBarPosition();
       loadDashboardData();
@@ -906,9 +988,11 @@
 
     // DIRECT TOGGLE STATUS UPDATE (NO REMARKS PROMPT)
     async function directToggleStepStatus(taskId, stepId, currentStatus, wbsNo, taskSteps) {
+      const task = allData.find(t => t.uniqueId === taskId);
+      const stepsToValidate = taskSteps || (task ? task.steps : []);
       const newStatus = (currentStatus === 'Completed') ? 'Pending' : 'Completed';
       
-      const isValid = validateSequentialCompletion(taskSteps, wbsNo, newStatus);
+      const isValid = validateSequentialCompletion(stepsToValidate, wbsNo, newStatus);
       if (!isValid) return;
 
       const payload = {
@@ -1080,9 +1164,14 @@
               </div>
             </td>
             <td class="py-3 px-3 text-center align-top">
-              <button onclick="openEditTaskModal('${item.uniqueId}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-lg font-bold text-[10px] shadow-xs inline-flex items-center gap-1 transition">
-                Update
-              </button>
+              <div class="inline-flex items-center gap-1.5 justify-center">
+                <button onclick="openEditTaskModal('${item.uniqueId}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-lg font-bold text-[10px] shadow-xs inline-flex items-center gap-1 transition">
+                  Update
+                </button>
+                <button onclick="toggleTaskCollapse('${item.uniqueId}')" class="p-1.5 rounded-lg border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-darkcard text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-slate-800 font-extrabold text-xs transition shadow-2xs leading-none" title="${isCollapsed ? 'Show Steps' : 'Hide Steps'}">
+                  ${isCollapsed ? '▼' : '▲'}
+                </button>
+              </div>
             </td>
           </tr>
         `;
@@ -1138,7 +1227,10 @@
                 <td class="py-3 px-3 text-slate-600 dark:text-slate-400 text-[10px] font-mono whitespace-nowrap">${actualStartStr}</td>
                 <td class="py-3 px-3 text-slate-600 dark:text-slate-400 text-[10px] font-mono whitespace-nowrap">${actualEndStr}</td>
                 <td class="py-3 px-3 text-center">
-                  <span class="inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono border ${timer.textClass}">
+                  <span class="stopwatch-ticker inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono border ${timer.textClass}"
+                        data-target="${s.plannedEndDate || ''}"
+                        data-status="${s.status}"
+                        data-actual="${s.actualEndDate || ''}">
                     ${timer.label}
                   </span>
                 </td>
@@ -1154,7 +1246,7 @@
                   <span class="px-2 py-0.5 text-[9px] font-bold rounded ${statusBadgeClass}">${statusLabel}</span>
                 </td>
                 <td class="py-3 px-3 text-center whitespace-nowrap">
-                  <button onclick="directToggleStepStatus('${item.uniqueId}', '${s._id}', '${s.status}', '${s.wbsNo}', ${JSON.stringify(item.steps).replace(/"/g, '&quot;')})" class="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[10px] font-bold shadow-2xs border transition ${toggleButtonClass}">
+                  <button onclick="directToggleStepStatus('${item.uniqueId}', '${s._id}', '${s.status}', '${s.wbsNo}')" class="inline-flex items-center gap-1 px-2.5 py-1 rounded text-[10px] font-bold shadow-2xs border transition ${toggleButtonClass}">
                     ${toggleButtonText}
                   </button>
                 </td>
@@ -1168,6 +1260,7 @@
       lucide.createIcons();
     }
 
+    // LIVE STOPWATCH COUNTDOWN & TIME DELAY CALCULATION
     function calculateTimeRemaining(targetEndDate, status, actualEndDate) {
       if (!targetEndDate) return { label: '-', textClass: 'text-slate-400 bg-slate-50 border-slate-200' };
 
@@ -1182,14 +1275,15 @@
             const diffMs = actualTime - plannedTime;
             const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
             const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-            const delayStr = days > 0 ? `+${days}d ${hours}h delay` : `+${hours}h delay`;
+            const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+            const delayStr = days > 0 ? `+${days}d ${hours}h delay` : (hours > 0 ? `+${hours}h ${mins}m delay` : `+${mins}m delay`);
             return { label: `✓ Done (${delayStr})`, textClass: 'text-amber-800 bg-amber-50 border-amber-300 font-semibold' };
           }
         }
         return { label: `✓ Done (On Time)`, textClass: 'text-emerald-700 bg-emerald-50 border-emerald-200 font-bold' };
       }
 
-      // Case 2: Pending / In Progress Task (Time Delay calculation matching Column J)
+      // Case 2: Pending / In Progress Task - LIVE COUNTDOWN
       const now = Date.now();
       const diffMs = plannedTime - now;
 
@@ -1197,15 +1291,46 @@
         const overdueMs = Math.abs(diffMs);
         const days = Math.floor(overdueMs / (1000 * 60 * 60 * 24));
         const hours = Math.floor((overdueMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const overdueStr = days > 0 ? `-${days}d ${hours}h delay` : `-${hours}h delay`;
+        const mins = Math.floor((overdueMs % (1000 * 60 * 60)) / (1000 * 60));
+        const secs = Math.floor((overdueMs % (1000 * 60)) / 1000);
+        
+        let overdueStr = '';
+        if (days > 0) {
+          overdueStr = `-${days}d ${hours}h ${mins}m delay`;
+        } else {
+          overdueStr = `-${hours}h ${mins}m ${secs}s delay`;
+        }
         return { label: `🚨 ${overdueStr}`, textClass: 'text-rose-700 bg-rose-50 border-rose-200 font-bold animate-pulse' };
       } else {
         const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
         const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-        const leftStr = days > 0 ? `${days}d ${hours}h left` : `${hours}h left`;
+        const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+        const secs = Math.floor((diffMs % (1000 * 60)) / 1000);
+
+        let leftStr = '';
+        if (days > 0) {
+          leftStr = `${days}d ${hours}h ${mins}m ${secs}s left`;
+        } else {
+          leftStr = `${hours}h ${mins}m ${secs}s left`;
+        }
         return { label: `⏱️ ${leftStr}`, textClass: 'text-indigo-800 bg-indigo-50 border-indigo-200 font-medium' };
       }
     }
+
+    // LIVE TICKER: Updates every second for real-time countdown
+    setInterval(() => {
+      document.querySelectorAll('.stopwatch-ticker').forEach(el => {
+        const target = el.getAttribute('data-target');
+        const status = el.getAttribute('data-status');
+        const actual = el.getAttribute('data-actual');
+        if (!target) return;
+        const res = calculateTimeRemaining(target, status, actual);
+        el.innerText = res.label;
+        if (el.className !== `stopwatch-ticker inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono border ${res.textClass}`) {
+          el.className = `stopwatch-ticker inline-flex items-center px-2 py-0.5 rounded text-[10px] font-mono border ${res.textClass}`;
+        }
+      });
+    }, 1000);
 
     async function loadDashboardData() {
       try {
@@ -1307,9 +1432,14 @@
               </div>
 
               <div class="bg-slate-50 dark:bg-slate-800 p-2 rounded-lg border space-y-1">
-                <div class="flex justify-between text-[10px] font-bold">
+                <div class="flex justify-between text-[10px] font-bold items-center">
                   <span class="text-slate-600 dark:text-slate-300">Progress: ${completedSteps}/${totalSteps} Steps (${siteProgress}%)</span>
-                  <span class="text-indigo-600 dark:text-indigo-400">${siteTasks.length} Packages</span>
+                  <div class="flex items-center gap-1.5">
+                    <span class="text-indigo-600 dark:text-indigo-400 font-bold">${siteTasks.length} Packages</span>
+                    <button onclick="openCreateModal('${s.siteName.replace(/'/g, "\\'")}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-0.5 rounded text-[9px] font-bold shadow-2xs transition flex items-center gap-0.5" title="Add Task in this Site">
+                      <i data-lucide="plus" class="w-3 h-3"></i> + Task
+                    </button>
+                  </div>
                 </div>
                 <div class="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
                   <div class="bg-emerald-500 h-full rounded-full" style="width: ${siteProgress}%"></div>
@@ -1447,15 +1577,29 @@
 
         const doerProgress = assignedTotal > 0 ? Math.round((completedCount / assignedTotal) * 100) : 0;
 
+        const doerPassword = d.password || '123456';
+
         html += `
           <div class="bg-white dark:bg-darkcard p-3 rounded-xl border border-slate-200 dark:border-darkborder shadow-2xs space-y-2">
             <div class="flex items-center justify-between">
               <div>
                 <h4 class="font-bold text-xs text-slate-900 dark:text-white">👤 ${d.name}</h4>
-                <p class="text-[10px] text-slate-400 font-mono">${d.email}</p>
+                <p class="text-[10px] text-slate-400 font-mono">ID: ${d.email}</p>
+                <div class="flex items-center gap-1.5 mt-0.5">
+                  <span class="text-[10px] text-slate-400">Password:</span>
+                  <span class="font-mono font-bold text-[10px] bg-slate-100 dark:bg-slate-800 text-emerald-700 dark:text-emerald-400 px-1.5 py-0.2 rounded border border-slate-200 dark:border-darkborder">${doerPassword}</span>
+                </div>
               </div>
-              <div class="flex items-center gap-1.5">
-                <span class="px-2 py-0.5 text-[9px] text-indigo-600 bg-indigo-50 font-bold rounded">${d.role || 'Executive'}</span>
+              <div class="flex flex-col items-end gap-1.5">
+                <div class="flex items-center gap-1">
+                  <span class="px-2 py-0.5 text-[9px] text-indigo-600 bg-indigo-50 dark:bg-indigo-950 dark:text-indigo-300 font-bold rounded">${d.role || 'Executive'}</span>
+                  <button onclick="openEditMemberModal('${d._id || ''}', '${d.name.replace(/'/g, "\\'")}', '${d.email}', '${(d.role || '').replace(/'/g, "\\'")}', '${doerPassword}')" class="p-1 text-slate-400 hover:text-indigo-600 rounded" title="Edit Credentials / Password">
+                    <i data-lucide="key" class="w-3.5 h-3.5"></i>
+                  </button>
+                  <button onclick="deleteMember('${d._id || ''}')" class="p-1 text-slate-300 hover:text-rose-600 rounded" title="Delete Member">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                  </button>
+                </div>
                 <button onclick="openDoerAuditModal('${d.email}', '${d.name.replace(/'/g, "\\'")}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 rounded text-[10px] font-bold shadow-xs transition">
                   🔍 View Details
                 </button>
@@ -1567,6 +1711,87 @@
       toggleModal('doerAuditModal', true);
     }
 
+    function openAddMemberModal() {
+      document.getElementById('editMemberId').value = '';
+      document.getElementById('newMemberName').value = '';
+      document.getElementById('newMemberEmail').value = '';
+      document.getElementById('newMemberRole').value = 'Executive';
+      document.getElementById('newMemberPassword').value = generateRandomPassword();
+      document.getElementById('memberModalTitle').innerText = 'Add Team Member (Generate ID & Password)';
+      toggleModal('addMemberModal', true);
+    }
+
+    function openEditMemberModal(id, name, email, role, password) {
+      document.getElementById('editMemberId').value = id;
+      document.getElementById('newMemberName').value = name;
+      document.getElementById('newMemberEmail').value = email;
+      document.getElementById('newMemberRole').value = role || 'Executive';
+      document.getElementById('newMemberPassword').value = password || '123456';
+      document.getElementById('memberModalTitle').innerText = `Edit Credentials for ${name}`;
+      toggleModal('addMemberModal', true);
+    }
+
+    function generateRandomPassword() {
+      return Math.random().toString(36).slice(-8);
+    }
+
+    function generateRandomDoerPassword() {
+      document.getElementById('newMemberPassword').value = generateRandomPassword();
+    }
+
+    async function saveDoerMember() {
+      const id = document.getElementById('editMemberId').value.trim();
+      const payload = {
+        name: document.getElementById('newMemberName').value.trim(),
+        email: document.getElementById('newMemberEmail').value.trim().toLowerCase(),
+        role: document.getElementById('newMemberRole').value.trim() || 'Executive',
+        password: document.getElementById('newMemberPassword').value.trim() || '123456'
+      };
+
+      if (!payload.name || !payload.email || !payload.password) {
+        return alert('Please fill in Name, Email ID, and Password.');
+      }
+
+      try {
+        const url = id ? `${API_BASE}/api/doers/${id}` : `${API_BASE}/api/doers`;
+        const method = id ? 'PUT' : 'POST';
+
+        const res = await fetch(url, {
+          method,
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        if (json.success) {
+          toggleModal('addMemberModal', false);
+          await loadDashboardData();
+          renderTeamView();
+          alert(`Member credentials saved!\nID: ${payload.email}\nPassword: ${payload.password}`);
+        } else {
+          alert(json.error || 'Failed to save member.');
+        }
+      } catch (err) {
+        alert('Network error: ' + err.message);
+      }
+    }
+
+    async function deleteMember(id) {
+      if (!id) return alert('Cannot delete without ID.');
+      if (!confirm('Are you sure you want to delete this team member?')) return;
+      try {
+        const res = await fetch(`${API_BASE}/api/doers/${id}`, { method: 'DELETE' });
+        const json = await res.json();
+        if (json.success) {
+          await loadDashboardData();
+          renderTeamView();
+        } else {
+          alert(json.error || 'Failed to delete member.');
+        }
+      } catch (err) {
+        alert('Network error: ' + err.message);
+      }
+    }
+
     function updateTemplateDropdown() {
       const selector = document.getElementById('templateSelector');
       if (!selector) return;
@@ -1604,11 +1829,11 @@
       generateStepsFromBulkInput();
     }
 
-    function openCreateModal() {
+    function openCreateModal(defaultSiteName = '') {
       document.getElementById('editTaskIdField').value = '';
-      document.getElementById('modalTaskTitle').innerText = 'Create Main Task & Steps';
+      document.getElementById('modalTaskTitle').innerText = defaultSiteName ? `Create Task for ${defaultSiteName}` : 'Create Main Task & Steps';
       document.getElementById('mStartDate').value = new Date().toISOString().slice(0, 10);
-      document.getElementById('mProject').value = '';
+      document.getElementById('mProject').value = defaultSiteName || '';
       document.getElementById('mItemName').value = '';
       document.getElementById('mCustomUniqueId').value = '';
       document.getElementById('bulkStepsInput').value = '';
