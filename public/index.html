@@ -64,10 +64,6 @@
         </div>
 
         <div class="flex items-center gap-2">
-          <button onclick="openTabSettingsModal()" class="p-1.5 rounded-lg border border-slate-200 dark:border-darkborder bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-indigo-50 transition" title="Manage Tab Settings">
-            <i data-lucide="settings" class="w-4 h-4"></i>
-          </button>
-
           <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg border border-slate-200 dark:border-darkborder">
             <select id="userRole" class="bg-transparent text-[11px] font-bold text-slate-700 dark:text-slate-200 outline-none cursor-pointer" onchange="handleRoleSwitch()">
               <option value="ADMIN">Super Admin</option>
@@ -124,9 +120,12 @@
           </div>
 
           <div class="flex items-center gap-1.5 bg-indigo-50/70 dark:bg-indigo-950/50 border border-indigo-200 dark:border-indigo-800 rounded-lg px-3 py-1.5 min-w-[170px]">
-            <span class="text-[10px] font-extrabold text-indigo-600 dark:text-indigo-400 uppercase tracking-wide">DOER:</span>
-            <select id="filterByDoer" onchange="applyFilters()" class="w-full bg-transparent text-[11px] font-bold text-indigo-950 dark:text-indigo-200 outline-none cursor-pointer">
-              <option value="ALL">All Members</option>
+            <span class="text-[10px] font-extrabold text-indigo-600 dark:text-indigo-400 uppercase tracking-wide">STATUS:</span>
+            <select id="filterByStatus" onchange="applyFilters()" class="w-full bg-transparent text-[11px] font-bold text-indigo-950 dark:text-indigo-200 outline-none cursor-pointer">
+              <option value="ALL">All Status</option>
+              <option value="PENDING">Pending Tasks</option>
+              <option value="OVERDUE">Overdue Tasks</option>
+              <option value="COMPLETED">Completed Tasks</option>
             </select>
           </div>
         </div>
@@ -257,12 +256,23 @@
   <!-- Modal: Doer Performance Audit Breakdown -->
   <div id="doerAuditModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
     <div class="bg-white dark:bg-darkcard rounded-2xl max-w-2xl w-full p-4 shadow-2xl border relative max-h-[92vh] flex flex-col">
-      <div class="flex items-center justify-between pb-2 border-b">
+      <div class="flex flex-wrap items-center justify-between pb-2 border-b gap-2">
         <div>
           <h3 class="text-xs font-bold text-slate-900 dark:text-white" id="auditModalTitle">Doer Audit Breakdown</h3>
           <p class="text-[9px] text-slate-400">Detailed list of assigned tasks and statuses for the selected period.</p>
         </div>
-        <button onclick="toggleModal('doerAuditModal', false)" class="text-slate-400"><i data-lucide="x" class="w-4 h-4"></i></button>
+        <div class="flex items-center gap-2">
+          <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-darkborder rounded-lg px-2.5 py-1">
+            <span class="text-[10px] font-extrabold text-indigo-600 dark:text-indigo-400 uppercase tracking-wide">Status:</span>
+            <select id="auditStatusFilter" onchange="filterAuditSteps()" class="bg-transparent text-[11px] font-bold text-slate-800 dark:text-slate-200 outline-none cursor-pointer">
+              <option value="ALL">All Statuses</option>
+              <option value="PENDING">Pending Only</option>
+              <option value="OVERDUE">Overdue / Delayed</option>
+              <option value="DONE">Done Only</option>
+            </select>
+          </div>
+          <button onclick="toggleModal('doerAuditModal', false)" class="text-slate-400 hover:text-slate-600 p-1"><i data-lucide="x" class="w-4 h-4"></i></button>
+        </div>
       </div>
 
       <div id="auditModalContent" class="overflow-y-auto custom-scroll py-3 space-y-2 flex-1 pr-1 text-xs"></div>
@@ -570,6 +580,7 @@
     let allVendors = [];
     let allSitesList = [];
     let currentAuditDoer = { email: '', name: '' };
+    let currentAuditSteps = [];
     let pmsChartInstance = null;
 
     const API_BASE = window.location.origin.startsWith('file:') 
@@ -1080,6 +1091,7 @@
       const tbody = document.getElementById('tableRows');
       const role = document.getElementById('userRole').value;
       const selectedSite = document.getElementById('filterByProject').value;
+      const selectedStatus = document.getElementById('filterByStatus')?.value || 'ALL';
       const doerEmail = document.getElementById('doerDropdownSelect').value.toLowerCase().trim();
       const searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
 
@@ -1116,6 +1128,21 @@
         let sortedSteps = [...item.steps].sort(naturalWbsSort);
         if (role === 'DOER' && doerEmail) {
           sortedSteps = sortedSteps.filter(s => (s.assignedEmail || '').toLowerCase().trim() === doerEmail);
+          if (sortedSteps.length === 0) return;
+        }
+
+        // Apply Status Filter (PENDING / OVERDUE / COMPLETED)
+        if (selectedStatus !== 'ALL') {
+          sortedSteps = sortedSteps.filter(s => {
+            const isCompleted = s.status === 'Completed';
+            const isOverdue = (new Date(s.plannedEndDate) < now && !isCompleted) || s.status === 'Delayed';
+            const isPending = !isCompleted && !isOverdue;
+
+            if (selectedStatus === 'PENDING') return isPending;
+            if (selectedStatus === 'OVERDUE') return isOverdue;
+            if (selectedStatus === 'COMPLETED') return isCompleted;
+            return true;
+          });
           if (sortedSteps.length === 0) return;
         }
 
@@ -1165,9 +1192,11 @@
             </td>
             <td class="py-3 px-3 text-center align-top">
               <div class="inline-flex items-center gap-1.5 justify-center">
+                ${role === 'ADMIN' ? `
                 <button onclick="openEditTaskModal('${item.uniqueId}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1 rounded-lg font-bold text-[10px] shadow-xs inline-flex items-center gap-1 transition">
                   Update
                 </button>
+                ` : ''}
                 <button onclick="toggleTaskCollapse('${item.uniqueId}')" class="p-1.5 rounded-lg border border-indigo-200 dark:border-indigo-800 bg-white dark:bg-darkcard text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-slate-800 font-extrabold text-xs transition shadow-2xs leading-none" title="${isCollapsed ? 'Show Steps' : 'Hide Steps'}">
                   ${isCollapsed ? '▼' : '▲'}
                 </button>
@@ -1630,7 +1659,6 @@
     function openDoerAuditModal(email, name) {
       currentAuditDoer = { email, name };
       document.getElementById('auditModalTitle').innerText = `Performance Audit: ${name} (${email})`;
-      const container = document.getElementById('auditModalContent');
       const now = new Date();
       const period = document.getElementById('mainAuditPeriodSelect')?.value || 'ALL';
 
@@ -1646,7 +1674,7 @@
         startDateLimit.setDate(now.getDate() - 90);
       }
 
-      let assignedSteps = [];
+      currentAuditSteps = [];
       allData.forEach(task => {
         task.steps.forEach(st => {
           if ((st.assignedEmail || '').toLowerCase().trim() === (email || '').toLowerCase().trim() || 
@@ -1662,7 +1690,7 @@
             }
 
             if (isInPeriod) {
-              assignedSteps.push({
+              currentAuditSteps.push({
                 uniqueId: task.uniqueId,
                 projectName: task.projectName || 'General',
                 mainItemName: task.mainItemName,
@@ -1676,14 +1704,35 @@
         });
       });
 
-      if (assignedSteps.length === 0) {
-        container.innerHTML = '<p class="text-xs text-slate-400 py-8 text-center">No tasks found for the selected period.</p>';
-        toggleModal('doerAuditModal', true);
+      const auditFilterSelect = document.getElementById('auditStatusFilter');
+      if (auditFilterSelect) auditFilterSelect.value = 'ALL';
+
+      filterAuditSteps();
+      toggleModal('doerAuditModal', true);
+    }
+
+    function filterAuditSteps() {
+      const container = document.getElementById('auditModalContent');
+      if (!container) return;
+
+      const filterStatus = document.getElementById('auditStatusFilter')?.value || 'ALL';
+
+      let displaySteps = currentAuditSteps;
+      if (filterStatus === 'PENDING') {
+        displaySteps = currentAuditSteps.filter(item => !item.isCompleted && !item.isBacklog && !item.isDelayed);
+      } else if (filterStatus === 'OVERDUE') {
+        displaySteps = currentAuditSteps.filter(item => item.isDelayed || item.isBacklog);
+      } else if (filterStatus === 'DONE') {
+        displaySteps = currentAuditSteps.filter(item => item.isCompleted);
+      }
+
+      if (displaySteps.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-400 py-8 text-center">No ${filterStatus === 'ALL' ? '' : filterStatus.toLowerCase()} tasks found for this member.</p>`;
         return;
       }
 
       let html = '';
-      assignedSteps.forEach((item) => {
+      displaySteps.forEach((item) => {
         let statusBadge = '';
         if (item.isCompleted) statusBadge = '<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded font-bold">✓ Done</span>';
         else if (item.isBacklog) statusBadge = '<span class="px-2 py-0.5 bg-purple-100 text-purple-800 rounded font-bold">Backlog (Date Passed)</span>';
@@ -1708,7 +1757,6 @@
       });
 
       container.innerHTML = html;
-      toggleModal('doerAuditModal', true);
     }
 
     function openAddMemberModal() {
