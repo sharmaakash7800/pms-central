@@ -35,6 +35,50 @@
 </head>
 <body class="text-slate-800 dark:bg-darkbg dark:text-slate-100 antialiased h-screen flex flex-col text-xs overflow-hidden">
 
+  <!-- Full Screen Login Overlay -->
+  <div id="loginOverlay" class="fixed inset-0 z-50 bg-slate-900/90 backdrop-blur-md flex items-center justify-center p-4">
+    <div class="bg-white dark:bg-darkcard rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 dark:border-darkborder space-y-4">
+      <div class="text-center space-y-1">
+        <div class="w-12 h-12 rounded-2xl bg-indigo-600 text-white mx-auto flex items-center justify-center shadow-lg shadow-indigo-300 dark:shadow-none font-bold text-xl">
+          ⚡
+        </div>
+        <h2 class="text-lg font-black text-slate-900 dark:text-white tracking-tight">PMS Central Login</h2>
+        <p class="text-slate-400 text-xs">Enter your credentials to access the workspace</p>
+      </div>
+
+      <!-- Role Selector Tabs in Login -->
+      <div class="grid grid-cols-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl gap-1 text-center font-bold text-xs">
+        <button type="button" id="loginTabAdmin" onclick="setLoginRole('ADMIN')" class="py-2 rounded-lg transition bg-white dark:bg-darkcard text-indigo-600 dark:text-indigo-400 shadow-xs">
+          👑 Super Admin
+        </button>
+        <button type="button" id="loginTabDoer" onclick="setLoginRole('DOER')" class="py-2 rounded-lg transition text-slate-500 hover:text-slate-900 dark:hover:text-white">
+          👤 Doer Member
+        </button>
+      </div>
+
+      <form onsubmit="handleLoginFormSubmit(event)" class="space-y-3">
+        <!-- Doer ID / Email Field (Only for DOER role) -->
+        <div id="loginEmailGroup" class="hidden">
+          <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1">Doer ID / Registered Email</label>
+          <input type="email" id="loginEmailInput" placeholder="e.g. heeralal@domain.com" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkborder rounded-xl px-3 py-2 text-xs font-medium outline-none focus:border-indigo-500 dark:text-white">
+        </div>
+
+        <!-- Password Field -->
+        <div>
+          <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide mb-1" id="loginPasswordLabel">Admin Password</label>
+          <input type="password" id="loginPasswordInput" required placeholder="Enter password" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-darkborder rounded-xl px-3 py-2 text-xs font-mono font-bold outline-none focus:border-indigo-500 dark:text-white">
+        </div>
+
+        <div id="loginErrorMsg" class="hidden text-[11px] text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/50 p-2 rounded-lg font-bold border border-rose-200 dark:border-rose-900 text-center"></div>
+
+        <button type="submit" id="loginSubmitBtn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl transition shadow-md shadow-indigo-200 dark:shadow-none text-xs flex items-center justify-center gap-2">
+          <span>Sign In</span>
+          <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </button>
+      </form>
+    </div>
+  </div>
+
   <!-- Fixed Main Header -->
   <header class="bg-white dark:bg-darkcard border-b border-slate-200 dark:border-darkborder shrink-0 z-40 shadow-xs">
     <div class="max-w-7xl mx-auto px-3 sm:px-5">
@@ -64,14 +108,15 @@
         </div>
 
         <div class="flex items-center gap-2">
-          <div class="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 px-2 py-1 rounded-lg border border-slate-200 dark:border-darkborder">
-            <select id="userRole" class="bg-transparent text-[11px] font-bold text-slate-700 dark:text-slate-200 outline-none cursor-pointer" onchange="handleRoleSwitch()">
-              <option value="ADMIN">Super Admin</option>
-              <option value="DOER">Doer Portal</option>
-            </select>
-            <select id="doerDropdownSelect" class="hidden bg-white dark:bg-darkcard text-[11px] border border-slate-300 dark:border-darkborder rounded px-1.5 py-0.5 outline-none font-semibold text-indigo-900 dark:text-indigo-300" onchange="onDoerUserChange()">
-              <option value="">Select Doer...</option>
-            </select>
+          <div id="headerUserInfo" class="flex items-center gap-2">
+            <div class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-200 dark:border-darkborder text-[11px]">
+              <span id="headerUserBadge" class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300">Admin</span>
+              <span id="headerUserName" class="font-bold text-slate-800 dark:text-slate-100">Super Admin</span>
+            </div>
+            <button onclick="logoutCurrentUser()" class="px-2.5 py-1 bg-rose-50 hover:bg-rose-100 text-rose-600 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-900 rounded-lg text-[10px] font-bold transition flex items-center gap-1" title="Log Out">
+              <i data-lucide="log-out" class="w-3.5 h-3.5"></i>
+              <span>Logout</span>
+            </button>
           </div>
         </div>
 
@@ -312,6 +357,15 @@
       <div>
         <label class="block text-[10px] font-bold text-slate-500 uppercase mb-1">Tab Shuffle & Visibility</label>
         <div id="tabShuffleContainer" class="space-y-1.5 text-xs max-h-48 overflow-y-auto custom-scroll pr-1"></div>
+      </div>
+
+      <div>
+        <label class="block text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase mb-1 flex items-center gap-1">
+          <i data-lucide="key" class="w-3.5 h-3.5"></i>
+          <span>Super Admin Master Password</span>
+        </label>
+        <input type="text" id="adminPasswordSettingInput" placeholder="admin123" class="w-full border border-slate-300 dark:border-darkborder rounded px-2.5 py-1.5 text-xs font-mono font-bold bg-slate-50 dark:bg-slate-800 dark:text-white outline-none focus:ring-1 focus:ring-indigo-500">
+        <p class="text-[9px] text-slate-400 mt-1">Change master password used to log in as Super Admin (default: admin123).</p>
       </div>
 
       <div>
@@ -582,6 +636,8 @@
     let currentAuditDoer = { email: '', name: '' };
     let currentAuditSteps = [];
     let pmsChartInstance = null;
+    let currentUser = JSON.parse(localStorage.getItem('pms_logged_in_user') || 'null');
+    let activeLoginRole = 'ADMIN';
 
     const API_BASE = window.location.origin.startsWith('file:') 
       ? 'https://pms-central-kini.onrender.com' 
@@ -622,8 +678,13 @@
       try {
         const res = await fetch(`${API_BASE}/api/settings`);
         const result = await res.json();
-        if (result.success && result.data && result.data.googleSheetWebhookUrl) {
-          document.getElementById('googleSheetWebhookInput').value = result.data.googleSheetWebhookUrl;
+        if (result.success && result.data) {
+          if (result.data.googleSheetWebhookUrl) {
+            document.getElementById('googleSheetWebhookInput').value = result.data.googleSheetWebhookUrl;
+          }
+          if (result.data.adminPassword) {
+            document.getElementById('adminPasswordSettingInput').value = result.data.adminPassword;
+          }
         }
       } catch (e) {
         console.error('Error fetching settings:', e);
@@ -633,12 +694,22 @@
 
     async function saveTabSettings() {
       const webhookUrl = document.getElementById('googleSheetWebhookInput').value.trim();
+      const adminPass = document.getElementById('adminPasswordSettingInput').value.trim();
       try {
-        await fetch(`${API_BASE}/api/settings`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ key: 'googleSheetWebhookUrl', value: webhookUrl })
-        });
+        if (webhookUrl) {
+          await fetch(`${API_BASE}/api/settings`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key: 'googleSheetWebhookUrl', value: webhookUrl })
+          });
+        }
+        if (adminPass) {
+          await fetch(`${API_BASE}/api/settings`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ key: 'adminPassword', value: adminPass })
+          });
+        }
       } catch (e) {
         console.error('Error saving settings:', e);
       }
@@ -692,7 +763,11 @@
       let html = '';
       tabOrder.forEach(tabId => {
         const meta = tabMeta[tabId];
-        const displayStyle = hiddenTabs[tabId] ? 'display: none;' : 'display: flex;';
+        let isVisible = !hiddenTabs[tabId];
+        if (currentUser && currentUser.role === 'DOER' && tabId === 'viewTeam') {
+          isVisible = false;
+        }
+        const displayStyle = isVisible ? 'display: flex;' : 'display: none;';
         const activeClass = document.getElementById(`tabBtn-${tabId}`)?.classList.contains('active') ? 'active' : '';
         
         let iconChar = '📦';
@@ -848,20 +923,120 @@
       }
     }
 
-    function handleRoleSwitch() {
-      const role = document.getElementById('userRole').value;
-      document.getElementById('doerDropdownSelect').classList.toggle('hidden', role !== 'DOER');
-      document.getElementById('activeDoerBanner').classList.toggle('hidden', role !== 'DOER');
-      applyFilters();
+    // LOGIN & AUTHENTICATION HANDLERS
+    function setLoginRole(role) {
+      activeLoginRole = role;
+      const adminTab = document.getElementById('loginTabAdmin');
+      const doerTab = document.getElementById('loginTabDoer');
+      const emailGroup = document.getElementById('loginEmailGroup');
+      const passwordLabel = document.getElementById('loginPasswordLabel');
+      const errorMsg = document.getElementById('loginErrorMsg');
+      errorMsg.classList.add('hidden');
+
+      if (role === 'ADMIN') {
+        adminTab.className = 'py-2 rounded-lg transition bg-white dark:bg-darkcard text-indigo-600 dark:text-indigo-400 shadow-xs';
+        doerTab.className = 'py-2 rounded-lg transition text-slate-500 hover:text-slate-900 dark:hover:text-white';
+        emailGroup.classList.add('hidden');
+        passwordLabel.innerText = 'Super Admin Password';
+      } else {
+        doerTab.className = 'py-2 rounded-lg transition bg-white dark:bg-darkcard text-indigo-600 dark:text-indigo-400 shadow-xs';
+        adminTab.className = 'py-2 rounded-lg transition text-slate-500 hover:text-slate-900 dark:hover:text-white';
+        emailGroup.classList.remove('hidden');
+        passwordLabel.innerText = 'Doer Password';
+      }
     }
 
-    function onDoerUserChange() { applyFilters(); }
+    async function handleLoginFormSubmit(e) {
+      e.preventDefault();
+      const errorMsg = document.getElementById('loginErrorMsg');
+      const submitBtn = document.getElementById('loginSubmitBtn');
+      const email = document.getElementById('loginEmailInput').value.trim();
+      const password = document.getElementById('loginPasswordInput').value.trim();
+
+      errorMsg.classList.add('hidden');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '<span>Verifying...</span>';
+
+      try {
+        const payload = { role: activeLoginRole, email, password };
+        const res = await fetch(`${API_BASE}/api/auth/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+
+        if (json.success && json.user) {
+          currentUser = json.user;
+          localStorage.setItem('pms_logged_in_user', JSON.stringify(currentUser));
+          applyLoggedInUserUI();
+          document.getElementById('loginPasswordInput').value = '';
+          document.getElementById('loginOverlay').classList.add('hidden');
+          await loadDashboardData();
+        } else {
+          errorMsg.innerText = json.error || 'Login failed. Please check credentials.';
+          errorMsg.classList.remove('hidden');
+        }
+      } catch (err) {
+        errorMsg.innerText = 'Network error: ' + err.message;
+        errorMsg.classList.remove('hidden');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '<span>Sign In</span><i data-lucide="arrow-right" class="w-4 h-4"></i>';
+        lucide.createIcons();
+      }
+    }
+
+    function applyLoggedInUserUI() {
+      const banner = document.getElementById('activeDoerBanner');
+      const bannerName = document.getElementById('doerBannerName');
+      const userBadge = document.getElementById('headerUserBadge');
+      const userName = document.getElementById('headerUserName');
+      const teamNavBtn = document.querySelector('button[onclick*="viewTeam"]');
+
+      if (!currentUser) {
+        document.getElementById('loginOverlay').classList.remove('hidden');
+        return;
+      }
+
+      document.getElementById('loginOverlay').classList.add('hidden');
+
+      if (currentUser.role === 'ADMIN') {
+        userBadge.className = 'px-1.5 py-0.5 rounded text-[9px] font-bold bg-purple-100 text-purple-800 dark:bg-purple-950 dark:text-purple-300';
+        userBadge.innerText = 'Admin';
+        userName.innerText = 'Super Admin';
+        if (banner) banner.classList.add('hidden');
+        if (teamNavBtn) teamNavBtn.parentElement?.classList.remove('hidden');
+      } else {
+        userBadge.className = 'px-1.5 py-0.5 rounded text-[9px] font-bold bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300';
+        userBadge.innerText = 'Doer';
+        userName.innerText = currentUser.name || currentUser.email;
+        if (banner) banner.classList.remove('hidden');
+        if (bannerName) bannerName.innerText = `${currentUser.name} (${currentUser.email})`;
+      }
+
+      applyTabOrderAndVisibility();
+      lucide.createIcons();
+    }
+
+    function logoutCurrentUser() {
+      if (!confirm('Are you sure you want to log out?')) return;
+      currentUser = null;
+      localStorage.removeItem('pms_logged_in_user');
+      document.getElementById('loginEmailInput').value = '';
+      document.getElementById('loginPasswordInput').value = '';
+      document.getElementById('loginErrorMsg').classList.add('hidden');
+      document.getElementById('loginOverlay').classList.remove('hidden');
+    }
 
     document.addEventListener('DOMContentLoaded', function () {
       initTheme();
       applyTabOrderAndVisibility();
       applyBarPosition();
-      loadDashboardData();
+      applyLoggedInUserUI();
+      if (currentUser) {
+        loadDashboardData();
+      }
     });
 
     let collapsedTasks = JSON.parse(localStorage.getItem('pms_collapsed_tasks') || '{}');
@@ -1089,10 +1264,10 @@
     // RENDER TABLE WITH CORRECT "✓ Done" LABEL AND WORKING SEARCH
     function renderStructuredTableGrid(data) {
       const tbody = document.getElementById('tableRows');
-      const role = document.getElementById('userRole').value;
+      const role = currentUser ? currentUser.role : 'ADMIN';
       const selectedSite = document.getElementById('filterByProject').value;
       const selectedStatus = document.getElementById('filterByStatus')?.value || 'ALL';
-      const doerEmail = document.getElementById('doerDropdownSelect').value.toLowerCase().trim();
+      const doerEmail = (currentUser && currentUser.role === 'DOER') ? (currentUser.email || '').toLowerCase().trim() : '';
       const searchQuery = document.getElementById('searchInput').value.toLowerCase().trim();
 
       const backBar = document.getElementById('backToSitesBar');

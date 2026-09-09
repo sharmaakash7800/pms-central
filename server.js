@@ -270,6 +270,47 @@ app.delete('/api/sites/:id', async (req, res) => {
   }
 });
 
+app.post('/api/auth/login', async (req, res) => {
+  try {
+    const { email, password, role } = req.body;
+    if (!password) {
+      return res.status(400).json({ success: false, error: 'Password is required' });
+    }
+
+    if (role === 'ADMIN') {
+      const adminSetting = await Setting.findOne({ key: 'adminPassword' });
+      const currentAdminPassword = (adminSetting && adminSetting.value) ? adminSetting.value : 'admin123';
+      if (password === currentAdminPassword) {
+        return res.json({
+          success: true,
+          user: { role: 'ADMIN', name: 'Super Admin', email: 'admin@domain.com' }
+        });
+      } else {
+        return res.status(401).json({ success: false, error: 'Invalid Admin Password' });
+      }
+    } else {
+      if (!email) {
+        return res.status(400).json({ success: false, error: 'Email / Doer ID is required' });
+      }
+      const doer = await Doer.findOne({ email: email.toLowerCase().trim() });
+      if (!doer) {
+        return res.status(404).json({ success: false, error: 'Doer ID not found in system' });
+      }
+      const doerPass = doer.password || '123456';
+      if (password === doerPass) {
+        return res.json({
+          success: true,
+          user: { role: 'DOER', name: doer.name, email: doer.email }
+        });
+      } else {
+        return res.status(401).json({ success: false, error: 'Incorrect Password for Doer ID' });
+      }
+    }
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 app.get('/api/doers', async (req, res) => {
   try {
     const doers = await Doer.find({});
