@@ -220,10 +220,12 @@ app.patch('/api/pms/update-step', async (req, res) => {
       stepTitle: step.stepTitle,
       assignedName: step.assignedName,
       assignedEmail: step.assignedEmail,
-      status: step.status,
-      remarks: step.remarks,
+      plannedStartDate: step.plannedStartDate,
+      plannedEndDate: step.plannedEndDate,
       actualStartDate: step.actualStartDate,
       actualEndDate: step.actualEndDate,
+      status: step.status,
+      remarks: step.remarks,
       attachmentUrl: step.attachmentUrl
     });
 
