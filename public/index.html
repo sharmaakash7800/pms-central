@@ -189,13 +189,13 @@
           <table id="pmsGridTable" class="text-left border-collapse text-xs w-full relative">
             <thead class="bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 uppercase font-semibold sticky top-0 z-20 border-b border-slate-200 dark:border-darkborder text-[11px] tracking-wider">
               <tr>
-                <th class="py-3 px-3 w-28">Task ID</th>
+                <th class="py-3 px-3 w-28">Unique ID</th>
                 <th class="py-3 px-2 text-center w-14">WBS</th>
                 <th class="py-3 px-3">Action / Step</th>
                 <th class="py-3 px-3 w-40">Doer</th>
                 <th class="py-3 px-3 w-32">Plan Date</th>
-                <th class="py-3 px-3 w-32">Actual Date</th>
-                <th class="py-3 px-3 w-32">Actual Date</th>
+                <th class="py-3 px-3 w-32">Actual Start</th>
+                <th class="py-3 px-3 w-32">Actual End</th>
                 <th class="py-3 px-3 w-28 text-center">Stopwatch</th>
                 <th class="py-3 px-3 w-36">Remarks</th>
                 <th class="py-3 px-3 w-28">Status</th>
@@ -1369,6 +1369,7 @@
           
           sortedSteps = sortedSteps.filter(s => 
             matchesTask || 
+            (s.uniqueId && s.uniqueId.toLowerCase().includes(searchQuery)) ||
             s.stepTitle.toLowerCase().includes(searchQuery) || 
             s.wbsNo.toLowerCase().includes(searchQuery) ||
             (s.assignedName || '').toLowerCase().includes(searchQuery)
@@ -1455,7 +1456,7 @@
             // Child Rows
             html += `
               <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition align-top">
-                <td class="py-3 px-3 text-slate-400 font-mono text-[10px] pl-6 border-l-2 border-indigo-200">${item.uniqueId}</td>
+                <td class="py-3 px-3 font-mono text-[11px] font-bold pl-6 border-l-2 border-indigo-200 text-indigo-700 dark:text-indigo-300">${s.uniqueId || item.uniqueId}</td>
                 <td class="py-3 px-2 text-center font-mono font-bold text-slate-800 dark:text-slate-200 bg-slate-50/50">${s.wbsNo}</td>
                 <td class="py-3 px-3 text-slate-800 dark:text-slate-200 font-medium whitespace-normal break-words">
                   <div class="flex items-center flex-wrap gap-1">
@@ -2267,7 +2268,7 @@
         let workOwnerText = '';
         let durationVal = 2;
 
-        // Mode 1: Tab-separated columns
+        // Mode 1: Tab-separated columns (Direct copy from Excel / Google Sheets)
         if (line.indexOf('\t') !== -1) {
           const cols = line.split('\t').map(c => c.trim());
           if (cols.length >= 3) {
@@ -2280,25 +2281,36 @@
             }
           }
         } 
-        // Mode 2: Space-separated line copied from browser / Excel
+        // Mode 2: Space-separated line copied from browser / text preview
         else {
-          const match = line.match(/^([A-Z0-9]{3,10})\s+(\d+)\s+(.+?)\s+(\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}\s+\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}\s+\d+)$/i);
-          if (match) {
-            uniqueIdCode = match[1];
-            wbsNoVal = match[2];
-            const textAndDates = match[3];
-            const durMatch = line.match(/\d+$/);
-            if (durMatch) durationVal = parseInt(durMatch[0], 10) || 2;
+          // Check if starts with a Unique ID pattern like SKM0001 or CRD0053
+          const startsWithCode = line.match(/^([A-Z0-9_-]{3,15})\s+(\d+)\s+(.+)$/i);
+          if (startsWithCode) {
+            uniqueIdCode = startsWithCode[1];
+            wbsNoVal = startsWithCode[2];
+            let remainder = startsWithCode[3].trim();
+            
+            // Extract trailing duration if exists
+            const durMatch = remainder.match(/\s+(\d+)\s*$/);
+            if (durMatch) {
+              durationVal = parseInt(durMatch[1], 10) || 2;
+              remainder = remainder.slice(0, durMatch.index).trim();
+            }
 
-            stepTitleText = textAndDates;
+            // Remove trailing dates (DD/MM/YYYY DD/MM/YYYY)
+            remainder = remainder.replace(/\s+\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}\s+\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}.*$/i, '').trim();
+
+            stepTitleText = remainder;
             for (let d of knownDoerNames) {
-              const idx = textAndDates.toLowerCase().lastIndexOf(d.toLowerCase());
+              const idx = remainder.toLowerCase().lastIndexOf(d.toLowerCase());
               if (idx !== -1) {
                 workOwnerText = d;
-                stepTitleText = textAndDates.slice(0, idx).trim();
+                stepTitleText = remainder.slice(0, idx).trim();
                 break;
               }
             }
+          } else {
+            stepTitleText = line;
           }
         }
 
