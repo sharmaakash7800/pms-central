@@ -628,6 +628,80 @@
     </div>
   </div>
 
+  <!-- Modal: Step Attachment Upload & Link -->
+  <div id="stepAttachmentModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
+    <div class="bg-white dark:bg-darkcard rounded-2xl max-w-md w-full p-4 shadow-2xl border border-slate-200 dark:border-darkborder relative">
+      <button onclick="toggleModal('stepAttachmentModal', false)" class="absolute right-3 top-3 text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+      <div class="flex items-center gap-2 mb-3">
+        <div class="p-2 rounded-xl bg-indigo-50 dark:bg-indigo-950 text-indigo-600 dark:text-indigo-300">
+          <i data-lucide="paperclip" class="w-4 h-4"></i>
+        </div>
+        <div>
+          <h3 class="text-xs font-bold text-slate-900 dark:text-white" id="attachModalTitle">Attach Document / Link</h3>
+          <p class="text-[9px] text-slate-400" id="attachModalSubtitle">Google Drive / Drawing / Bill / PDF Link</p>
+        </div>
+      </div>
+      <form onsubmit="event.preventDefault(); submitStepAttachmentModal();" class="space-y-3 text-xs">
+        <input type="hidden" id="modalAttachTaskId">
+        <input type="hidden" id="modalAttachStepId">
+        
+        <div>
+          <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Paste Document / Image URL</label>
+          <div class="relative">
+            <input type="url" id="modalAttachUrlInput" placeholder="https://drive.google.com/... or https://..." class="w-full border rounded-xl px-3 py-2 text-xs dark:bg-slate-800 dark:text-white font-mono focus:ring-1 focus:ring-indigo-500 outline-none">
+          </div>
+          <p class="text-[9px] text-slate-400 mt-1">Accepts Google Drive, Dropbox, PDF, PNG/JPG links.</p>
+        </div>
+
+        <div id="modalAttachPreviewBox" class="hidden p-2 rounded-lg bg-slate-50 dark:bg-slate-800 border flex items-center justify-between text-xs">
+          <a id="modalAttachPreviewLink" href="#" target="_blank" class="text-indigo-600 dark:text-indigo-400 font-bold hover:underline truncate max-w-[280px]">🔗 Open Current Link</a>
+          <button type="button" onclick="document.getElementById('modalAttachUrlInput').value='';" class="text-rose-500 text-[10px] font-bold hover:underline">Clear</button>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-1">
+          <button type="button" onclick="toggleModal('stepAttachmentModal', false)" class="px-3 py-1.5 font-bold text-slate-500 hover:text-slate-800">Cancel</button>
+          <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-1.5 rounded-xl shadow-xs transition flex items-center gap-1">
+            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+            <span>Save Attachment</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Modal: Step Remarks Update -->
+  <div id="stepRemarksModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-3">
+    <div class="bg-white dark:bg-darkcard rounded-2xl max-w-md w-full p-4 shadow-2xl border border-slate-200 dark:border-darkborder relative">
+      <button onclick="toggleModal('stepRemarksModal', false)" class="absolute right-3 top-3 text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-4 h-4"></i></button>
+      <div class="flex items-center gap-2 mb-3">
+        <div class="p-2 rounded-xl bg-amber-50 dark:bg-amber-950 text-amber-600 dark:text-amber-300">
+          <i data-lucide="message-square" class="w-4 h-4"></i>
+        </div>
+        <div>
+          <h3 class="text-xs font-bold text-slate-900 dark:text-white" id="remarkModalTitle">Update Remark</h3>
+          <p class="text-[9px] text-slate-400" id="remarkModalSubtitle">Add progress note, issue, or reason for delay</p>
+        </div>
+      </div>
+      <form onsubmit="event.preventDefault(); submitStepRemarksModal();" class="space-y-3 text-xs">
+        <input type="hidden" id="modalRemarkTaskId">
+        <input type="hidden" id="modalRemarkStepId">
+        
+        <div>
+          <label class="block text-[9px] font-bold text-slate-500 uppercase mb-1">Remark Note</label>
+          <textarea id="modalRemarkTextarea" rows="3" placeholder="Enter reason, progress update, or vendor issue..." class="w-full border rounded-xl p-2.5 text-xs dark:bg-slate-800 dark:text-white focus:ring-1 focus:ring-amber-500 outline-none"></textarea>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-1">
+          <button type="button" onclick="toggleModal('stepRemarksModal', false)" class="px-3 py-1.5 font-bold text-slate-500 hover:text-slate-800">Cancel</button>
+          <button type="submit" class="bg-amber-600 hover:bg-amber-700 text-white font-bold px-4 py-1.5 rounded-xl shadow-xs transition flex items-center gap-1">
+            <i data-lucide="check" class="w-3.5 h-3.5"></i>
+            <span>Save Remark</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <script>
     let activeDoers = [];
     let allData = [];
@@ -1245,15 +1319,25 @@
       }
     }
 
-    // EDIT REMARKS VIA PROMPT
-    async function editStepRemarks(taskId, stepId, currentRemarks) {
-      const newRemarks = prompt("Update remark:", currentRemarks || '');
-      if (newRemarks === null) return;
+    // MODERN REMARKS MODAL HANDLER
+    function editStepRemarks(taskId, stepId, currentRemarks) {
+      document.getElementById('modalRemarkTaskId').value = taskId;
+      document.getElementById('modalRemarkStepId').value = stepId;
+      document.getElementById('modalRemarkTextarea').value = currentRemarks || '';
+      document.getElementById('remarkModalTitle').innerText = `Update Remark (Task ${taskId})`;
+      toggleModal('stepRemarksModal', true);
+      setTimeout(() => document.getElementById('modalRemarkTextarea').focus(), 100);
+    }
+
+    async function submitStepRemarksModal() {
+      const taskId = document.getElementById('modalRemarkTaskId').value;
+      const stepId = document.getElementById('modalRemarkStepId').value;
+      const newRemarks = document.getElementById('modalRemarkTextarea').value.trim();
 
       const payload = {
         uniqueId: taskId,
         stepId: stepId,
-        remarks: newRemarks.trim()
+        remarks: newRemarks
       };
 
       try {
@@ -1264,6 +1348,7 @@
         });
         const json = await res.json();
         if (json.success) {
+          toggleModal('stepRemarksModal', false);
           await loadDashboardData();
         } else {
           alert(json.error || 'Failed to update remark.');
@@ -1273,15 +1358,35 @@
       }
     }
 
-    // EDIT ATTACHMENT LINK
-    async function editStepAttachment(taskId, stepId, currentAttachment) {
-      const url = prompt("Paste Attachment Link (Google Drive / PDF / Image URL):", currentAttachment || '');
-      if (url === null) return;
+    // MODERN ATTACHMENT MODAL HANDLER
+    function editStepAttachment(taskId, stepId, currentAttachment) {
+      document.getElementById('modalAttachTaskId').value = taskId;
+      document.getElementById('modalAttachStepId').value = stepId;
+      document.getElementById('modalAttachUrlInput').value = currentAttachment || '';
+      
+      const previewBox = document.getElementById('modalAttachPreviewBox');
+      const previewLink = document.getElementById('modalAttachPreviewLink');
+      if (currentAttachment) {
+        previewLink.href = currentAttachment;
+        previewBox.classList.remove('hidden');
+      } else {
+        previewBox.classList.add('hidden');
+      }
+
+      document.getElementById('attachModalTitle').innerText = `Attach Document / Link (Task ${taskId})`;
+      toggleModal('stepAttachmentModal', true);
+      setTimeout(() => document.getElementById('modalAttachUrlInput').focus(), 100);
+    }
+
+    async function submitStepAttachmentModal() {
+      const taskId = document.getElementById('modalAttachTaskId').value;
+      const stepId = document.getElementById('modalAttachStepId').value;
+      const url = document.getElementById('modalAttachUrlInput').value.trim();
 
       const payload = {
         uniqueId: taskId,
         stepId: stepId,
-        attachmentUrl: url.trim()
+        attachmentUrl: url
       };
 
       try {
@@ -1292,6 +1397,7 @@
         });
         const json = await res.json();
         if (json.success) {
+          toggleModal('stepAttachmentModal', false);
           await loadDashboardData();
         } else {
           alert(json.error || 'Failed to update attachment.');
