@@ -231,7 +231,7 @@
         <span class="font-bold text-slate-900 dark:text-white uppercase tracking-wider text-[11px]">Vendor & PO Directory</span>
         <div class="flex items-center gap-2">
           <span id="vendorTotalCountBadge" class="bg-amber-100 text-amber-800 px-2 py-0.2 rounded-full text-[10px] font-bold font-mono">0 Vendors</span>
-          <button onclick="openAddVendorModal()" class="bg-indigo-600 text-white text-[10px] font-bold px-2.5 py-1 rounded shadow-xs transition flex items-center gap-1">
+          <button id="btnAddVendorDirectory" onclick="openAddVendorModal()" class="bg-indigo-600 text-white text-[10px] font-bold px-2.5 py-1 rounded shadow-xs transition flex items-center gap-1">
             <i data-lucide="plus" class="w-3 h-3"></i>
             <span>+ Add Vendor</span>
           </button>
@@ -256,7 +256,7 @@
           <label class="flex items-center gap-1 text-[10px] font-bold text-slate-600 dark:text-slate-300 cursor-pointer">
             <input type="checkbox" id="showHiddenSitesToggle" onchange="loadSitesList()" class="rounded"> Show Hidden Sites
           </label>
-          <button onclick="openSiteModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1">
+          <button id="btnAddSiteDirectory" onclick="openSiteModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1">
             <i data-lucide="plus" class="w-3.5 h-3.5"></i>
             <span>+ Add New Site</span>
           </button>
@@ -287,7 +287,7 @@
               <option value="QUARTER">This Quarter (Last 90 Days)</option>
             </select>
           </div>
-          <button onclick="openAddMemberModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1">
+          <button id="btnAddMemberTeam" onclick="openAddMemberModal()" class="bg-indigo-600 hover:bg-indigo-700 text-white text-[11px] font-bold px-3 py-1.5 rounded-lg shadow-xs transition flex items-center gap-1">
             <i data-lucide="plus" class="w-3.5 h-3.5"></i>
             <span>+ Add Member</span>
           </button>
@@ -835,6 +835,9 @@
     }
 
     function openAddVendorModal() {
+      if (!currentUser || currentUser.role !== 'ADMIN') {
+        return alert('Permission Denied: Only Admin can add vendors.');
+      }
       document.getElementById('editVendorId').value = '';
       document.getElementById('vName').value = '';
       document.getElementById('vPhone').value = '';
@@ -843,6 +846,9 @@
     }
 
     function openEditVendorModal(id, name, phone) {
+      if (!currentUser || currentUser.role !== 'ADMIN') {
+        return alert('Permission Denied: Only Admin can edit vendors.');
+      }
       document.getElementById('editVendorId').value = id;
       document.getElementById('vName').value = name;
       document.getElementById('vPhone').value = phone;
@@ -851,6 +857,9 @@
     }
 
     async function saveVendor() {
+      if (!currentUser || currentUser.role !== 'ADMIN') {
+        return alert('Permission Denied: Only Admin can modify vendors.');
+      }
       const id = document.getElementById('editVendorId').value.trim();
       const payload = {
         name: document.getElementById('vName').value.trim(),
@@ -879,6 +888,9 @@
     }
 
     async function deleteVendor(id) {
+      if (!currentUser || currentUser.role !== 'ADMIN') {
+        return alert('Permission Denied: Only Admin can delete vendors.');
+      }
       if (!confirm('Are you sure you want to delete this vendor?')) return;
       const res = await fetch(`${API_BASE}/api/vendors/${id}`, { method: 'DELETE' });
       const json = await res.json();
@@ -899,10 +911,12 @@
         document.getElementById('vendorTotalCountBadge').innerText = `${vendors.length} Vendors`;
         let html = '';
         vendors.forEach(v => {
+          const isAdmin = (currentUser && currentUser.role === 'ADMIN');
           html += `
             <div class="bg-white dark:bg-darkcard p-3 rounded-xl border border-slate-200 dark:border-darkborder shadow-2xs space-y-1 text-xs relative">
               <div class="flex items-center justify-between">
                 <h4 class="font-bold text-slate-900 dark:text-white text-sm">🏢 ${v.name}</h4>
+                ${isAdmin ? `
                 <div class="flex items-center gap-1">
                   <button onclick="openEditVendorModal('${v._id}', '${v.name.replace(/'/g, "\\'")}', '${v.phone}')" class="text-slate-400 hover:text-indigo-600 p-1" title="Edit Vendor">
                     <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
@@ -911,6 +925,7 @@
                     <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                   </button>
                 </div>
+                ` : ''}
               </div>
               <p class="text-[11px] text-slate-500 dark:text-slate-400 font-mono">📞 ${v.phone}</p>
             </div>
@@ -1007,12 +1022,28 @@
         userName.innerText = 'Super Admin';
         if (banner) banner.classList.add('hidden');
         if (teamNavBtn) teamNavBtn.parentElement?.classList.remove('hidden');
+
+        // Show Admin buttons
+        const addMemberBtn = document.getElementById('btnAddMemberTeam');
+        if (addMemberBtn) addMemberBtn.classList.remove('hidden');
+        const addVendorBtn = document.getElementById('btnAddVendorDirectory');
+        if (addVendorBtn) addVendorBtn.classList.remove('hidden');
+        const addSiteBtn = document.getElementById('btnAddSiteDirectory');
+        if (addSiteBtn) addSiteBtn.classList.remove('hidden');
       } else {
         userBadge.className = 'px-1.5 py-0.5 rounded text-[9px] font-bold bg-indigo-100 text-indigo-800 dark:bg-indigo-950 dark:text-indigo-300';
         userBadge.innerText = 'Doer';
         userName.innerText = currentUser.name || currentUser.email;
         if (banner) banner.classList.remove('hidden');
         if (bannerName) bannerName.innerText = `${currentUser.name} (${currentUser.email})`;
+
+        // Hide Admin buttons for Doer
+        const addMemberBtn = document.getElementById('btnAddMemberTeam');
+        if (addMemberBtn) addMemberBtn.classList.add('hidden');
+        const addVendorBtn = document.getElementById('btnAddVendorDirectory');
+        if (addVendorBtn) addVendorBtn.classList.add('hidden');
+        const addSiteBtn = document.getElementById('btnAddSiteDirectory');
+        if (addSiteBtn) addSiteBtn.classList.add('hidden');
       }
 
       applyTabOrderAndVisibility();
@@ -1100,8 +1131,17 @@
         });
         const json = await res.json();
         if (json.success) {
-          loadSitesList();
-          renderProjectFilterDropdown();
+          const updatedSite = json.data;
+          const idx = allSitesList.findIndex(s => String(s._id) === String(siteId));
+          if (idx !== -1) {
+            allSitesList[idx] = updatedSite;
+          } else {
+            const sitesRes = await fetch(`${API_BASE}/api/sites`);
+            const sitesJson = await sitesRes.json();
+            allSitesList = sitesJson.data || [];
+          }
+          await loadSitesList();
+          await renderProjectFilterDropdown();
         } else {
           alert(json.error || 'Failed to update site status.');
         }
@@ -1626,12 +1666,14 @@
                   <button onclick="toggleSiteHideStatus('${s._id}', ${Boolean(s.isHidden)})" class="p-1.5 rounded border ${hideBtnClass}" title="${hideTitle}">
                     <i data-lucide="${hideIcon}" class="w-3.5 h-3.5"></i>
                   </button>
+                  ${(currentUser && currentUser.role === 'ADMIN') ? `
                   <button onclick="openEditSiteModal('${s._id}', '${s.siteName.replace(/'/g, "\\'")}', '${(s.companyName || '').replace(/'/g, "\\'")}', '${(s.processCoordinator || '').replace(/'/g, "\\'")}', '${(s.technicalPerson || '').replace(/'/g, "\\'")}', '${(s.purchaserPerson || '').replace(/'/g, "\\'")}', '${(s.vrePerson || '').replace(/'/g, "\\'")}')" class="text-slate-400 hover:text-indigo-600 p-1" title="Edit Site">
                     <i data-lucide="edit-2" class="w-3.5 h-3.5"></i>
                   </button>
                   <button onclick="deleteSite('${s._id}')" class="text-slate-300 hover:text-rose-600 p-1" title="Delete Site">
                     <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                   </button>
+                  ` : ''}
                 </div>
               </div>
 
@@ -1640,9 +1682,11 @@
                   <span class="text-slate-600 dark:text-slate-300">Progress: ${completedSteps}/${totalSteps} Steps (${siteProgress}%)</span>
                   <div class="flex items-center gap-1.5">
                     <span class="text-indigo-600 dark:text-indigo-400 font-bold">${siteTasks.length} Packages</span>
+                    ${(currentUser && currentUser.role === 'ADMIN') ? `
                     <button onclick="openCreateModal('${s.siteName.replace(/'/g, "\\'")}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-0.5 rounded text-[9px] font-bold shadow-2xs transition flex items-center gap-0.5" title="Add Task in this Site">
                       <i data-lucide="plus" class="w-3 h-3"></i> + Task
                     </button>
+                    ` : ''}
                   </div>
                 </div>
                 <div class="w-full bg-slate-200 dark:bg-slate-700 h-1.5 rounded-full overflow-hidden">
@@ -1665,6 +1709,9 @@
     }
 
     function openSiteModal() {
+      if (!currentUser || currentUser.role !== 'ADMIN') {
+        return alert('Permission Denied: Only Admin can add sites.');
+      }
       document.getElementById('editSiteId').value = '';
       document.getElementById('formSiteName').value = '';
       document.getElementById('formCompanyName').value = 'MAHESHWARI DISTRIBUTORS';
@@ -1677,6 +1724,9 @@
     }
 
     function openEditSiteModal(id, name, comp, coord, tech, pur, vre) {
+      if (!currentUser || currentUser.role !== 'ADMIN') {
+        return alert('Permission Denied: Only Admin can edit site details.');
+      }
       document.getElementById('editSiteId').value = id;
       document.getElementById('formSiteName').value = name;
       document.getElementById('formCompanyName').value = comp || 'MAHESHWARI DISTRIBUTORS';
@@ -1689,6 +1739,9 @@
     }
 
     async function saveSiteData() {
+      if (!currentUser || currentUser.role !== 'ADMIN') {
+        return alert('Permission Denied: Only Admin can modify sites.');
+      }
       const id = document.getElementById('editSiteId').value;
       const payload = {
         siteName: document.getElementById('formSiteName').value.trim(),
@@ -1717,6 +1770,9 @@
     }
 
     async function deleteSite(id) {
+      if (!currentUser || currentUser.role !== 'ADMIN') {
+        return alert('Permission Denied: Only Admin can delete sites.');
+      }
       if (!confirm('Are you sure you want to delete this site?')) return;
       const res = await fetch(`${API_BASE}/api/sites/${id}`, { method: 'DELETE' });
       const json = await res.json();
@@ -1752,7 +1808,13 @@
         startDateLimit.setDate(now.getDate() - 90);
       }
 
-      activeDoers.forEach(d => {
+      const isAdmin = (currentUser && currentUser.role === 'ADMIN');
+      let displayDoers = activeDoers;
+      if (!isAdmin && currentUser && currentUser.email) {
+        displayDoers = activeDoers.filter(d => (d.email || '').toLowerCase().trim() === (currentUser.email || '').toLowerCase().trim());
+      }
+
+      displayDoers.forEach(d => {
         let assignedTotal = 0, completedCount = 0, pendingCount = 0, backlogCount = 0;
 
         allData.forEach(task => {
@@ -1789,20 +1851,24 @@
               <div>
                 <h4 class="font-bold text-xs text-slate-900 dark:text-white">👤 ${d.name}</h4>
                 <p class="text-[10px] text-slate-400 font-mono">ID: ${d.email}</p>
+                ${isAdmin ? `
                 <div class="flex items-center gap-1.5 mt-0.5">
                   <span class="text-[10px] text-slate-400">Password:</span>
                   <span class="font-mono font-bold text-[10px] bg-slate-100 dark:bg-slate-800 text-emerald-700 dark:text-emerald-400 px-1.5 py-0.2 rounded border border-slate-200 dark:border-darkborder">${doerPassword}</span>
                 </div>
+                ` : ''}
               </div>
               <div class="flex flex-col items-end gap-1.5">
                 <div class="flex items-center gap-1">
                   <span class="px-2 py-0.5 text-[9px] text-indigo-600 bg-indigo-50 dark:bg-indigo-950 dark:text-indigo-300 font-bold rounded">${d.role || 'Executive'}</span>
+                  ${isAdmin ? `
                   <button onclick="openEditMemberModal('${d._id || ''}', '${d.name.replace(/'/g, "\\'")}', '${d.email}', '${(d.role || '').replace(/'/g, "\\'")}', '${doerPassword}')" class="p-1 text-slate-400 hover:text-indigo-600 rounded" title="Edit Credentials / Password">
                     <i data-lucide="key" class="w-3.5 h-3.5"></i>
                   </button>
                   <button onclick="deleteMember('${d._id || ''}')" class="p-1 text-slate-300 hover:text-rose-600 rounded" title="Delete Member">
                     <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                   </button>
+                  ` : ''}
                 </div>
                 <button onclick="openDoerAuditModal('${d.email}', '${d.name.replace(/'/g, "\\'")}')" class="bg-indigo-600 hover:bg-indigo-700 text-white px-2 py-1 rounded text-[10px] font-bold shadow-xs transition">
                   🔍 View Details
@@ -1935,6 +2001,9 @@
     }
 
     function openAddMemberModal() {
+      if (!currentUser || currentUser.role !== 'ADMIN') {
+        return alert('Permission Denied: Only Admin can add team members.');
+      }
       document.getElementById('editMemberId').value = '';
       document.getElementById('newMemberName').value = '';
       document.getElementById('newMemberEmail').value = '';
@@ -1945,6 +2014,9 @@
     }
 
     function openEditMemberModal(id, name, email, role, password) {
+      if (!currentUser || currentUser.role !== 'ADMIN') {
+        return alert('Permission Denied: Only Admin can change passwords or credentials.');
+      }
       document.getElementById('editMemberId').value = id;
       document.getElementById('newMemberName').value = name;
       document.getElementById('newMemberEmail').value = email;
@@ -1963,6 +2035,9 @@
     }
 
     async function saveDoerMember() {
+      if (!currentUser || currentUser.role !== 'ADMIN') {
+        return alert('Permission Denied: Only Admin can create or update members.');
+      }
       const id = document.getElementById('editMemberId').value.trim();
       const payload = {
         name: document.getElementById('newMemberName').value.trim(),
@@ -1999,6 +2074,9 @@
     }
 
     async function deleteMember(id) {
+      if (!currentUser || currentUser.role !== 'ADMIN') {
+        return alert('Permission Denied: Only Admin can delete members.');
+      }
       if (!id) return alert('Cannot delete without ID.');
       if (!confirm('Are you sure you want to delete this team member?')) return;
       try {
@@ -2053,6 +2131,9 @@
     }
 
     function openCreateModal(defaultSiteName = '') {
+      if (!currentUser || currentUser.role !== 'ADMIN') {
+        return alert('Permission Denied: Only Admin can create new tasks.');
+      }
       document.getElementById('editTaskIdField').value = '';
       document.getElementById('modalTaskTitle').innerText = defaultSiteName ? `Create Task for ${defaultSiteName}` : 'Create Main Task & Steps';
       document.getElementById('mStartDate').value = new Date().toISOString().slice(0, 10);
@@ -2067,6 +2148,9 @@
     }
 
     function openEditTaskModal(uniqueId) {
+      if (!currentUser || currentUser.role !== 'ADMIN') {
+        return alert('Permission Denied: Only Admin can edit task packages.');
+      }
       const task = allData.find(t => t.uniqueId === uniqueId);
       if(!task) return;
 
@@ -2139,6 +2223,9 @@
     }
 
     async function deleteTaskPackage(uniqueId) {
+      if (!currentUser || currentUser.role !== 'ADMIN') {
+        return alert('Permission Denied: Only Admin can delete task packages.');
+      }
       if(!confirm(`Are you sure you want to delete task package ${uniqueId}?`)) return;
       const res = await fetch(`${API_BASE}/api/pms/delete/${uniqueId}`, { method: 'DELETE' });
       const json = await res.json();
